@@ -130,6 +130,7 @@ class OPS_add_main_tab(Operator):
 
     def execute(self, context):
         self.obj.prompts.add_tab(self.tab_name)
+        context.area.tag_redraw()
         return {'FINISHED'}
 
     def invoke(self,context,event):
@@ -171,6 +172,7 @@ class OPS_add_prompt(Operator):
         data = self.get_data(context)
         if data:        
             data.prompt_page.add_prompt(self.prompt_type,self.prompt_name)
+        context.area.tag_redraw()
         return {'FINISHED'}
 
     def invoke(self,context,event):

@@ -1,5 +1,5 @@
 bl_info = {
-    "name": "BlenderPro",
+    "name": "BlenderPro Sidebar",
     "author": "Andrew Peel",
     "version": (0, 0, 1),
     "blender": (2, 80, 0),
@@ -27,6 +27,7 @@ from .ops import bp_world
 from .ops import bp_collection
 from .bp_lib import bp_prompts
 from .bp_lib import bp_props
+from . import library
 
 def register():
     bp_filebrowser_ui.register()
@@ -46,6 +47,7 @@ def register():
     bp_library_objects.register()
     bp_prompts.register()
     bp_props.register()
+    library.register()
 
 def unregister():
     bp_filebrowser_ui.unregister()
@@ -65,3 +67,4 @@ def unregister():
     bp_library_objects.unregister()    
     bp_prompts.unregister()
     bp_props.unregister()
+    library.unregister()

@@ -56,10 +56,12 @@ def delete_obj_list(obj_list):
         obj.parent = None
         obj.hide_select = False
         obj.hide_viewport = False
-        obj.select = True
+        obj.select_set(True)
         
-        if obj.name in bpy.context.scene.objects:
-            bpy.context.scene.objects.unlink(obj)
+        #TODO: FIGURE OUT IF THIS IS RIGHT
+        if obj.name in bpy.context.view_layer.active_layer_collection.collection.objects:
+            bpy.context.view_layer.active_layer_collection.collection.objects.unlink(obj)
+            # bpy.context.scene.objects.unlink(obj)
 
     for obj in obj_list:
         bpy.data.objects.remove(obj,do_unlink=True)
@@ -128,3 +130,80 @@ def floor_raycast(context, mx, my):
         snapped_rotation.rotate_axis('Z', randoffset)
 
     return has_hit, snapped_location, snapped_normal, snapped_rotation, face_index, object, matrix
+
+def get_selection_point(context, event, ray_max=10000.0,objects=None,floor=None,exclude_objects=[]):
+    """Gets the point to place an object based on selection"""
+    # get the context arguments
+    scene = context.scene
+    region = context.region
+    rv3d = context.region_data
+    coord = event.mouse_region_x, event.mouse_region_y
+
+    # get the ray from the viewport and mouse
+    view_vector = view3d_utils.region_2d_to_vector_3d(region, rv3d, coord)
+    ray_origin = view3d_utils.region_2d_to_origin_3d(region, rv3d, coord)
+    ray_target = ray_origin + view_vector
+ 
+    def visible_objects_and_duplis():
+        """Loop over (object, matrix) pairs (mesh only)"""
+ 
+        for obj in context.visible_objects:
+             
+            if objects:
+                if obj in objects and obj not in exclude_objects:
+                    yield (obj, obj.matrix_world.copy())
+             
+            else:
+                if obj not in exclude_objects:
+                    if floor is not None and obj == floor:
+                        yield (obj, obj.matrix_world.copy())
+                         
+    #                 if obj.draw_type != 'WIRE':
+                    if obj.type == 'MESH' and obj.hide_select == False:
+                        yield (obj, obj.matrix_world.copy())
+    
+                    if obj.instance_type != 'NONE':
+                        obj.dupli_list_create(scene)
+                        for dob in obj.dupli_list:
+                            obj_dupli = dob.object
+                            if obj_dupli.type == 'MESH':
+                                yield (obj_dupli, dob.matrix.copy())
+ 
+            # obj.dupli_list_clear()
+ 
+    def obj_ray_cast(obj, matrix):
+        """Wrapper for ray casting that moves the ray into object space"""
+        try:
+            # get the ray relative to the object
+            matrix_inv = matrix.inverted()
+            ray_origin_obj = matrix_inv @ ray_origin
+            ray_target_obj = matrix_inv @ ray_target
+            ray_direction_obj = ray_target_obj - ray_origin_obj
+     
+            # cast the ray
+            success, location, normal, face_index = obj.ray_cast(ray_origin_obj, ray_direction_obj)
+     
+            if success:
+                return location, normal, face_index
+            else:
+                return None, None, None
+        except:
+            print("ERROR IN obj_ray_cast",obj)
+            return None, None, None
+             
+    best_length_squared = ray_max * ray_max
+    best_obj = None
+    best_hit = (0,0,0)
+    for obj, matrix in visible_objects_and_duplis():
+        if obj.type == 'MESH':
+            if obj.data:
+                hit, normal, face_index = obj_ray_cast(obj, matrix)
+                if hit is not None:
+                    hit_world = matrix @ hit
+                    length_squared = (hit_world - ray_origin).length_squared
+                    if length_squared < best_length_squared:
+                        best_hit = hit_world
+                        best_length_squared = length_squared
+                        best_obj = obj
+                        
+    return best_hit, best_obj    

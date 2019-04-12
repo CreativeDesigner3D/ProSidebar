@@ -41,12 +41,18 @@ class VIEW3D_PT_collection_info(Panel):
     def draw(self, context):
         layout = self.layout
         view_layer = context.view_layer
+        master_collection = context.view_layer.layer_collection.collection
+
+        row = layout.row(align=True)
+        row.scale_y = 1.3
+        row.operator("library.add_collection_from_library",text="Collection Library",icon='DISK_DRIVE')
+        row.menu('LIBRARY_MT_collection_library',text="",icon="DISCLOSURE_TRI_DOWN")
+
         layout.operator('bp_collection.create_collection')
 
-        master_collection = context.view_layer.layer_collection.collection
         col = layout.column(align=True)
         box = col.box()
-        box.label(text="Collection Hierarchy",icon='GROUP')
+        box.label(text="Collection Hierarchy",icon='OUTLINER')
         box = col.box()
         # col = box.column(align=True)
         

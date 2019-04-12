@@ -20,6 +20,8 @@ from ..bp_lib import bp_unit, bp_utils
 #TODO: IMPLEMENT OBJECT DATA
 #TODO: FIGURE OUT HOW TO IMPLEMENT INFO FOR GREASE PENCIL (LAYERS, MATERIALS, ...)
 #TODO: IMPLEMENT CONSTRAINTS PANEL
+#TODO: IMPLEMENT DIFFERENT MODES OR REMOVE THEM
+
 
 class VIEW3D_PT_objects(Panel):
     bl_space_type = 'VIEW_3D'
@@ -28,21 +30,49 @@ class VIEW3D_PT_objects(Panel):
     bl_category = "Object"
     bl_options = {'HIDE_HEADER'}
     
-    @classmethod
-    def poll(cls, context):
-        return context.object
-    
+    def draw_modes(self,obj,layout):
+        row = layout.row(align=True)
+        row.scale_y = 1.3        
+        if obj.type == 'MESH':
+            row.operator('object.mode_set',text="Object",icon = 'CHECKBOX_HLT' if obj.mode == 'OBJECT' else 'BLANK1').mode = 'OBJECT'
+            row.operator('object.mode_set',text="Edit",icon = 'CHECKBOX_HLT' if obj.mode == 'EDIT' else 'BLANK1').mode = 'EDIT'
+            row.operator('object.mode_set',text="Sculpt",icon = 'CHECKBOX_HLT' if obj.mode == 'SCULPT' else 'BLANK1').mode = 'SCULPT'
+
+        if obj.type in {'CURVE','FONT','LATTICE','META','SURFACE'}:
+            row.operator('object.mode_set',text="Object",icon = 'CHECKBOX_HLT' if obj.mode == 'OBJECT' else 'BLANK1').mode = 'OBJECT'
+            row.operator('object.mode_set',text="Edit",icon = 'CHECKBOX_HLT' if obj.mode == 'EDIT' else 'BLANK1').mode = 'EDIT'
+
+        if obj.type in {'EMPTY','LIGHT','CAMERA','SPEAKER','FORCE_FIELD','LIGHT_PROBE'}:
+            row.operator('object.mode_set',text="Object",icon = 'CHECKBOX_HLT' if obj.mode == 'OBJECT' else 'BLANK1').mode = 'OBJECT'
+                                    
+        if obj.type == 'ARMATURE':
+            row.operator('object.mode_set',text="Object",icon = 'CHECKBOX_HLT' if obj.mode == 'OBJECT' else 'BLANK1').mode = 'OBJECT'
+            row.operator('object.mode_set',text="Edit",icon = 'CHECKBOX_HLT' if obj.mode == 'EDIT' else 'BLANK1').mode = 'EDIT'
+            row.operator('object.mode_set',text="Pose",icon = 'CHECKBOX_HLT' if obj.mode == 'POSE' else 'BLANK1').mode = 'POSE'
+
+        if obj.type == 'GPENCIL':
+            row.operator('object.mode_set',text="Object",icon = 'CHECKBOX_HLT' if obj.mode == 'OBJECT' else 'BLANK1').mode = 'OBJECT'
+            row.operator('object.mode_set',text="Edit",icon = 'CHECKBOX_HLT' if obj.mode == 'EDIT_GPENCIL' else 'BLANK1').mode = 'EDIT_GPENCIL'
+            row.operator('object.mode_set',text="Draw",icon = 'CHECKBOX_HLT' if obj.mode == 'PAINT_GPENCIL' else 'BLANK1').mode = 'PAINT_GPENCIL'
+            row.operator('object.mode_set',text="Sculpt",icon = 'CHECKBOX_HLT' if obj.mode == 'SCULPT_GPENCIL' else 'BLANK1').mode = 'SCULPT_GPENCIL'
+
     def draw(self, context):
         obj = context.object
-        scene = context.scene
         layout = self.layout
         
         row = layout.row(align=True)
         row.scale_y = 1.3
-        split = row.split(factor=.7,align=True)
-        split.popover(panel="VIEW3D_PT_object_selection",text=obj.name,icon=bp_utils.get_object_icon(obj))
-        split.menu("VIEW3D_MT_add", text="Add",icon='ADD')
-        layout.prop(obj,'name')
+        row.operator("library.add_object_from_library",text="Object Library",icon='DISK_DRIVE')
+        row.menu('LIBRARY_MT_object_library',text="",icon="DISCLOSURE_TRI_DOWN")
+
+        if obj:
+            self.draw_modes(obj,layout)
+            row = layout.row(align=True)
+            row.scale_y = 1.3
+            split = row.split(factor=.7,align=True)
+            split.popover(panel="VIEW3D_PT_object_selection",text=obj.name,icon=bp_utils.get_object_icon(obj))
+            split.menu("VIEW3D_MT_add", text="Add",icon='ADD')
+            layout.prop(obj,'name')
 
 
 class SCENE_UL_objects(UIList):

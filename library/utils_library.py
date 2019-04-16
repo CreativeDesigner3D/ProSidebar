@@ -91,9 +91,9 @@ def write_xml_file():
         xml.add_element_with_text(paths,'Materials',"")
         
     if os.path.exists(wm_props.collection_library_path):
-        xml.add_element_with_text(paths,'Collection',wm_props.collection_library_path)
+        xml.add_element_with_text(paths,'Collections',wm_props.collection_library_path)
     else:
-        xml.add_element_with_text(paths,'Collection',"")
+        xml.add_element_with_text(paths,'Collections',"")
     
     xml.write(get_library_path_file())
 

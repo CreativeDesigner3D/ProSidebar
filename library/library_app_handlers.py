@@ -26,11 +26,11 @@ def update_library_paths_on_startup(scene=None):
                     else:
                         wm_props.material_library_path = ""
                         
-                if item.tag == 'Groups':
+                if item.tag == 'Collections':
                     if os.path.exists(str(item.text)):
-                        wm_props.group_library_path = item.text
+                        wm_props.collection_library_path = item.text
                     else:
-                        wm_props.group_library_path = "" 
+                        wm_props.collection_library_path = "" 
 
 
 def register():

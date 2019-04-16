@@ -128,6 +128,14 @@ class LIBRARY_OT_add_collection_from_library(bpy.types.Operator):
         context.area.tag_redraw()
         return {'RUNNING_MODAL'}
 
+    def get_collection_objects(self,coll):
+        for obj in coll.objects:
+            self.collection_objects.append(obj)
+            if obj.parent is None:
+                self.parent_objects.append(obj)   
+        for child in coll.children:
+            self.get_collection_objects(child)
+
     def get_collection(self,context):
         collection_file_path = os.path.join(get_library_path() ,self.collection_category,self.collection_name + ".blend")
         with bpy.data.libraries.load(collection_file_path, False, False) as (data_from, data_to):
@@ -135,17 +143,11 @@ class LIBRARY_OT_add_collection_from_library(bpy.types.Operator):
             for coll in data_from.collections:
                 if coll == self.collection_name:
                     data_to.collections = [coll]
-                    
                     break
             
         for coll in data_to.collections:
             context.view_layer.active_layer_collection.collection.children.link(coll)
-            for obj in coll.objects:
-                self.collection_objects.append(obj)
-                # context.view_layer.active_layer_collection.collection.objects.link(obj)
-                if obj.parent is None:
-                    self.parent_objects.append(obj)   
-
+            self.get_collection_objects(coll)
             return coll
 
     def create_drawing_plane(self,context):
@@ -242,19 +244,32 @@ class LIBRARY_OT_save_collection_to_library(bpy.types.Operator):
     def check(self, context):
         return True
 
+    def select_collection_objects(self,coll):
+        for obj in coll.objects:
+            obj.select_set(True)
+        for child in coll.children:
+            self.select_collection_objects(child)
+
     def create_collection_thumbnail_script(self,source_dir,source_file,collection_name):
         file = open(os.path.join(bpy.app.tempdir,"thumb_temp.py"),'w')
         file.write("import bpy\n")
+        file.write("def select_collection_objects(coll):\n")
+        file.write("    for obj in coll.objects:\n")
+        file.write("        obj.select_set(True)\n")
+        file.write("    for child in coll.children:\n")
+        file.write("        select_collection_objects(child)\n")
         file.write("with bpy.data.libraries.load(r'" + source_file + "', False, True) as (data_from, data_to):\n")
         file.write("    for collection in data_from.collections:\n")
         file.write("        if collection == '" + collection_name + "':\n")
         file.write("            data_to.collections = [collection]\n")
         file.write("            break\n")
         file.write("for collection in data_to.collections:\n")
-        file.write("    for obj in collection.objects:\n")
-        file.write("        bpy.context.scene.objects.link(obj)\n") #TODO: FIX
-        file.write("        obj.select = True\n")
-        file.write("        bpy.context.scene.objects.active = obj\n")
+        file.write("    bpy.context.view_layer.active_layer_collection.collection.children.link(collection)\n")
+        file.write("    select_collection_objects(collection)\n")
+        # file.write("    for obj in collection.objects:\n")
+        # file.write("        bpy.context.scene.objects.link(obj)\n") #TODO: FIX
+        # file.write("        obj.select_set(True)\n")
+        # file.write("        bpy.context.scene.objects.active = obj\n")
         file.write("    bpy.ops.view3d.camera_to_view_selected()\n")
         file.write("    render = bpy.context.scene.render\n")
         file.write("    render.use_file_extension = True\n")
@@ -271,23 +286,20 @@ class LIBRARY_OT_save_collection_to_library(bpy.types.Operator):
         file.write("    bpy.data.materials.remove(mat,do_unlink=True)\n")
         file.write("for obj in bpy.data.objects:\n")
         file.write("    bpy.data.objects.remove(obj,do_unlink=True)\n")               
-        file.write("bpy.context.user_preferences.filepaths.save_version = 0\n")
+        file.write("bpy.context.preferences.filepaths.save_version = 0\n") #TODO: FIX THIS
         file.write("with bpy.data.libraries.load(r'" + source_file + "', False, True) as (data_from, data_to):\n")
         file.write("    for collection in data_from.collections:\n")
         file.write("        if collection == '" + collection_name + "':\n")
         file.write("            data_to.collections = [collection]\n")
         file.write("            break\n")
         file.write("for collection in data_to.collections:\n")
-        file.write("    for obj in collection.objects:\n")
-        file.write("        bpy.context.scene.objects.link(obj)\n")
-        file.write("        obj.select = True\n")
-        file.write("        bpy.context.scene.objects.active = obj\n")
+        file.write("    bpy.context.view_layer.active_layer_collection.collection.children.link(collection)\n")
         file.write("bpy.ops.wm.save_as_mainfile(filepath=r'" + os.path.join(source_dir,collection_name) + ".blend')\n")
         file.close()
         return os.path.join(bpy.app.tempdir,'save_temp.py')
 
     def invoke(self,context,event):
-        collection = bpy.data.collections[context.scene.outliner.selected_collection_index]
+        collection = context.view_layer.active_layer_collection.collection
         self.collection_name = collection.name
         clear_collection_categories(self,context)
         wm = context.window_manager
@@ -301,12 +313,12 @@ class LIBRARY_OT_save_collection_to_library(bpy.types.Operator):
             path = os.path.join(get_library_path() ,self.collection_category) 
         files = os.listdir(path) if os.path.exists(path) else []
         if self.create_new_category:
-            row = layout.split(percentage=.6)
+            row = layout.split(factor=.6)
             row.label(text="Enter new folder name:",icon='FILE_FOLDER')
             row.prop(self,'create_new_category',text="Create New",icon='NEWFOLDER')
             layout.prop(self,'new_category_name',text="",icon='FILE_FOLDER')
         else:
-            row = layout.split(percentage=.6)
+            row = layout.split(factor=.6)
             row.label(text="Select folder to save to:",icon='FILE_FOLDER')
             row.prop(self,'create_new_category',text="Create New",icon='NEWFOLDER')
             layout.prop(self,'collection_category',text="",icon='FILE_FOLDER')
@@ -314,7 +326,7 @@ class LIBRARY_OT_save_collection_to_library(bpy.types.Operator):
         if self.collection_name + ".blend" in files or self.collection_name + ".png" in files:
             layout.label(text="File already exists",icon="ERROR")
         if bpy.data.filepath != "" and bpy.data.is_dirty:
-            row = layout.split(percentage=.6)
+            row = layout.split(factor=.6)
             row.label(text="File is not saved",icon="ERROR")
             row.prop(self,'save_file',text="Auto Save")
         
@@ -322,7 +334,7 @@ class LIBRARY_OT_save_collection_to_library(bpy.types.Operator):
         if bpy.data.filepath == "":
             bpy.ops.wm.save_as_mainfile(filepath=os.path.join(bpy.app.tempdir,"temp_blend.blend"))
                     
-        collection_to_save = bpy.data.collections[context.scene.outliner.selected_collection_index]
+        collection_to_save = context.view_layer.active_layer_collection.collection
         if self.create_new_category:
             os.makedirs(os.path.join(get_library_path() ,self.new_category_name))
             

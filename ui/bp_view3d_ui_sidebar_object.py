@@ -71,8 +71,12 @@ class VIEW3D_PT_objects(Panel):
             row.scale_y = 1.3
             split = row.split(factor=.7,align=True)
             split.popover(panel="VIEW3D_PT_object_selection",text=obj.name,icon=bp_utils.get_object_icon(obj))
-            split.menu("VIEW3D_MT_add", text="Add",icon='ADD')
+            split.menu("VIEW3D_MT_bp_add", text="Add",icon='ADD')
             layout.prop(obj,'name')
+        else:
+            row = layout.row(align=True)
+            row.scale_y = 1.3            
+            row.menu("VIEW3D_MT_bp_add", text="Add",icon='ADD')
 
 
 class SCENE_UL_objects(UIList):
@@ -207,6 +211,96 @@ class VIEW3D_PT_object_material(Panel):
         layout = self.layout
         layout.label(text='',icon='MATERIAL')
 
+    def draw_gpencil_properties(self,context,layout,obj):
+        mat = obj.material_slots[obj.active_material_index].material
+        if mat is not None and mat.grease_pencil is not None:
+            gpcolor = mat.grease_pencil
+            box = layout.box()
+            row = box.row()
+            row.label(text="",icon='SOLO_OFF')
+            row.prop(gpcolor, "show_stroke")
+            row = box.row(align=True)
+            row.label(text="Line Type:")
+            row.prop(gpcolor, "mode",text="")
+            row.prop(gpcolor, "stroke_style", text="")
+
+            if gpcolor.stroke_style == 'TEXTURE':
+                row = box.row()
+                row.enabled = not gpcolor.lock
+                box = row.column(align=True)
+                box.template_ID(gpcolor, "stroke_image", open="image.open")
+                if gpcolor.mode == 'LINE':
+                    box.prop(gpcolor, "pixel_size", text="UV Factor")
+
+                box.prop(gpcolor, "use_stroke_pattern", text="Use As Pattern")
+
+            if gpcolor.stroke_style == 'SOLID' or gpcolor.use_stroke_pattern is True:
+                row = box.row()
+                row.label(text="Color:")
+                row.prop(gpcolor, "color", text="")
+
+            if gpcolor.mode in {'DOTS', 'BOX'}:
+                box.prop(gpcolor, "use_follow_path", text="Follow Drawing Path")
+
+            box = layout.box()
+            row = box.row()
+            row.label(text="",icon='SOLO_ON')            
+            row.prop(gpcolor, "show_fill")
+            col = box.column()
+            col.active = not gpcolor.lock
+            col.prop(gpcolor, "fill_style", text="Style")
+
+            if gpcolor.fill_style == 'GRADIENT':
+                col.prop(gpcolor, "gradient_type")
+
+            if gpcolor.fill_style != 'TEXTURE':
+                row = col.row()
+                row.label(text="Color:")
+                row.prop(gpcolor, "fill_color", text="")
+
+                if gpcolor.fill_style in {'GRADIENT', 'CHESSBOARD'}:
+                    col.prop(gpcolor, "mix_color", text="Secondary Color")
+
+                if gpcolor.fill_style == 'GRADIENT':
+                    col.prop(gpcolor, "mix_factor", text="Mix Factor", slider=True)
+
+                if gpcolor.fill_style in {'GRADIENT', 'CHESSBOARD'}:
+                    col.prop(gpcolor, "flip", text="Flip Colors")
+
+                    col.prop(gpcolor, "pattern_shift", text="Location")
+                    col.prop(gpcolor, "pattern_scale", text="Scale")
+
+                if gpcolor.gradient_type == 'RADIAL' and gpcolor.fill_style not in {'SOLID', 'CHESSBOARD'}:
+                    col.prop(gpcolor, "pattern_radius", text="Radius")
+                else:
+                    if gpcolor.fill_style != 'SOLID':
+                        col.prop(gpcolor, "pattern_angle", text="Angle")
+
+                if gpcolor.fill_style == 'CHESSBOARD':
+                    col.prop(gpcolor, "pattern_gridsize", text="Box Size")
+
+            # Texture
+            if gpcolor.fill_style == 'TEXTURE' or (gpcolor.texture_mix is True and gpcolor.fill_style == 'SOLID'):
+                col.template_ID(gpcolor, "fill_image", open="image.open")
+
+                if gpcolor.fill_style == 'TEXTURE':
+                    col.prop(gpcolor, "use_fill_pattern", text="Use As Pattern")
+                    if gpcolor.use_fill_pattern is True:
+                        col.prop(gpcolor, "fill_color", text="Color")
+
+                col.prop(gpcolor, "texture_offset", text="Offset")
+                col.prop(gpcolor, "texture_scale", text="Scale")
+                col.prop(gpcolor, "texture_angle")
+                col.prop(gpcolor, "texture_opacity")
+                col.prop(gpcolor, "texture_clamp", text="Clip Image")
+
+                if gpcolor.use_fill_pattern is False:
+                    col.prop(gpcolor, "texture_mix", text="Mix With Color")
+
+                    if gpcolor.texture_mix is True:
+                        col.prop(gpcolor, "fill_color", text="Mix Color")
+                        col.prop(gpcolor, "mix_factor", text="Mix Factor", slider=True)
+
     def draw(self, context):
         layout = self.layout
         obj = context.object
@@ -221,7 +315,10 @@ class VIEW3D_PT_object_material(Panel):
 
         row = layout.row()
 
-        row.template_list("MATERIAL_UL_matslots", "", obj, "material_slots", obj, "active_material_index", rows=rows)
+        if obj.type == 'GPENCIL':
+            row.template_list("GPENCIL_UL_matslots", "", obj, "material_slots", obj, "active_material_index", rows=rows)
+        else:
+            row.template_list("MATERIAL_UL_matslots", "", obj, "material_slots", obj, "active_material_index", rows=rows)
 
         col = row.column(align=True)
         col.operator("object.material_slot_add", icon='ADD', text="")
@@ -251,7 +348,10 @@ class VIEW3D_PT_object_material(Panel):
             row.operator("object.material_slot_select", text="Select")
             row.operator("object.material_slot_deselect", text="Deselect")
 
-        layout.operator("bp_general.open_new_editor",text="Open Material Editor",icon='MATERIAL').space_type = 'NODE_EDITOR'
+        if obj.type == 'GPENCIL':
+            self.draw_gpencil_properties(context,layout,obj)
+        else:
+            layout.operator("bp_general.open_new_editor",text="Open Material Editor",icon='MATERIAL').space_type = 'NODE_EDITOR'
 
 
 class VIEW3D_PT_object_modifiers(Panel):
@@ -585,6 +685,117 @@ class VIEW3D_PT_object_prompts(Panel):
         if obj:
             obj.prompt_page.draw_prompts(layout,'OBJECT')
 
+class VIEW3D_PT_grease_pencil(Panel):
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+    bl_category = "Object"
+    bl_label = "Grease Pencil Layers"
+    bl_options = {'DEFAULT_CLOSED'}
+    
+    @classmethod
+    def poll(cls, context):
+        if context.object:
+            if context.object.type == 'GPENCIL':
+                return True
+            else:
+                return False
+        else:
+            return False
+
+    def draw_header(self, context):
+        layout = self.layout
+        obj = context.object
+        layout.label(text="",icon='COLOR')
+
+    def draw(self, context):
+        layout = self.layout
+        props = layout.operator("bp_general.split_region")
+        props.space_type = 'DOPESHEET_EDITOR'
+        props.space_sub_type = 'GPENCIL'
+        props.split_direction = 'HORIZONTAL'
+        props.split_factor = .2
+        
+
+class VIEW3D_MT_bp_add(bpy.types.Menu):
+    bl_label = "Add"
+
+    def draw(self, context):
+        layout = self.layout
+
+        # note, don't use 'EXEC_SCREEN' or operators won't get the 'v3d' context.
+
+        # Note: was EXEC_AREA, but this context does not have the 'rv3d', which prevents
+        #       "align_view" to work on first call (see [#32719]).
+        # layout.operator_context = 'EXEC_REGION_WIN'
+
+        # layout.operator_menu_enum("object.mesh_add", "type", text="Mesh", icon='OUTLINER_OB_MESH')
+        layout.menu("VIEW3D_MT_mesh_add", icon='OUTLINER_OB_MESH')
+
+        # layout.operator_menu_enum("object.curve_add", "type", text="Curve", icon='OUTLINER_OB_CURVE')
+        layout.menu("VIEW3D_MT_curve_add", icon='OUTLINER_OB_CURVE')
+        # layout.operator_menu_enum("object.surface_add", "type", text="Surface", icon='OUTLINER_OB_SURFACE')
+        layout.menu("VIEW3D_MT_surface_add", icon='OUTLINER_OB_SURFACE')
+        layout.menu("VIEW3D_MT_metaball_add", text="Metaball", icon='OUTLINER_OB_META')
+        layout.operator("bp_object.add_text_dialog", text="Text", icon='OUTLINER_OB_FONT')
+        layout.operator_menu_enum("object.gpencil_add", "type", text="Grease Pencil", icon='OUTLINER_OB_GREASEPENCIL')
+
+        layout.separator()
+
+        if bpy.types.VIEW3D_MT_armature_add.is_extended():
+            layout.menu("VIEW3D_MT_armature_add", icon='OUTLINER_OB_ARMATURE')
+        else:
+            layout.operator("object.armature_add", text="Armature", icon='OUTLINER_OB_ARMATURE')
+
+        layout.operator("object.add", text="Lattice", icon='OUTLINER_OB_LATTICE').type = 'LATTICE'
+
+        layout.separator()
+
+        layout.operator_menu_enum("object.empty_add", "type", text="Empty", icon='OUTLINER_OB_EMPTY')
+        layout.menu("VIEW3D_MT_image_add", text="Image", icon='OUTLINER_OB_IMAGE')
+
+        layout.separator()
+
+        layout.menu("VIEW3D_MT_light_add", icon='OUTLINER_OB_LIGHT')
+        layout.menu("VIEW3D_MT_lightprobe_add", icon='OUTLINER_OB_LIGHTPROBE')
+
+        layout.separator()
+
+        if bpy.types.VIEW3D_MT_camera_add.is_extended():
+            layout.menu("VIEW3D_MT_camera_add", icon='OUTLINER_OB_CAMERA')
+        else:
+            layout.operator("bp_object.add_camera", text="Camera", icon='OUTLINER_OB_CAMERA')
+            
+            # bpy.types.VIEW3D_MT_camera_add.draw(self, context)
+
+        layout.separator()
+
+        layout.operator("object.speaker_add", text="Speaker", icon='OUTLINER_OB_SPEAKER')
+
+        layout.separator()
+
+        layout.operator_menu_enum("object.effector_add", "type", text="Force Field", icon='OUTLINER_OB_FORCE_FIELD')
+
+        layout.separator()
+
+        has_collections = bool(bpy.data.collections)
+        col = layout.column()
+        col.enabled = has_collections
+
+        if not has_collections or len(bpy.data.collections) > 10:
+            col.operator_context = 'INVOKE_REGION_WIN'
+            col.operator(
+                "object.collection_instance_add",
+                text="Collection Instance..." if has_collections else "No Collections to Instance",
+                icon='OUTLINER_OB_GROUP_INSTANCE',
+            )
+        else:
+            col.operator_menu_enum(
+                "object.collection_instance_add",
+                "collection",
+                text="Collection Instance",
+                icon='OUTLINER_OB_GROUP_INSTANCE',
+            )
+
 classes = (
     VIEW3D_PT_objects,
     VIEW3D_PT_object_selection,
@@ -595,7 +806,9 @@ classes = (
     VIEW3D_PT_object_material,
     VIEW3D_PT_object_modifiers,
     VIEW3D_PT_object_constraints,
-    VIEW3D_PT_object_prompts
+    VIEW3D_PT_object_prompts,
+    VIEW3D_PT_grease_pencil,
+    VIEW3D_MT_bp_add
 )
 
 register, unregister = bpy.utils.register_classes_factory(classes)

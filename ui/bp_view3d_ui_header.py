@@ -10,7 +10,7 @@ class DrawMenu(bpy.types.Menu):
         layout.operator('bp.draw_plane')
         layout.label(text="TODO: Draw Cube")
         layout.label(text="TODO: Draw Lamp")
-        layout.label(text="TODO: Draw Particle")
+        layout.operator('bp_object.particle_paint')
 
 class LibraryMenu(bpy.types.Menu):
     bl_label = "Library"

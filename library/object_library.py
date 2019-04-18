@@ -230,7 +230,7 @@ class LIBRARY_OT_save_object_to_library(bpy.types.Operator):
 
     def invoke(self,context,event):
         clear_object_categories(self,context)
-        self.obj_name = bpy.data.objects[context.scene.outliner.selected_object_index]
+        self.obj_name = context.object.name
         wm = context.window_manager
         return wm.invoke_props_dialog(self, width=300)
         
@@ -243,12 +243,12 @@ class LIBRARY_OT_save_object_to_library(bpy.types.Operator):
         files = os.listdir(path) if os.path.exists(path) else []
 
         if self.create_new_category:
-            row = layout.split(percentage=.6)
+            row = layout.split(factor=.6)
             row.label(text="Enter new folder name:",icon='FILE_FOLDER')
             row.prop(self,'create_new_category',text="Create New",icon='NEWFOLDER')
             layout.prop(self,'new_category_name',text="",icon='FILE_FOLDER')
         else:
-            row = layout.split(percentage=.6)
+            row = layout.split(factor=.6)
             row.label(text="Select folder to save to:",icon='FILE_FOLDER')
             row.prop(self,'create_new_category',text="Create New",icon='NEWFOLDER')
             layout.prop(self,'object_category',text="",icon='FILE_FOLDER')
@@ -267,12 +267,12 @@ class LIBRARY_OT_save_object_to_library(bpy.types.Operator):
         file.write("            data_to.objects = [obj]\n")
         file.write("            break\n")
         file.write("for obj in data_to.objects:\n")
-        file.write("    bpy.context.scene.objects.link(obj)\n")
-        file.write("    obj.select = True\n")
+        file.write("    bpy.context.view_layer.active_layer_collection.collection.objects.link(obj)\n")
+        file.write("    obj.select_set(True)\n")
         file.write("    if obj.type == 'CURVE':\n")
         file.write("        bpy.context.scene.camera.rotation_euler = (0,0,0)\n")
         file.write("        obj.data.dimensions = '2D'\n")
-        file.write("    bpy.context.scene.objects.active = obj\n")
+        file.write("    bpy.context.view_layer.objects.active = obj\n")
         file.write("    bpy.ops.view3d.camera_to_view_selected()\n")
         file.write("    render = bpy.context.scene.render\n")
         file.write("    render.use_file_extension = True\n")
@@ -290,19 +290,19 @@ class LIBRARY_OT_save_object_to_library(bpy.types.Operator):
         file.write("    bpy.data.materials.remove(mat,do_unlink=True)\n")
         file.write("for obj in bpy.data.objects:\n")
         file.write("    bpy.data.objects.remove(obj,do_unlink=True)\n")        
-        file.write("bpy.context.user_preferences.filepaths.save_version = 0\n")
+        file.write("bpy.context.preferences.filepaths.save_version = 0\n")
         file.write("with bpy.data.libraries.load(r'" + source_file + "', False, True) as (data_from, data_to):\n")
         file.write("    for obj in data_from.objects:\n")
         file.write("        if obj == '" + object_name + "':\n")
         file.write("            data_to.objects = [obj]\n")
         file.write("            break\n")
         file.write("for obj in data_to.objects:\n")
-        file.write("    bpy.context.scene.objects.link(obj)\n")
-        file.write("    obj.select = True\n")
+        file.write("    bpy.context.view_layer.active_layer_collection.collection.objects.link(obj)\n")
+        file.write("    obj.select_set(True)\n")
         file.write("    if obj.type == 'CURVE':\n")
         file.write("        bpy.context.scene.camera.rotation_euler = (0,0,0)\n")
         file.write("        obj.data.dimensions = '2D'\n")
-        file.write("    bpy.context.scene.objects.active = obj\n")
+        file.write("    bpy.context.view_layer.objects.active = obj\n")
         file.write("bpy.ops.wm.save_as_mainfile(filepath=r'" + os.path.join(source_dir,object_name) + ".blend')\n")
         file.close()
         
@@ -312,7 +312,7 @@ class LIBRARY_OT_save_object_to_library(bpy.types.Operator):
         if bpy.data.filepath == "":
             bpy.ops.wm.save_as_mainfile(filepath=os.path.join(bpy.app.tempdir,"temp_blend.blend"))
         
-        obj_to_save = bpy.data.objects[context.scene.outliner.selected_object_index]
+        obj_to_save = context.object
         if self.create_new_category:
             os.makedirs(os.path.join(get_library_path() ,self.new_category_name))
             
@@ -323,13 +323,13 @@ class LIBRARY_OT_save_object_to_library(bpy.types.Operator):
         thumbnail_script_path = self.create_object_thumbnail_script(directory_to_save_to, bpy.data.filepath, obj_to_save.name)
         save_script_path = self.create_object_save_script(directory_to_save_to, bpy.data.filepath, obj_to_save.name)
 
-        subprocess.Popen(r'explorer ' + bpy.app.tempdir)
+        # subprocess.Popen(r'explorer ' + bpy.app.tempdir)
         
         subprocess.call(bpy.app.binary_path + ' "' + utils_library.get_thumbnail_file_path() + '" -b --python "' + thumbnail_script_path + '"')   
         subprocess.call(bpy.app.binary_path + ' -b --python "' + save_script_path + '"')
         
-#         os.remove(thumbnail_script_path)
-#         os.remove(save_script_path)
+        # os.remove(thumbnail_script_path)
+        # os.remove(save_script_path)
         
         return {'FINISHED'}
 

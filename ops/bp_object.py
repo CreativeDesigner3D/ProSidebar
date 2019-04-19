@@ -22,8 +22,13 @@ class bp_object_OT_collapse_all_modifiers(Operator):
         return context.object
 
     def execute(self, context):
-        for mod in context.active_object.modifiers:
-            mod.show_expanded = False
+        if context.object.type == 'GPENCIL':
+            for mod in context.active_object.grease_pencil_modifiers:
+                mod.show_expanded = False
+        else:
+            for mod in context.active_object.modifiers:
+                mod.show_expanded = False
+
         return {'FINISHED'}
     
 class bp_object_OT_collapse_all_constraints(Operator):

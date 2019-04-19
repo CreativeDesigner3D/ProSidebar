@@ -1600,8 +1600,7 @@ class Modifier():
         col.prop(md, "face_influence")
 
 
-class GPencil_Modifier():
-    bl_label = "Modifiers"
+class Gpencil_Modifier():
 
     def check_conflicts(self, layout, ob):
         for md in ob.grease_pencil_modifiers:
@@ -1609,28 +1608,6 @@ class GPencil_Modifier():
                 row = layout.row()
                 row.label(text="Build and Time Offset modifier not compatible", icon='ERROR')
                 break
-
-    @classmethod
-    def poll(cls, context):
-        ob = context.object
-        return ob and ob.type == 'GPENCIL'
-
-    def draw(self, context):
-        layout = self.layout
-
-        ob = context.object
-
-        layout.operator_menu_enum("object.gpencil_modifier_add", "type")
-
-        for md in ob.grease_pencil_modifiers:
-            box = layout.template_greasepencil_modifier(md)
-            if box:
-                # match enum type to our functions, avoids a lookup table.
-                getattr(self, md.type)(box, ob, md)
-
-    # the mt.type enum is (ab)used for a lookup on function names
-    # ...to avoid lengthy if statements
-    # so each type must have a function here.
 
     def GP_NOISE(self, layout, ob, md):
         gpd = ob.data
@@ -1990,7 +1967,13 @@ class GPencil_Modifier():
         split = layout.split()
 
         col = split.column()
-        self.check_conflicts(col, ob)
+
+        for md in ob.grease_pencil_modifiers:
+            if md.type == 'GP_TIME':
+                row = layout.row()
+                row.label(text="Build and Time Offset modifier not compatible", icon='ERROR')
+                break        
+        # self.check_conflicts(col, ob)
 
         col.prop(md, "mode")
         if md.mode == 'CONCURRENT':

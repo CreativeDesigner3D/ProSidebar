@@ -14,7 +14,7 @@ from bpy.props import (
         CollectionProperty,
         )
 import math        
-from .modifiers import Modifier
+from .modifiers import Modifier, Gpencil_Modifier
 from ..bp_lib import bp_unit, bp_utils
 
 #TODO: IMPLEMENT OBJECT DATA
@@ -118,7 +118,7 @@ class VIEW3D_PT_object_transform(Panel):
     def draw(self, context):
         layout = self.layout
         obj = context.object
-        if obj.type not in {'EMPTY','CAMERA','LAMP'}:
+        if obj.type not in {'EMPTY','CAMERA','LIGHT'}:
             col = layout.column(align=True)
             col.label(text='Dimensions:')
             #X
@@ -142,6 +142,17 @@ class VIEW3D_PT_object_transform(Panel):
                 row.label(text="Z: " + str(round(bp_unit.meter_to_active_unit(obj.dimensions.z),4)))
             else:
                 row.prop(obj,"dimensions",index=2,text="Z")
+
+        if obj.type == 'CAMERA':
+            cam = obj.data
+            row = layout.row()
+            row.label(text="Size:")
+            row.prop(cam, "display_size", text="")
+
+        if obj.type == 'EMPTY':
+            row = layout.row()
+            row.label(text="Size:")            
+            row.prop(obj, "empty_display_size", text="")            
 
         col1 = layout.row()
         col2 = col1.split()
@@ -373,18 +384,32 @@ class VIEW3D_PT_object_modifiers(Panel):
     def draw(self, context):
         layout = self.layout
         obj = context.object        
-        col = layout.column(align=True)
-        row = col.row()
-        row.operator_menu_enum("object.modifier_add", "type")
-        row.operator('bp_object.collapse_all_modifiers',text="",icon='FULLSCREEN_EXIT')
-        
-        col.separator()
 
-        for mod in obj.modifiers:
-            box = col.template_modifier(mod)
-            if box:
-                # match enum type to our functions, avoids a lookup table.
-                getattr(Modifier, mod.type)(None, box, obj, mod)
+        if obj.type == 'GPENCIL':
+            col = layout.column(align=True)
+            row = col.row()            
+            row.operator_menu_enum("object.gpencil_modifier_add", "type")
+            row.operator('bp_object.collapse_all_modifiers',text="",icon='FULLSCREEN_EXIT')
+
+            for md in obj.grease_pencil_modifiers:
+                box = col.template_greasepencil_modifier(md)
+                if box:
+                    # match enum type to our functions, avoids a lookup table.
+                    getattr(Gpencil_Modifier, md.type)(Gpencil_Modifier, box, obj, md)
+        else:
+
+            col = layout.column(align=True)
+            row = col.row()
+            row.operator_menu_enum("object.modifier_add", "type")
+            row.operator('bp_object.collapse_all_modifiers',text="",icon='FULLSCREEN_EXIT')
+            
+            col.separator()
+
+            for mod in obj.modifiers:
+                box = col.template_modifier(mod)
+                if box:
+                    # match enum type to our functions, avoids a lookup table.
+                    getattr(Modifier, mod.type)(None, box, obj, mod)
 
 
 class VIEW3D_PT_object_view_options(Panel):
@@ -600,20 +625,118 @@ class VIEW3D_PT_object_data(Panel):
         pass
 
     def draw_camera_properties(self,layout,obj):
-        pass
-        #LENS PROPS
-        #VIEWPORT PROPS
+
+        view = bpy.context.space_data
+            
+        cam = obj.data
+
+        layout.prop(view, "lock_camera")
+        layout.prop(cam, "type")
+
+        col = layout.column()
+
+        if cam.type == 'PERSP':
+            col = layout.column()
+            if cam.lens_unit == 'MILLIMETERS':
+                col.prop(cam, "lens")
+            elif cam.lens_unit == 'FOV':
+                col.prop(cam, "angle")
+            col.prop(cam, "lens_unit")
+
+        elif cam.type == 'ORTHO':
+            col.prop(cam, "ortho_scale")
+
+        elif cam.type == 'PANO':
+            engine = bpy.context.scene.render.engine
+            if engine == 'CYCLES':
+                ccam = cam.cycles
+                col.prop(ccam, "panorama_type")
+                if ccam.panorama_type == 'FISHEYE_EQUIDISTANT':
+                    col.prop(ccam, "fisheye_fov")
+                elif ccam.panorama_type == 'FISHEYE_EQUISOLID':
+                    col.prop(ccam, "fisheye_lens", text="Lens")
+                    col.prop(ccam, "fisheye_fov")
+                elif ccam.panorama_type == 'EQUIRECTANGULAR':
+                    sub = col.column(align=True)
+                    sub.prop(ccam, "latitude_min", text="Latitude Min")
+                    sub.prop(ccam, "latitude_max", text="Max")
+                    sub = col.column(align=True)
+                    sub.prop(ccam, "longitude_min", text="Longitude Min")
+                    sub.prop(ccam, "longitude_max", text="Max")
+            elif engine in {'BLENDER_RENDER', 'BLENDER_EEVEE', 'BLENDER_WORKBENCH'}:
+                if cam.lens_unit == 'MILLIMETERS':
+                    col.prop(cam, "lens")
+                elif cam.lens_unit == 'FOV':
+                    col.prop(cam, "angle")
+                col.prop(cam, "lens_unit")
+
+        col = layout.column()
+        col.separator()
+
+        row = col.row(align=True)
+        row.label(text="Shift:")
+        row.prop(cam, "shift_x", text="X")
+        row.prop(cam, "shift_y", text="Y")
+
+        row = col.row(align=True)
+        row.label(text="Clip:")
+        row.prop(cam, "clip_start", text="Start")
+        row.prop(cam, "clip_end", text="End")
+
         #DOF
-        
+        box = layout.box()
+        box.label(text="Depth of Field")
+        row = box.row()
+        row.label(text="Focus on Object:")
+        row.prop(cam, "dof_object", text="")
+
+        sub = box.column()
+        sub.active = (cam.dof_object is None)
+        row = sub.row()
+        row.label(text="Focus Distance:")        
+        row.prop(cam, "dof_distance", text="")
+
+        dof_options = cam.gpu_dof
+
+        flow = box.grid_flow(row_major=True, columns=0, even_columns=True, even_rows=False, align=False)
+
+        col = flow.column()
+        col.prop(dof_options, "fstop")
+        col.prop(dof_options, "blades")
+
+        col = flow.column()
+        col.prop(dof_options, "rotation")
+        col.prop(dof_options, "ratio")        
+
     def draw_light_properties(self,layout,obj):
         pass
         #LIGHT PROPS
         #SHADOW PROPS
 
     def draw_empty_properties(self,layout,obj):
-        pass
-        #TYPE, SIZE
-        #IMAGE
+        layout.prop(obj, "empty_display_type", text="Display As")
+
+        if obj.empty_display_type == 'IMAGE':
+            layout.template_ID(obj, "data", open="image.open", unlink="object.unlink_data")
+            layout.template_image(obj, "data", obj.image_user, compact=True)
+
+            layout.row(align=True).row(align=True)
+
+            layout.prop(obj, "use_empty_image_alpha")
+
+            col = layout.column()
+            col.active = obj.use_empty_image_alpha
+            col.prop(obj, "color", text="Transparency", index=3, slider=True)
+
+            col = layout.column(align=True)
+            col.prop(obj, "empty_image_offset", text="Offset X", index=0)
+            col.prop(obj, "empty_image_offset", text="Y", index=1)
+
+            col = layout.column()
+            col.row().prop(obj, "empty_image_depth", text="Depth", expand=True)
+            col.row().prop(obj, "empty_image_side", text="Side", expand=True)
+            col.prop(obj, "show_empty_image_orthographic", text="Display Orthographic")
+            col.prop(obj, "show_empty_image_perspective", text="Display Perspective")
 
     def draw_curve_properties(self,layout,obj):
         pass

@@ -42,8 +42,19 @@ class BPSCENE_OT_delete_scene(Operator):
         layout.label("Are you sure you want to delete the scene?")  
         layout.label("Scene Name: " + self.scene_name)  
 
+class BPSCENE_OT_add_audio(Operator):
+    bl_idname = "bp_scene.add_audio"
+    bl_label = "Add Audio"
+    bl_description = "This will add an audio file to the scene"
+    bl_options = {'UNDO'}
+
+    def execute(self, context):
+        #FIGURE OUT HOW TO ADD AUDIO
+        return {'FINISHED'}
+
 classes = (
     BPSCENE_OT_delete_scene,
+    BPSCENE_OT_add_audio,
 )
 
 register, unregister = bpy.utils.register_classes_factory(classes)

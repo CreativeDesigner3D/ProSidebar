@@ -68,6 +68,51 @@ class VIEW3D_PT_scenes_units(Panel):
         subcol.prop(unit, "mass_unit", text="Mass")
         subcol.prop(unit, "time_unit", text="Time")
 
+class VIEW3D_PT_scenes_audio(Panel):
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_label = "Audio"
+    bl_category = "Scene"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    def draw_header(self, context):
+        layout = self.layout
+        layout.label(text='',icon='OUTLINER_OB_SPEAKER')
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+
+        scene = context.scene
+        rd = context.scene.render
+        ffmpeg = rd.ffmpeg
+
+        layout.operator('bp_scene.add_audio')
+
+        flow = layout.grid_flow(row_major=True, columns=0, even_columns=True, even_rows=False, align=True)
+        
+        col = flow.column()
+        col.prop(scene, "audio_volume")
+
+        col.separator()
+
+        col.prop(scene, "audio_distance_model")
+        col.prop(ffmpeg, "audio_channels")
+
+        col.separator()
+
+        col = flow.column()
+        col.prop(ffmpeg, "audio_mixrate", text="Sample Rate")
+
+        col.separator()
+
+        col = col.column(align=True)
+        col.prop(scene, "audio_doppler_speed", text="Doppler Speed")
+        col.prop(scene, "audio_doppler_factor", text="Doppler Factor")
+
+        col.separator()
+
+        layout.operator("sound.bake_animation")
 
 class SCENE_UL_scenes(UIList):
     
@@ -79,6 +124,7 @@ class SCENE_UL_scenes(UIList):
 classes = (
     VIEW3D_PT_scenes,
     VIEW3D_PT_scenes_units,
+    VIEW3D_PT_scenes_audio,
     SCENE_UL_scenes,
 )
 

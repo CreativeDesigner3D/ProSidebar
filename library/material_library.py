@@ -114,7 +114,7 @@ class LIBRARY_OT_add_material_from_library(bpy.types.Operator):
         layout = self.layout
         layout.prop(self,'material_category',text="",icon='FILE_FOLDER')  
         layout.template_icon_view(self,"material_name",show_labels=True)  
-        layout.label(self.material_name)
+        layout.label(text=self.material_name)
         
     def execute(self, context):
         self.mat = self.get_material(context)
@@ -141,11 +141,11 @@ class LIBRARY_OT_add_material_from_library(bpy.types.Operator):
         selected_point, selected_obj = bp_utils.get_selection_point(context,event)
         bpy.ops.object.select_all(action='DESELECT')
         if selected_obj:
-            selected_obj.select = True
-            context.scene.objects.active = selected_obj
+            selected_obj.select_set(True)
+            context.view_layer.objects.active = selected_obj
         
             if self.event_is_place_material(event):
-                if len(selected_obj.data.uv_textures) == 0:
+                if len(selected_obj.data.uv_layers) == 0:
                     bpy.ops.object.editmode_toggle()
                     bpy.ops.mesh.select_all(action='SELECT') 
                     bpy.ops.uv.smart_project(angle_limit=66, island_margin=0, user_area_weight=0)  
@@ -215,7 +215,7 @@ class LIBRARY_OT_assign_material(bpy.types.Operator):
     
     @classmethod
     def poll(cls, context):
-        if context.scene.outliner.selected_material_index + 1 <= len(bpy.data.materials):
+        if context.scene.bp_props.selected_material_index + 1 <= len(bpy.data.materials):
             return True
         else:
             return False
@@ -230,7 +230,7 @@ class LIBRARY_OT_assign_material(bpy.types.Operator):
         return {'RUNNING_MODAL'}
         
     def get_material(self,context):
-        return bpy.data.materials[context.scene.outliner.selected_material_index]
+        return bpy.data.materials[context.scene.bp_props.selected_material_index]
     
     def modal(self, context, event):
         context.window.cursor_set('PAINT_BRUSH')
@@ -240,11 +240,11 @@ class LIBRARY_OT_assign_material(bpy.types.Operator):
         selected_point, selected_obj = bp_utils.get_selection_point(context,event)
         bpy.ops.object.select_all(action='DESELECT')
         if selected_obj:
-            selected_obj.select = True
-            context.scene.objects.active = selected_obj
-            
+            selected_obj.select_set(True)
+            context.view_layer.objects.active = selected_obj
+
             if self.event_is_place_material(event):
-                if len(selected_obj.data.uv_textures) == 0:
+                if len(selected_obj.data.uv_layers) == 0:
                     bpy.ops.object.editmode_toggle()
                     bpy.ops.mesh.select_all(action='SELECT') 
                     bpy.ops.uv.smart_project(angle_limit=66, island_margin=0, user_area_weight=0)  
@@ -313,7 +313,7 @@ class LIBRARY_OT_save_material_to_library(bpy.types.Operator):
         
     @classmethod
     def poll(cls, context):
-        if context.scene.outliner.selected_material_index + 1 <= len(bpy.data.materials):
+        if context.scene.bp_props.selected_material_index + 1 <= len(bpy.data.materials):
             return True
         else:
             return False
@@ -322,7 +322,7 @@ class LIBRARY_OT_save_material_to_library(bpy.types.Operator):
         return True
 
     def invoke(self,context,event):
-        mat = bpy.data.materials[context.scene.outliner.selected_material_index]
+        mat = bpy.data.materials[context.scene.bp_props.selected_material_index]
         self.mat_name = mat.name
         clear_material_categories(self,context)
         wm = context.window_manager
@@ -340,7 +340,7 @@ class LIBRARY_OT_save_material_to_library(bpy.types.Operator):
         file.write("            break\n")
         file.write("for mat in data_to.materials:\n")
         file.write("    bpy.ops.mesh.primitive_cube_add()\n")
-        file.write("    obj = bpy.context.scene.objects.active\n")
+        file.write("    obj = bpy.context.view_layer.objects.active\n")
         file.write("    bpy.ops.object.shade_smooth()\n")
         file.write("    obj.dimensions = (2,2,2)\n")
         file.write("    bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)\n")
@@ -355,7 +355,7 @@ class LIBRARY_OT_save_material_to_library(bpy.types.Operator):
         file.write("    bpy.ops.object.material_slot_add()\n")
         file.write("    for slot in obj.material_slots:\n")
         file.write("        slot.material = mat\n")
-        file.write("    bpy.context.scene.objects.active = obj\n")
+        file.write("    bpy.context.view_layer.objects.active = obj\n")
         file.write("    bpy.ops.view3d.camera_to_view_selected()\n")
         file.write("    render = bpy.context.scene.render\n")
         file.write("    render.use_file_extension = True\n")
@@ -379,7 +379,7 @@ class LIBRARY_OT_save_material_to_library(bpy.types.Operator):
         file.write("            break\n")
         file.write("for mat in data_to.materials:\n")
         file.write("    bpy.ops.mesh.primitive_cube_add()\n")
-        file.write("    obj = bpy.context.scene.objects.active\n")
+        file.write("    obj = bpy.context.view_layer.objects.active\n")
         file.write("    bpy.ops.object.shade_smooth()\n")
         file.write("    obj.dimensions = (2,2,2)\n")
         file.write("    bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)\n")
@@ -403,17 +403,17 @@ class LIBRARY_OT_save_material_to_library(bpy.types.Operator):
         layout = self.layout
         path = os.path.join(get_library_path() ,self.material_category) 
         files = os.listdir(path)        
-        layout.label("Select folder to save material to")
+        layout.label(text="Select folder to save material to")
         layout.prop(self,'material_category',text="",icon='FILE_FOLDER')
-        layout.label("Name: " + self.mat_name)
+        layout.label(text="Name: " + self.mat_name)
         if self.mat_name + ".blend" in files or self.mat_name + ".png" in files:
-            layout.label("File already exists",icon="ERROR")           
+            layout.label(text="File already exists",icon="ERROR")           
         
     def execute(self, context):
         if bpy.data.filepath == "":
             bpy.ops.wm.save_as_mainfile(filepath=os.path.join(bpy.app.tempdir,"temp_blend.blend"))
         
-        mat_to_save = bpy.data.materials[context.scene.outliner.selected_material_index]
+        mat_to_save = bpy.data.materials[context.scene.bp_props.selected_material_index]
         directory_to_save_to = os.path.join(get_library_path() ,self.material_category)
         
         thumbnail_script_path = self.create_material_thumbnail_script(directory_to_save_to, bpy.data.filepath, mat_to_save.name)
@@ -451,11 +451,11 @@ class LIBRARY_OT_assign_material_dialog(bpy.types.Operator):
         
     def draw(self,context):
         layout = self.layout
-        layout.label(self.obj.name,icon='OBJECT_DATA')
+        layout.label(text=self.obj.name,icon='OBJECT_DATA')
         for index, mat_slot in enumerate(self.obj.material_slots):
             row = layout.split(percentage=.55)
             if mat_slot.name == "":
-                row.label('No Material')
+                row.label(text='No Material')
             else:
                 row.prop(mat_slot,"name",text="",icon='MATERIAL')
 #                 row.prop(mat_slot,"name",text=self.obj.cabinetlib.material_slots[index].name if len(self.obj.cabinetlib.material_slots) >= index+1 else "")

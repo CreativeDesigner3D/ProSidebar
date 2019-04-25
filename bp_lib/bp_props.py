@@ -38,6 +38,8 @@ class BP_Scene_Props(PropertyGroup):
     selected_scene_index: IntProperty(name="Selected Scene Index", default=0, update = update_scene_selection)
     selected_object_index: IntProperty(name="Selected Object Index", default=0, update = update_object_selection)
     selected_world_index: IntProperty(name="Selected World Index", default=0, update = update_world_selection)
+    selected_material_index: IntProperty(name="Selected Material Index", default=0)
+    
     object_tabs: bpy.props.EnumProperty(name="Object Tabs",
                                         items=[('MAIN',"Main","Show the Scene Options"),
                                                ('MATERIAL',"Material","Show the Material Options"),

@@ -51,9 +51,6 @@ class WORLD_OT_create_world_from_hdr(Operator):
 
     filepath: bpy.props.StringProperty(subtype="FILE_PATH")
 
-    def draw(self, context):
-        self.layout.operator('file.select_all_toggle')  
-
     def invoke(self, context, event):
         wm = context.window_manager
         wm.fileselect_add(self)

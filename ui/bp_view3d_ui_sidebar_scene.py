@@ -81,7 +81,7 @@ class VIEW3D_PT_scenes_audio(Panel):
 
     def draw(self, context):
         layout = self.layout
-        layout.use_property_split = True
+        # layout.use_property_split = True
 
         scene = context.scene
         rd = context.scene.render
@@ -104,107 +104,31 @@ class VIEW3D_PT_scenes_audio(Panel):
 
             row.prop(sound, "use_memory_cache")
 
-            layout.prop(sound, "use_mono")
+            # layout.prop(sound, "use_mono")
 
         # if st.waveform_display_type == 'DEFAULT_WAVEFORMS':
         #     layout.prop(strip, "show_waveform")
 
-            col = layout.column(align=True)
-            col.prop(strip, "volume")
-            col.prop(strip, "pitch")
-            col.prop(strip, "pan")
+            box = layout.box()
+            box.label(text="Audio Settings")
 
-            col = layout.column(align=True)
-            col.label(text="Trim Duration (hard):")
-            row = layout.row(align=True)
+            col = box.column(align=True)
+            row = col.row(align=True)
+            row.prop(strip, "volume",text="Volume")    
+            row.prop(strip, "pitch",text="Pitch")
+            row.prop(strip, "pan",text="Pan")
+
+            row = box.row(align=True)
+            row.label(text="Trim (Hard):")
             row.prop(strip, "animation_offset_start", text="Start")
             row.prop(strip, "animation_offset_end", text="End")
 
-            col = layout.column(align=True)
-            col.label(text="Trim Duration (soft):")
-            row = layout.row(align=True)
+            row = box.row(align=True)
+            row.label(text="Trim (Soft):")
             row.prop(strip, "frame_offset_start", text="Start")
             row.prop(strip, "frame_offset_end", text="End")
         else:
             layout.operator('bp_scene.add_audio')
-
-        # flow = layout.grid_flow(row_major=True, columns=0, even_columns=True, even_rows=False, align=True)
-        
-        # col = flow.column()
-        # col.prop(scene, "audio_volume")
-
-        # col.separator()
-
-        # col.prop(scene, "audio_distance_model")
-        # col.prop(ffmpeg, "audio_channels")
-
-        # col.separator()
-
-        # col = flow.column()
-        # col.prop(ffmpeg, "audio_mixrate", text="Sample Rate")
-
-        # col.separator()
-
-        # col = col.column(align=True)
-        # col.prop(scene, "audio_doppler_speed", text="Doppler Speed")
-        # col.prop(scene, "audio_doppler_factor", text="Doppler Factor")
-
-        # col.separator()
-
-        # layout.operator("sound.bake_animation")
-
-
-    # @classmethod
-    # def poll(cls, context):
-    #     if not cls.has_sequencer(context):
-    #         return False
-
-    #     strip = act_strip(context)
-    #     if not strip:
-    #         return False
-
-    #     return (strip.type == 'SOUND')
-
-    # def draw(self, context):
-    #     layout = self.layout
-
-    #     st = context.space_data
-    #     strip = act_strip(context)
-    #     sound = strip.sound
-
-    #     layout.template_ID(strip, "sound", open="sound.open")
-    #     if sound is not None:
-    #         layout.prop(sound, "filepath", text="")
-
-    #         row = layout.row()
-    #         if sound.packed_file:
-    #             row.operator("sound.unpack", icon='PACKAGE', text="Unpack")
-    #         else:
-    #             row.operator("sound.pack", icon='UGLYPACKAGE', text="Pack")
-
-    #         row.prop(sound, "use_memory_cache")
-
-    #         layout.prop(sound, "use_mono")
-
-    #     if st.waveform_display_type == 'DEFAULT_WAVEFORMS':
-    #         layout.prop(strip, "show_waveform")
-
-    #     col = layout.column(align=True)
-    #     col.prop(strip, "volume")
-    #     col.prop(strip, "pitch")
-    #     col.prop(strip, "pan")
-
-    #     col = layout.column(align=True)
-    #     col.label(text="Trim Duration (hard):")
-    #     row = layout.row(align=True)
-    #     row.prop(strip, "animation_offset_start", text="Start")
-    #     row.prop(strip, "animation_offset_end", text="End")
-
-    #     col = layout.column(align=True)
-    #     col.label(text="Trim Duration (soft):")
-    #     row = layout.row(align=True)
-    #     row.prop(strip, "frame_offset_start", text="Start")
-    #     row.prop(strip, "frame_offset_end", text="End")
 
 class SCENE_UL_scenes(UIList):
     

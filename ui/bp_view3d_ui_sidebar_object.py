@@ -15,6 +15,7 @@ from bpy.props import (
         )
 import math        
 from .modifiers import Modifier, Gpencil_Modifier
+from .constraints import Constraint
 from ..bp_lib import bp_unit, bp_utils
 
 #TODO: IMPLEMENT OBJECT DATA
@@ -456,8 +457,25 @@ class VIEW3D_PT_object_constraints(Panel):
         layout.label(text='',icon='CONSTRAINT')
 
     def draw(self, context):
-        pass
+        layout = self.layout
+        obj = context.object
+        col = layout.column(align=True)
+        row = col.row()
+        row.operator_menu_enum("object.constraint_add", "type", text="Add Object Constraint")
+        row.operator('bp_object.collapse_all_constraints',text="",icon='FULLSCREEN_EXIT')
+        
+        col.separator()
 
+        for con in obj.constraints:
+
+            box = col.template_constraint(con)
+
+            if box:
+                # match enum type to our functions, avoids a lookup table.
+                getattr(Constraint, con.type)(Constraint, context, box, con)
+
+                if con.type not in {'RIGID_BODY_JOINT', 'NULL'}:
+                    box.prop(con, "influence")
 
 class VIEW3D_PT_object_data(Panel):
     bl_space_type = 'VIEW_3D'
@@ -631,47 +649,52 @@ class VIEW3D_PT_object_data(Panel):
         cam = obj.data
 
         layout.prop(view, "lock_camera")
-        layout.prop(cam, "type")
 
-        col = layout.column()
+        box = layout.box()
+        box.label(text="Lens Settings:")
+        row = box.row()
+        row.prop(cam, "type",expand=True)
+
+        # col = layout.column()
 
         if cam.type == 'PERSP':
-            col = layout.column()
+            row = box.row(align=True)
+            row.prop(cam, "lens_unit",text="Size")
             if cam.lens_unit == 'MILLIMETERS':
-                col.prop(cam, "lens")
+                row.prop(cam, "lens",text="Length")
             elif cam.lens_unit == 'FOV':
-                col.prop(cam, "angle")
-            col.prop(cam, "lens_unit")
+                row.prop(cam, "angle",text="Angle")
 
         elif cam.type == 'ORTHO':
-            col.prop(cam, "ortho_scale")
+            row = box.row()
+            row.label(text="Scale:")
+            row.prop(cam, "ortho_scale",text="")
 
         elif cam.type == 'PANO':
             engine = bpy.context.scene.render.engine
             if engine == 'CYCLES':
                 ccam = cam.cycles
-                col.prop(ccam, "panorama_type")
+                box.prop(ccam, "panorama_type")
+                box.prop(cam, "lens_unit")
                 if ccam.panorama_type == 'FISHEYE_EQUIDISTANT':
-                    col.prop(ccam, "fisheye_fov")
+                    box.prop(ccam, "fisheye_fov")
                 elif ccam.panorama_type == 'FISHEYE_EQUISOLID':
-                    col.prop(ccam, "fisheye_lens", text="Lens")
-                    col.prop(ccam, "fisheye_fov")
+                    box.prop(ccam, "fisheye_lens", text="Lens")
+                    box.prop(ccam, "fisheye_fov")
                 elif ccam.panorama_type == 'EQUIRECTANGULAR':
-                    sub = col.column(align=True)
+                    sub = box.column(align=True)
                     sub.prop(ccam, "latitude_min", text="Latitude Min")
                     sub.prop(ccam, "latitude_max", text="Max")
-                    sub = col.column(align=True)
+                    sub = box.column(align=True)
                     sub.prop(ccam, "longitude_min", text="Longitude Min")
                     sub.prop(ccam, "longitude_max", text="Max")
             elif engine in {'BLENDER_RENDER', 'BLENDER_EEVEE', 'BLENDER_WORKBENCH'}:
                 if cam.lens_unit == 'MILLIMETERS':
-                    col.prop(cam, "lens")
+                    box.prop(cam, "lens")
                 elif cam.lens_unit == 'FOV':
-                    col.prop(cam, "angle")
-                col.prop(cam, "lens_unit")
+                    box.prop(cam, "angle")
 
-        col = layout.column()
-        col.separator()
+        col = box.column()
 
         row = col.row(align=True)
         row.label(text="Shift:")

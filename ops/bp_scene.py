@@ -48,8 +48,17 @@ class BPSCENE_OT_add_audio(Operator):
     bl_description = "This will add an audio file to the scene"
     bl_options = {'UNDO'}
 
+    filepath: bpy.props.StringProperty(subtype="FILE_PATH")
+
+    def invoke(self, context, event):
+        wm = context.window_manager
+        wm.fileselect_add(self)
+        return {'RUNNING_MODAL'}
+
     def execute(self, context):
-        #FIGURE OUT HOW TO ADD AUDIO
+        file_path, file_name = os.path.split(self.filepath)
+        filename , ext = os.path.splitext(file_name)
+        context.scene.sequence_editor.sequences.new_sound(filename,self.filepath,1,1)
         return {'FINISHED'}
 
 classes = (

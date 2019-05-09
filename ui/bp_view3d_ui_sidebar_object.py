@@ -732,9 +732,121 @@ class VIEW3D_PT_object_data(Panel):
         col.prop(dof_options, "ratio")        
 
     def draw_light_properties(self,layout,obj):
-        pass
-        #LIGHT PROPS
-        #SHADOW PROPS
+        light = obj.data
+
+        box = layout.box()
+
+        row = box.row()
+        row.prop(light, "type",expand=True)
+        row = box.row()
+        row.label(text="Color")
+        row.prop(light, "color",text="")
+        row = box.row()
+        row.label(text="Energy")
+        row.prop(light, "energy",text="")
+        row = box.row()
+        row.label(text="Specular")
+        row.prop(light, "specular_factor", text="")
+        row = box.row()
+        row.prop(light, "use_custom_distance", text="Use Custom Distance")
+        if light.use_custom_distance:
+            row.prop(light,"cutoff_distance",text="Distance")
+
+        if light.type in {'POINT', 'SPOT', 'SUN'}:
+            row = box.row()
+            row.label(text="Radius")            
+            row.prop(light, "shadow_soft_size", text="")
+        elif light.type == 'AREA':
+            box = layout.box()
+            row = box.row()
+            row.label(text="Shape:")
+            row.prop(light, "shape",expand=True)
+
+            sub = box.column(align=True)
+
+            if light.shape in {'SQUARE', 'DISK'}:
+                row = sub.row(align=True)
+                row.label(text="Size:")     
+                row.prop(light, "size",text="")
+            elif light.shape in {'RECTANGLE', 'ELLIPSE'}:
+                row = sub.row(align=True)
+                row.label(text="Size:")
+
+                row.prop(light, "size", text="X")
+                row.prop(light, "size_y", text="Y")
+        
+        if light.type == 'SPOT':
+            box = layout.box()
+            row = box.row()        
+            row.label(text="Spot Size:")    
+            row.prop(light, "spot_size", text="")
+            row = box.row()        
+            row.label(text="Spot Blend:")                
+            row.prop(light, "spot_blend", text="", slider=True)
+
+            box.prop(light, "show_cone")            
+
+        box = layout.box()
+        box.prop(light, "use_shadow", text="Use Shadows")
+        box.active = light.use_shadow
+
+        col = box.column()
+        row = col.row(align=True)
+        row.label(text="Clip:")
+        row.prop(light, "shadow_buffer_clip_start", text="Start")
+        if light.type == 'SUN':
+            row.prop(light, "shadow_buffer_clip_end", text="End")
+
+        row = col.row(align=True)
+        row.label(text="Softness:")
+        row.prop(light, "shadow_buffer_soft", text="")
+
+        col.separator()
+
+        row = col.row(align=True)
+        row.label(text="Bias:")
+        row.prop(light, "shadow_buffer_bias", text="")
+        row = col.row(align=True)
+        row.label(text="Bleed Bias:")        
+        row.prop(light, "shadow_buffer_bleed_bias", text="")        
+        row = col.row(align=True)
+        row.label(text="Exponent:")        
+        row.prop(light, "shadow_buffer_exp", text="")
+
+        col.separator()
+
+        col.prop(light, "use_contact_shadow", text="Use Contact Shadows")
+        if light.use_shadow and light.use_contact_shadow:
+            col = box.column()
+            row = col.row(align=True)
+            row.label(text="Distance:")  
+            row.prop(light, "contact_shadow_distance", text="")
+            row = col.row(align=True)
+            row.label(text="Softness:")  
+            row.prop(light, "contact_shadow_soft_size", text="")
+            row = col.row(align=True)
+            row.label(text="Bias:")          
+            row.prop(light, "contact_shadow_bias", text="")
+            row = col.row(align=True)
+            row.label(text="Thickness:")          
+            row.prop(light, "contact_shadow_thickness", text="")
+
+        if light.type == 'SUN' and light.use_shadow:
+            box = layout.box()
+            box.label(text="Sun Shadow Settings")
+            row = box.row(align=True)
+            row.label(text="Cascade Count:")                
+            row.prop(light, "shadow_cascade_count", text="")
+            row = box.row(align=True)
+            row.label(text="Fade:")                 
+            row.prop(light, "shadow_cascade_fade", text="")
+
+            row = box.row(align=True)
+            row.label(text="Max Distance:")      
+            row.prop(light, "shadow_cascade_max_distance", text="")
+            row = box.row(align=True)
+            row.label(text="Distribution:")                  
+            row.prop(light, "shadow_cascade_exponent", text="")
 
     def draw_empty_properties(self,layout,obj):
         layout.prop(obj, "empty_display_type", text="Display As")

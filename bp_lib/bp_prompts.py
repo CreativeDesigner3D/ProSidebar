@@ -96,17 +96,26 @@ class Prompt_Page(PropertyGroup):
             type=cls,
         )
 
+        bpy.types.Collection.prompt_page = PointerProperty(
+            name="Prompt Page",
+            description="Blender Pro Prompts",
+            type=cls,
+        )
+
     @classmethod
     def unregister(cls):
         del bpy.types.Object.prompt_page
         del bpy.types.World.prompt_page
+        del bpy.types.Collection.prompt_page
 
     def add_tab(self,name):
         tab = self.tabs.add()
         tab.name = name
 
     def draw_prompts(self,layout,data_type):
-        layout.operator('bp_prompts.add_prompt').data_type = data_type
+        props = layout.operator('bp_prompts.add_prompt')
+        props.data_type = data_type
+        props.data_name = self.id_data.name
         for prompt in self.prompts:
             prompt.draw(layout)
     
@@ -153,6 +162,7 @@ class OPS_add_prompt(Operator):
     bl_options = {'UNDO'}
     
     data_type: StringProperty(name="Data Type",default="")
+    data_name: StringProperty(name="Data Name",default="") #WHY DON"T POINTERS WORK?
 
     prompt_name: StringProperty(name="Prompt Name",default="New Prompt")
     prompt_type: EnumProperty(name="Prompt Type",items=prompt_types)
@@ -164,12 +174,21 @@ class OPS_add_prompt(Operator):
 
     def get_data(self,context):
         if self.data_type == 'OBJECT':
-            return context.object
+            if self.data_name in bpy.data.objects:
+                return bpy.data.objects[self.data_name]
+            else:
+                return context.object
         if self.data_type == 'WORLD':
             return context.scene.world
+        if self.data_type == 'COLLECTION':
+            if self.data_name in bpy.data.collections:
+                return bpy.data.collections[self.data_name]
+            else:
+                return context.view_layer.active_layer_collection.collection
 
     def execute(self, context):
         data = self.get_data(context)
+        print("PROMPT DATA",data)
         if data:        
             data.prompt_page.add_prompt(self.prompt_type,self.prompt_name)
         context.area.tag_redraw()

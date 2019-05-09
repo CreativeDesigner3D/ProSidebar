@@ -17,6 +17,7 @@ from .ui import bp_view3d_ui_sidebar_object
 from .ui import bp_view3d_ui_sidebar_materials
 from .ui import bp_view3d_ui_sidebar_world
 from .ui import bp_view3d_ui_sidebar_collections
+from .ui import bp_view3d_ui_sidebar_assembly
 from .ui import bp_view3d_ui_sidebar_view
 from .ui import bp_view3d_ui_header
 from .ops import bp_library_objects
@@ -27,6 +28,7 @@ from .ops import bp_material
 from .ops import bp_scene
 from .ops import bp_world
 from .ops import bp_collection
+from .ops import bp_assembly
 from .bp_lib import bp_prompts
 from .bp_lib import bp_props
 from . import library
@@ -39,6 +41,7 @@ def register():
     bp_view3d_ui_sidebar_materials.register()
     bp_view3d_ui_sidebar_world.register()
     bp_view3d_ui_sidebar_collections.register()
+    bp_view3d_ui_sidebar_assembly.register()
     bp_view3d_ui_sidebar_view.register()
     bp_view3d_ui_header.register()
     bp_draw_objects.register()
@@ -48,6 +51,7 @@ def register():
     bp_scene.register()
     bp_world.register()
     bp_collection.register()
+    bp_assembly.register()
     bp_library_objects.register()
     bp_prompts.register()
     bp_props.register()
@@ -61,6 +65,7 @@ def unregister():
     bp_view3d_ui_sidebar_materials.unregister()
     bp_view3d_ui_sidebar_world.unregister()
     bp_view3d_ui_sidebar_collections.unregister()
+    bp_view3d_ui_sidebar_assembly.unregister()
     bp_view3d_ui_sidebar_view.unregister()
     bp_view3d_ui_header.unregister()
     bp_draw_objects.unregister()
@@ -70,6 +75,7 @@ def unregister():
     bp_scene.unregister()
     bp_world.unregister()
     bp_collection.unregister()
+    bp_assembly.unregister()
     bp_library_objects.unregister()    
     bp_prompts.unregister()
     bp_props.unregister()

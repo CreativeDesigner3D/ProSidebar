@@ -61,7 +61,12 @@ class BP_Scene_Props(PropertyGroup):
 
 class BP_Collection_Props(PropertyGroup):
     selected_object_index: IntProperty(name="Select Object Index", default=False)
-
+    assembly_tabs: bpy.props.EnumProperty(name="Assembly Tabs",
+                                          items=[('MAIN',"Main","Show the Scene Options"),
+                                                 ('PROMPTS',"Prompts","Show the Assembly Prompts"),
+                                                 ('OBJECTS',"Objects","Show the Objects"),
+                                                 ('LOGIC',"Logic","Show the Driver Logic")],
+                                          default='MAIN')
     @classmethod
     def register(cls):
         bpy.types.Collection.bp_props = PointerProperty(name="BP Props",description="Blender Pro Props",type=cls)

@@ -12,6 +12,21 @@ from bpy.props import (StringProperty,
 import os
 from ..bp_lib import bp_unit
 
+class bp_object_OT_select_object(bpy.types.Operator):
+    bl_idname = "bp_object.select_object"
+    bl_label = "Select Object"
+    bl_options = {'UNDO'}
+
+    obj_name: StringProperty(name='Object Name')
+
+    def execute(self, context):
+        if self.obj_name in context.scene.objects:
+            bpy.ops.object.select_all(action = 'DESELECT')
+            obj = context.scene.objects[self.obj_name]
+            obj.select_set(True)
+            context.view_layer.objects.active = obj
+        return {'FINISHED'}
+
 class bp_object_OT_collapse_all_modifiers(Operator):
     bl_idname = "bp_object.collapse_all_modifiers"
     bl_label = "Collapse All Modifiers"
@@ -49,9 +64,9 @@ class bp_object_OT_add_text(bpy.types.Operator):
     bl_idname = "bp_object.add_text_dialog"
     bl_label = "Add Text"
     
-    enter_text: bpy.props.StringProperty(name='Enter Text')
-    split_with: bpy.props.StringProperty(name='Split With')
-    split_text_with_character: bpy.props.BoolProperty(name="Split Text with Character")
+    enter_text: StringProperty(name='Enter Text')
+    split_with: StringProperty(name='Split With')
+    split_text_with_character: BoolProperty(name="Split Text with Character")
 
     def check(self, context):
         return True
@@ -163,6 +178,7 @@ class bp_object_OT_particle_paint(bpy.types.Operator):
         layout.prop(self,'group_name',text="Particle Name")
 
 classes = (
+    bp_object_OT_select_object,
     bp_object_OT_collapse_all_modifiers,
     bp_object_OT_collapse_all_constraints,
     bp_object_OT_add_text,

@@ -41,6 +41,26 @@ class Assembly:
                 if "obj_prompts" in obj:
                     self.obj_prompts = obj                    
 
+    def update_vector_groups(self):
+        """ 
+        This is used to add all of the vector groups to 
+        an assembly this should be called everytime a new object
+        is added to an assembly.
+        """
+        vgroupslist = []
+        objlist = []
+        
+        for child in self.obj_bp.children:
+            if child.type == 'EMPTY' and 'obj_prompts' not in child:
+                vgroupslist.append(child.name)
+            if child.type == 'MESH':
+                objlist.append(child)
+        
+        for obj in objlist:
+            for vgroup in vgroupslist:
+                if vgroup not in obj.vertex_groups:
+                    obj.vertex_groups.new(name=vgroup)
+
     def create_assembly(self,assembly_name="New Assembly"):
         """ 
         This creates the basic structure for an assembly.
@@ -59,30 +79,64 @@ class Assembly:
         self.obj_bp = bpy.data.objects.new("OBJ_BP",None)
         self.obj_bp.location = (0,0,0)
         self.obj_bp["obj_bp"] = True
+        self.obj_bp.empty_display_type = 'CUBE'
+        self.obj_bp.empty_display_size = .1           
         coll.objects.link(self.obj_bp)
 
         self.obj_x = bpy.data.objects.new("OBJ_X",None)
         self.obj_x.location = (0,0,0)
         self.obj_x.parent = self.obj_bp
         self.obj_x["obj_x"] = True
+        self.obj_x.empty_display_type = 'SPHERE'
+        self.obj_x.empty_display_size = .1  
+        self.obj_x.lock_location[0] = False       
+        self.obj_x.lock_location[1] = True
+        self.obj_x.lock_location[2] = True
+        self.obj_x.lock_rotation[0] = True     
+        self.obj_x.lock_rotation[1] = True   
+        self.obj_x.lock_rotation[2] = True      
         coll.objects.link(self.obj_x)
 
         self.obj_y = bpy.data.objects.new("OBJ_Y",None)
         self.obj_y.location = (0,0,0)
         self.obj_y.parent = self.obj_bp
         self.obj_y["obj_y"] = True
+        self.obj_y.empty_display_type = 'SPHERE'
+        self.obj_y.empty_display_size = .1     
+        self.obj_y.lock_location[0] = True       
+        self.obj_y.lock_location[1] = False
+        self.obj_y.lock_location[2] = True
+        self.obj_y.lock_rotation[0] = True     
+        self.obj_y.lock_rotation[1] = True   
+        self.obj_y.lock_rotation[2] = True                    
         coll.objects.link(self.obj_y)      
 
         self.obj_z = bpy.data.objects.new("OBJ_Z",None)
         self.obj_z.location = (0,0,0)
         self.obj_z.parent = self.obj_bp
         self.obj_z["obj_z"] = True
+        self.obj_z.empty_display_type = 'SINGLE_ARROW'
+        self.obj_z.empty_display_size = .2     
+        self.obj_z.lock_location[0] = True
+        self.obj_z.lock_location[1] = True
+        self.obj_z.lock_location[2] = False
+        self.obj_z.lock_rotation[0] = True     
+        self.obj_z.lock_rotation[1] = True   
+        self.obj_z.lock_rotation[2] = True               
         coll.objects.link(self.obj_z)
 
         self.obj_prompts = bpy.data.objects.new("OBJ_PROMPTS",None)
         self.obj_prompts.location = (0,0,0)
         self.obj_prompts.parent = self.obj_bp
+        self.obj_prompts.empty_display_size = 0      
+        self.obj_prompts.lock_location[0] = True
+        self.obj_prompts.lock_location[1] = True
+        self.obj_prompts.lock_location[2] = True
+        self.obj_prompts.lock_rotation[0] = True     
+        self.obj_prompts.lock_rotation[1] = True   
+        self.obj_prompts.lock_rotation[2] = True           
         self.obj_prompts["obj_prompts"] = True
+
         coll.objects.link(self.obj_prompts)
 
     def add_empty(self,obj_name):
@@ -90,3 +144,9 @@ class Assembly:
         self.obj.location = (0,0,0)
         self.obj.parent = self.obj_bp
         self.coll.objects.link(self.obj)
+
+    def add_object(self,obj):
+        obj.location = (0,0,0)
+        obj.parent = self.obj_bp
+        self.coll.objects.link(obj)
+        self.update_vector_groups()

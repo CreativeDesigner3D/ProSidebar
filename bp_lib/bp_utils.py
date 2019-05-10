@@ -3,6 +3,7 @@ from bpy_extras import view3d_utils
 import mathutils
 from mathutils import Vector
 import math, random
+import bmesh
 
 def get_object_icon(obj):
     ''' 
@@ -40,6 +41,14 @@ def get_object_icon(obj):
         return 'OUTLINER_OB_GREASEPENCIL'    
     if obj.type == 'LIGHT_PROBE':
         return 'OUTLINER_OB_LIGHTPROBE'  
+
+def get_assembly_collection(obj):
+    '''
+    Gets the assembly collection that is assigned to the object
+    '''
+    for coll in obj.users_collection:
+        if "IS_ASSEMBLY" in coll:
+            return coll
 
 def delete_obj_list(obj_list):
     ''' 
@@ -81,6 +90,57 @@ def delete_object_and_children(obj_bp):
         else:
             obj_list.append(child)
     delete_obj_list(obj_list)
+
+def create_cube_mesh(name,size):
+    
+    verts = [(0.0, 0.0, 0.0),
+             (0.0, size[1], 0.0),
+             (size[0], size[1], 0.0),
+             (size[0], 0.0, 0.0),
+             (0.0, 0.0, size[2]),
+             (0.0, size[1], size[2]),
+             (size[0], size[1], size[2]),
+             (size[0], 0.0, size[2]),
+             ]
+
+    faces = [(0, 1, 2, 3),
+             (4, 7, 6, 5),
+             (0, 4, 5, 1),
+             (1, 5, 6, 2),
+             (2, 6, 7, 3),
+             (4, 0, 3, 7),
+            ]
+    
+    return create_object_from_verts_and_faces(verts,faces,name)
+
+def create_object_from_verts_and_faces(verts,faces,name):
+    """ 
+        Creates an object from Verties and Faces
+        arg1: Verts List of tuples [(float,float,float)]
+        arg2: Faces List of ints
+        arg3: name of object
+
+        RETURNS bpy.types.Object
+    """
+    mesh = bpy.data.meshes.new(name)
+    
+    bm = bmesh.new()
+
+    for v_co in verts:
+        bm.verts.new(v_co)
+    
+    for f_idx in faces:
+        bm.verts.ensure_lookup_table()
+        bm.faces.new([bm.verts[i] for i in f_idx])
+    
+    bm.to_mesh(mesh)
+    
+    mesh.update()
+    
+    obj_new = bpy.data.objects.new(mesh.name, mesh)
+    
+    # bpy.context.scene.objects.link(obj_new)
+    return obj_new
 
 def floor_raycast(context, mx, my):
     '''

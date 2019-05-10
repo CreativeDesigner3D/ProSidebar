@@ -29,6 +29,7 @@ from .ops import bp_scene
 from .ops import bp_world
 from .ops import bp_collection
 from .ops import bp_assembly
+from .ops import bp_driver
 from .bp_lib import bp_prompts
 from .bp_lib import bp_props
 from . import library
@@ -52,6 +53,7 @@ def register():
     bp_world.register()
     bp_collection.register()
     bp_assembly.register()
+    bp_driver.register()
     bp_library_objects.register()
     bp_prompts.register()
     bp_props.register()
@@ -76,6 +78,7 @@ def unregister():
     bp_world.unregister()
     bp_collection.unregister()
     bp_assembly.unregister()
+    bp_driver.unregister()
     bp_library_objects.unregister()    
     bp_prompts.unregister()
     bp_props.unregister()

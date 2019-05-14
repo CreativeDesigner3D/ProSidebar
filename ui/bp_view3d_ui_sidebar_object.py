@@ -550,8 +550,10 @@ class VIEW3D_PT_object_data(Panel):
                 sub.operator("object.vertex_group_select", text="Select")
                 sub.operator("object.vertex_group_deselect", text="Deselect")
         
-                box.prop(bpy.context.tool_settings, "vertex_group_weight", text="Weight")   
-        else:
+                box.prop(bpy.context.tool_settings, "vertex_group_weight", text="Weight")  
+            else:
+                box.operator("bp_assembly.connect_meshes_to_hooks_in_assembly", text="Connect Mesh Hooks").obj_name = obj.name
+        else:   
             row.operator('object.vertex_group_add',icon='ADD',text="Add")        
 
     def draw_shape_keys(self,layout,obj):
@@ -952,7 +954,7 @@ class VIEW3D_PT_object_drivers(Panel):
             else:
                 row.prop(driver,"mute",text="",icon='DECORATE')
 
-    def draw_driver_variable(self,layout,driver,object_name):
+    def draw_driver_variable(self,layout,driver,obj):
         for var in driver.driver.variables:
             col = layout.column()
             boxvar = col.box()
@@ -960,25 +962,26 @@ class VIEW3D_PT_object_drivers(Panel):
             row.prop(var,"name",text="",icon='FORWARD')
             
             props = row.operator("bp_driver.remove_variable",text="",icon='X',emboss=False)
-            props.object_name = object_name
+            props.object_name = obj.name
             props.data_path = driver.data_path
             props.array_index = driver.array_index
             props.var_name = var.name
+
             for target in var.targets:
-                # if driver.driver.show_debug_info:
-                row = boxvar.row()
-                row.prop(var,"type",text="")
-                row = boxvar.row()
-                row.prop(target,"id",text="")
-                row = boxvar.row(align=True)
-                row.prop(target,"data_path",text="",icon='ANIM_DATA')
+                if obj.bp_props.show_driver_debug_info:
+                    row = boxvar.row()
+                    row.prop(var,"type",text="")
+                    row = boxvar.row()
+                    row.prop(target,"id",text="")
+                    row = boxvar.row(align=True)
+                    row.prop(target,"data_path",text="",icon='ANIM_DATA')
+
                 if target.id and target.data_path != "":
                     value = eval('bpy.data.objects["' + target.id.name + '"]'"." + target.data_path)
                 else:
                     value = "ERROR#"
                 row = boxvar.row()
-                row.label(text="",icon='BLANK1')
-                row.label(text="",icon='BLANK1')
+                row.alignment = 'CENTER'
                 if type(value).__name__ == 'str':
                     row.label(text="Value: " + value)
                 elif type(value).__name__ == 'float':
@@ -997,6 +1000,8 @@ class VIEW3D_PT_object_drivers(Panel):
             else:
                 if len(obj.animation_data.drivers) == 0:
                     layout.label(text="There are no drivers assigned to the object",icon='ERROR')
+                else:
+                    layout.prop(obj.bp_props,'show_driver_debug_info')
                 for driver in obj.animation_data.drivers:
                     box = layout.box()
                     row = box.row()
@@ -1033,9 +1038,10 @@ class VIEW3D_PT_object_drivers(Panel):
                         props.object_name = obj.name
                         props.var_object_name = assembly.obj_prompts.name
                         props.data_path = driver.data_path
-                        props.array_index = driver.array_index    
+                        props.array_index = driver.array_index
+                    
                     self.draw_driver_expression(box,driver)
-                    self.draw_driver_variable(box,driver,obj.name)                    
+                    self.draw_driver_variable(box,driver,obj)                    
 
 class VIEW3D_PT_grease_pencil(Panel):
     bl_space_type = "VIEW_3D"

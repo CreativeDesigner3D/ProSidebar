@@ -50,6 +50,38 @@ def get_assembly_collection(obj):
         if "IS_ASSEMBLY" in coll:
             return coll
 
+def hook_vertex_group_to_object(obj_mesh,vertex_group,obj_hook):
+    """ This function adds a hook modifier to the verties 
+        in the vertex_group to the obj_hook
+    """
+    bpy.ops.object.select_all(action = 'DESELECT')
+    obj_hook.hide_set(False)
+    obj_hook.hide_select = False
+    obj_hook.select_set(True)
+    obj_mesh.hide_set(False)
+    obj_mesh.hide_select = False
+    if vertex_group in obj_mesh.vertex_groups:
+        vgroup = obj_mesh.vertex_groups[vertex_group]
+        obj_mesh.vertex_groups.active_index = vgroup.index
+        bpy.context.view_layer.objects.active = obj_mesh
+        bpy.ops.bp_object.toggle_edit_mode(obj_name=obj_mesh.name)
+        bpy.ops.mesh.select_all(action = 'DESELECT')
+        bpy.ops.object.vertex_group_select()
+        if obj_mesh.data.total_vert_sel > 0:
+            bpy.ops.object.hook_add_selob()
+        bpy.ops.mesh.select_all(action = 'DESELECT')
+        bpy.ops.bp_object.toggle_edit_mode(obj_name=obj_mesh.name)
+
+def apply_hook_modifiers(context,obj):
+    """ This function applies all of the hook modifers on an object
+    """
+    obj.hide_set(False)
+    obj.select_set(True)
+    context.view_layer.objects.active = obj
+    for mod in obj.modifiers:
+        if mod.type == 'HOOK':
+            bpy.ops.object.modifier_apply(modifier=mod.name)
+
 def delete_obj_list(obj_list):
     ''' 
     This function deletes every object in the list

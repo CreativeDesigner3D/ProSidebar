@@ -177,13 +177,35 @@ class bp_object_OT_particle_paint(bpy.types.Operator):
             row.label(text=particle.name)
         layout.prop(self,'group_name',text="Particle Name")
 
+
+class bp_object_OT_toggle_edit_mode(Operator):
+    bl_idname = "bp_object.toggle_edit_mode"
+    bl_label = "Toggle Edit Mode"
+    bl_description = "This will toggle between object and edit mode"
+    
+    obj_name = StringProperty(name="Object Name")
+
+    @classmethod
+    def poll(cls, context):
+        return True
+
+    def execute(self, context):
+        obj = bpy.data.objects[self.obj_name]
+        obj.hide_set(False)
+        obj.hide_select = False
+        obj.select_set(True)
+        context.view_layer.objects.active = obj
+        bpy.ops.object.editmode_toggle()
+        return {'FINISHED'}
+
 classes = (
     bp_object_OT_select_object,
     bp_object_OT_collapse_all_modifiers,
     bp_object_OT_collapse_all_constraints,
     bp_object_OT_add_text,
     bp_object_OT_add_camera,
-    bp_object_OT_particle_paint
+    bp_object_OT_particle_paint,
+    bp_object_OT_toggle_edit_mode
 )
 
 register, unregister = bpy.utils.register_classes_factory(classes)

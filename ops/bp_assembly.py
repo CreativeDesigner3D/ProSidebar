@@ -103,9 +103,55 @@ class ASSEMBLY_OT_add_object(Operator):
         layout.prop(self,'object_type',expand=True)
         layout.prop(self,'object_name')
 
+class ASSEMBLY_OT_connect_mesh_to_hooks_in_assembly(Operator):
+    bl_idname = "bp_assembly.connect_meshes_to_hooks_in_assembly"
+    bl_label = "Connect Mesh to Hooks In Assembly"
+    bl_options = {'UNDO'}
+    
+    obj_name = StringProperty(name="Object Name")
+    
+    @classmethod
+    def poll(cls, context):
+        return True
+    
+    def execute(self, context):
+        obj = bpy.data.objects[self.obj_name]
+        coll = bp_utils.get_assembly_collection(obj)
+        assembly = bp_types.Assembly(coll)
+
+        hooklist = []
+        for child in coll.objects:
+            if child.type == 'EMPTY' and 'obj_prompts' not in child:
+                hooklist.append(child)
+        
+        if obj.mode == 'EDIT':
+            bpy.ops.object.editmode_toggle()
+        
+        bp_utils.apply_hook_modifiers(context,obj)
+        for vgroup in obj.vertex_groups:
+            for hook in hooklist:
+                if hook.name == vgroup.name:
+                    bp_utils.hook_vertex_group_to_object(obj,vgroup.name,hook)
+
+            # if vgroup.name == 'X Dimension':
+            #     bp_utils.hook_vertex_group_to_object(obj,'X Dimension',assembly.obj_x)
+            # elif vgroup.name == 'Y Dimension':
+            #     bp_utils.hook_vertex_group_to_object(obj,'Y Dimension',assembly.obj_y)
+            # elif vgroup.name == 'Z Dimension':
+            #     bp_utils.hook_vertex_group_to_object(obj,'Z Dimension',assembly.obj_z)
+            # else:
+            #     for hook in hooklist:
+            #         if hook.mv.name_object == vgroup.name:
+            #             bp_utils.hook_vertex_group_to_object(obj,vgroup.name,hook)
+                
+        obj.lock_location = (True,True,True)
+                
+        return {'FINISHED'}
+
 classes = (
     ASSEMBLY_OT_create_new_assembly,
-    ASSEMBLY_OT_add_object
+    ASSEMBLY_OT_add_object,
+    ASSEMBLY_OT_connect_mesh_to_hooks_in_assembly
 )
 
 register, unregister = bpy.utils.register_classes_factory(classes)

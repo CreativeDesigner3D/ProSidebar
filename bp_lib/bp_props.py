@@ -75,10 +75,21 @@ class BP_Collection_Props(PropertyGroup):
     def unregister(cls):
         del bpy.types.Collection.bp_props
 
+class BP_Object_Props(PropertyGroup):
+    show_driver_debug_info: BoolProperty(name="Show Driver Debug Info", default=False)
+
+    @classmethod
+    def register(cls):
+        bpy.types.Object.bp_props = PointerProperty(name="BP Props",description="Blender Pro Props",type=cls)
+        
+    @classmethod
+    def unregister(cls):
+        del bpy.types.Object.bp_props
 
 classes = (
     BP_Scene_Props,
     BP_Collection_Props,
+    BP_Object_Props,
 )
 
 register, unregister = bpy.utils.register_classes_factory(classes)

@@ -11,7 +11,7 @@ class VIEW3D_PT_assembly(Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
     bl_label = "Assembly"
-    bl_category = "Object"
+    bl_category = "Builder"
     bl_options = {'DEFAULT_CLOSED'}
     
     def get_assembly_collection(self,obj):
@@ -96,9 +96,29 @@ class VIEW3D_PT_assembly(Panel):
             if active_coll.bp_props.assembly_tabs == 'LOGIC':
                 pass
             
+class VIEW3D_PT_assembly_library(Panel):
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_label = "Assembly Library"
+    bl_category = "Builder"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    def draw_header(self, context):
+        layout = self.layout
+        layout.label(text='',icon='STICKY_UVS_LOC')
+
+    def draw(self, context):
+        layout = self.layout
+        wm_props = context.window_manager.bp_lib
+        for item in wm_props.library_items:
+            props = layout.operator('library.draw_library_item',text=item.name)
+            props.package_name = item.package_name
+            props.module_name = item.module_name
+            props.class_name = item.class_name
 
 classes = (
     VIEW3D_PT_assembly,
+    VIEW3D_PT_assembly_library,
 )
 
 register, unregister = bpy.utils.register_classes_factory(classes)

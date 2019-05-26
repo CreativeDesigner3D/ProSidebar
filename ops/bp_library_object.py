@@ -2,7 +2,7 @@ import bpy
 import os
 import subprocess
 from ..bp_lib import bp_utils
-from . import utils_library
+from ..bp_utils import utils_library
 
 OBJECT_FOLDER = os.path.join(utils_library.LIBRARY_FOLDER,"objects")
 preview_collections = {}

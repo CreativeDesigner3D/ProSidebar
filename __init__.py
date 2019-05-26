@@ -20,7 +20,6 @@ from .ui import bp_view3d_ui_sidebar_collections
 from .ui import bp_view3d_ui_sidebar_assembly
 from .ui import bp_view3d_ui_sidebar_view
 from .ui import bp_view3d_ui_header
-from .ops import bp_library_objects
 from .ops import bp_draw_objects
 from .ops import bp_general
 from .ops import bp_object
@@ -30,9 +29,14 @@ from .ops import bp_world
 from .ops import bp_collection
 from .ops import bp_assembly
 from .ops import bp_driver
-from .bp_lib import bp_prompts
-from .bp_lib import bp_props
-from . import library
+from .ops import bp_prompts
+from .ops import bp_library
+from .ops import bp_library_collection
+from .ops import bp_library_material
+from .ops import bp_library_object
+from . import bp_props
+from . import bp_prefs
+from . import bp_load_library
 
 def register():
     bp_filebrowser_ui.register()
@@ -54,10 +58,14 @@ def register():
     bp_collection.register()
     bp_assembly.register()
     bp_driver.register()
-    bp_library_objects.register()
     bp_prompts.register()
+    bp_library.register()
+    bp_library_collection.register()
+    bp_library_material.register()
+    bp_library_object.register()
     bp_props.register()
-    library.register()
+    bp_prefs.register()
+    bp_load_library.register()
 
 def unregister():
     bp_filebrowser_ui.unregister()
@@ -79,7 +87,11 @@ def unregister():
     bp_collection.unregister()
     bp_assembly.unregister()
     bp_driver.unregister()
-    bp_library_objects.unregister()    
     bp_prompts.unregister()
+    bp_library.unregister()
+    bp_library_collection.unregister()
+    bp_library_material.unregister()
+    bp_library_object.unregister()    
     bp_props.unregister()
-    library.unregister()
+    bp_prefs.unregister()
+    bp_load_library.unregister()

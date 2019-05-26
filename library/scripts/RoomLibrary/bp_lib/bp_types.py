@@ -130,17 +130,29 @@ class Assembly:
         self.obj_prompts.lock_rotation[1] = True   
         self.obj_prompts.lock_rotation[2] = True           
         self.obj_prompts["obj_prompts"] = True
-
         coll.objects.link(self.obj_prompts)
 
     def add_empty(self,obj_name):
-        self.obj = bpy.data.objects.new(obj_name,None)
-        self.obj.location = (0,0,0)
-        self.obj.parent = self.obj_bp
-        self.coll.objects.link(self.obj)
+        obj = bpy.data.objects.new(obj_name,None)
+        obj.location = (0,0,0)
+        obj.parent = self.obj_bp
+        self.coll.objects.link(obj)
+        return obj
 
     def add_object(self,obj):
+        # bpy.ops.bp_collection.set_active_collection(collection_name=self.coll.name)
+        # bpy.context.view_layer.active_layer_collection = self.coll
         obj.location = (0,0,0)
         obj.parent = self.obj_bp
         self.coll.objects.link(obj)
         self.update_vector_groups()
+
+    def add_assembly(self,assembly):
+        if assembly.obj_bp is None:
+            assembly.draw()
+        bpy.ops.bp_collection.set_active_collection(collection_name=self.coll.name)
+        self.add_object(assembly.obj_bp)
+        return assembly
+
+    def add_cube(self,name,obj_bp,obj_x,obj_y,obj_z):
+        pass

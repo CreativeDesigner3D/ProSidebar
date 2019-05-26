@@ -25,16 +25,24 @@ class COLLECTION_OT_set_active_collection(Operator):
 
     collection_name: StringProperty(name="Collection Name",default="New Collection")
 
+    def search_parent_objects(self,collection):
+        bpy.ops.object.select_all(action = 'DESELECT')
+        for obj in collection.collection.objects:
+            if obj.parent is None:
+                obj.select_set(True)
+
     def search_children(self,collection):
         for child in collection.children:
             if child.collection.name == self.collection_name:
                 bpy.context.view_layer.active_layer_collection = child
+                self.search_parent_objects(child)
             else:
                 self.search_children(child)
 
     def execute(self, context):
         if self.collection_name == context.view_layer.layer_collection.collection.name:
             context.view_layer.active_layer_collection = context.view_layer.layer_collection
+            self.search_parent_objects(context.view_layer.layer_collection)
         else:
             self.search_children(context.view_layer.layer_collection)
         return {'FINISHED'}

@@ -10,7 +10,9 @@ from bpy.props import (StringProperty,
                        PointerProperty,
                        CollectionProperty,
                        EnumProperty)
-    
+
+from ..bp_props import prompt_types
+
 #TODO: IMPLEMENT CALCULATORS
 #TODO: IMPLEMENT EASY WAY TO ADD VARS FOR DRIVERS FROM PROMPTS
 #TODO: IMPLEMENT EDIT PROMPT INTERFACE TO CHANGE PROMPT TYPE, RENAME, TAB INDEX 
@@ -20,111 +22,6 @@ from bpy.props import (StringProperty,
 #TODO: IMPLEMENT PROMPTS FOR WORLDS, SCENES, MATERIALS, COLLECTIONS
 #TODO: IMPLEMENT TABS
 
-prompt_types = [('FLOAT',"Float","Float"),
-                ('DISTANCE',"Distance","Distance"),
-                ('ANGLE',"Angle","Angle"),
-                ('QUANTITY',"Quantity","Quantity"),
-                ('PERCENTAGE',"Percentage","Percentage"),
-                ('CHECKBOX',"Checkbox","Checkbox"),
-                ('COMBOBOX',"Combobox","Combobox"),
-                ('TEXT',"Text","Text")]
-
-
-class Combobox_Item(PropertyGroup):
-    pass    
-    
-
-class Tab(PropertyGroup):
-    pass    
-
-
-class Prompt(PropertyGroup):
-    tab_index: IntProperty(name="Tab Index")
-    prompt_type: EnumProperty(name="Prompt Type",items=prompt_types)
-
-    float_value: FloatProperty(name="Float Value")
-    distance_value: FloatProperty(name="Distance Value",subtype='DISTANCE')
-    angle_value: FloatProperty(name="Angle Value",subtype='ANGLE')
-    quantity_value: IntProperty(name="Quantity Value",subtype='DISTANCE',min=0)
-    percentage_value: FloatProperty(name="Percentage Value",subtype='PERCENTAGE',min=0,max=1)
-    checkbox_value: BoolProperty(name="Checkbox Value", description="")
-    text_value: StringProperty(name="Text Value", description="")
-
-    calculator_index: IntProperty(name="Calculator Index")
-
-    combobox_items: CollectionProperty(type=Combobox_Item, name="Tabs")
-    combobox_index: IntProperty(name="Combobox Index", description="")
-    combobox_columns: IntProperty(name="Combobox Columns")
-
-    def draw(self,layout):
-        row = layout.row()
-        row.label(text=self.name)
-        if self.prompt_type == 'FLOAT':
-            row.prop(self,"float_value")
-        if self.prompt_type == 'DISTANCE':
-            row.prop(self,"distance_value")
-        if self.prompt_type == 'ANGLE':
-            row.prop(self,"angle_value")
-        if self.prompt_type == 'QUANTITY':
-            row.prop(self,"quantity_value")
-        if self.prompt_type == 'PERCENTAGE':
-            row.prop(self,"percentage_value")
-        if self.prompt_type == 'CHECKBOX':
-            row.prop(self,"checkbox_value")
-        if self.prompt_type == 'COMBOBOX':
-            row.prop(self,"combobox_index") #TODO: IMPLEMENT UI LIST
-        if self.prompt_type == 'TEXT':
-            row.prop(self,"text_value")
-
-
-class Prompt_Page(PropertyGroup):
-    tabs: CollectionProperty(type=Tab, name="Tabs")
-    tab_index: IntProperty(name="Tab Index")
-    prompts: CollectionProperty(type=Prompt, name="Prompts")
-    
-    @classmethod
-    def register(cls):
-        bpy.types.Object.prompt_page = PointerProperty(
-            name="Prompt Page",
-            description="Blender Pro Prompts",
-            type=cls,
-        )
-        
-        bpy.types.World.prompt_page = PointerProperty(
-            name="Prompt Page",
-            description="Blender Pro Prompts",
-            type=cls,
-        )
-
-        bpy.types.Collection.prompt_page = PointerProperty(
-            name="Prompt Page",
-            description="Blender Pro Prompts",
-            type=cls,
-        )
-
-    @classmethod
-    def unregister(cls):
-        del bpy.types.Object.prompt_page
-        del bpy.types.World.prompt_page
-        del bpy.types.Collection.prompt_page
-
-    def add_tab(self,name):
-        tab = self.tabs.add()
-        tab.name = name
-
-    def draw_prompts(self,layout,data_type):
-        props = layout.operator('bp_prompts.add_prompt')
-        props.data_type = data_type
-        props.data_name = self.id_data.name
-        for prompt in self.prompts:
-            prompt.draw(layout)
-    
-    def add_prompt(self,prompt_type,prompt_name):
-        prompt = self.prompts.add()
-        prompt.prompt_type = prompt_type
-        prompt.name = prompt_name
-        prompt.tab_index = self.tab_index
-            
 class OPS_add_main_tab(Operator):
     bl_idname = "fd_prompts.add_main_tab"
     bl_label = "Add Main Tab"
@@ -212,10 +109,6 @@ class OPS_add_prompt(Operator):
         layout.prop(self,"prompt_type")
 
 classes = (
-    Combobox_Item,
-    Tab,
-    Prompt,
-    Prompt_Page,
     OPS_add_main_tab,
     OPS_add_prompt
 )

@@ -183,7 +183,7 @@ class bp_object_OT_toggle_edit_mode(Operator):
     bl_label = "Toggle Edit Mode"
     bl_description = "This will toggle between object and edit mode"
     
-    obj_name = StringProperty(name="Object Name")
+    obj_name: StringProperty(name="Object Name")
 
     @classmethod
     def poll(cls, context):

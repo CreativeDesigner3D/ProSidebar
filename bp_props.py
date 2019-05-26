@@ -307,6 +307,7 @@ class BP_Object_Props(PropertyGroup):
     def hook_vertex_group_to_object(self,vertex_group,obj_hook):
         """ This function adds a hook modifier to the verties 
             in the vertex_group to the obj_hook
+            THIS IS SLOW AND PROBABLY NOT NEEDED ANY MORE
         """
         bpy.ops.object.select_all(action = 'DESELECT')
         obj_hook.hide_set(False)
@@ -339,6 +340,11 @@ class BP_Object_Driver_Props(PropertyGroup):
     
     def get_var(self,data_path,name):
         return Variable(self.id_data,data_path,name)
+
+    def modifier(self,modifier,property_name,index=-1,expression="",variables=[]):
+        driver = modifier.driver_add(property_name,index)
+        add_driver_variables(driver,variables)
+        driver.driver.expression = expression
 
     def x_loc(self,expression,variables):
         driver = self.id_data.driver_add('location',0)

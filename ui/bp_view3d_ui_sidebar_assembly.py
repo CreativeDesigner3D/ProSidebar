@@ -110,6 +110,9 @@ class VIEW3D_PT_assembly_library(Panel):
     def draw(self, context):
         layout = self.layout
         wm_props = context.window_manager.bp_lib
+        if len(wm_props.library_items) == 0:
+            layout.operator('library.load_script_libraries')
+            
         for item in wm_props.library_items:
             props = layout.operator('library.draw_library_item',text=item.name)
             props.package_name = item.package_name
@@ -117,8 +120,8 @@ class VIEW3D_PT_assembly_library(Panel):
             props.class_name = item.class_name
 
 classes = (
-    VIEW3D_PT_assembly,
     VIEW3D_PT_assembly_library,
+    VIEW3D_PT_assembly,
 )
 
 register, unregister = bpy.utils.register_classes_factory(classes)

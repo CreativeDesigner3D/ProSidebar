@@ -13,6 +13,8 @@ from bpy.props import (StringProperty,
                        CollectionProperty,
                        EnumProperty)
 
+from ..bp_utils import utils_library
+
 class LIBRARY_OT_open_browser_window(bpy.types.Operator):
     bl_idname = "library.open_browser_window"
     bl_label = "Open Browser Window"
@@ -79,13 +81,28 @@ class LIBRARY_OT_draw_library_item(bpy.types.Operator):
                             start_time = time.time()
                             product = obj()
                             product.draw()
+                            product.obj_bp.select_set(True)
+                            context.view_layer.objects.active = product.obj_bp
                             print("Draw Time --- %s seconds ---" % (time.time() - start_time))
+        #IMPLEMENT CUSTOM DROP FUNCTIONALITY
         return {'FINISHED'}
+
+class LIBRARY_OT_load_script_libraries(bpy.types.Operator):
+    bl_idname = "library.load_script_libraries"
+    bl_label = "Load Script Libraries"
+    bl_description = "This will load the library items for scripts"
+
+    def execute(self, context):
+        utils_library.update_props_from_xml_file()
+        utils_library.load_library_scripts()
+        return {'FINISHED'}
+
 
 classes = (
     LIBRARY_OT_open_browser_window,
     LIBRARY_OT_create_new_folder,
     LIBRARY_OT_draw_library_item,
+    LIBRARY_OT_load_script_libraries,
 )
 
 register, unregister = bpy.utils.register_classes_factory(classes)

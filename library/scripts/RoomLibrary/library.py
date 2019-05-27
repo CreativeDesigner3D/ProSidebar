@@ -80,11 +80,15 @@ class Wall(bp_types.Assembly):
         height = self.obj_z.drivers.get_var('location.z','height')
 
         #Add Prompts
+        stud_spacing_distance = self.obj_prompts.prompt_page.add_prompt('DISTANCE',"Stud Spacing Distance")
+        stud_spacing_distance.set_value(bp_unit.inch(16))
+
         material_thickness = self.obj_prompts.prompt_page.add_prompt('DISTANCE',"Material Thickness")
         material_thickness.set_value(bp_unit.inch(2))
 
         #Get Prompt Variables
         material_thickness = material_thickness.get_var("material_thickness")
+        stud_spacing_distance = stud_spacing_distance.get_var("stud_spacing_distance")
 
         #Add Parts
         bottom_plate = self.add_assembly(Stud())
@@ -122,15 +126,18 @@ class Wall(bp_types.Assembly):
         last_stud.obj_z.drivers.z_loc('material_thickness',[material_thickness])
 
         center_stud = self.add_assembly(Stud())
-        center_stud.obj_bp.drivers.x_loc('length',[length])
+        center_stud.obj_bp.drivers.x_loc('stud_spacing_distance',[stud_spacing_distance])
         center_stud.obj_bp.location.y = 0
         center_stud.obj_bp.drivers.z_loc('material_thickness',[material_thickness])
         center_stud.obj_bp.rotation_euler.y = math.radians(-90)
         center_stud.obj_x.drivers.x_loc('height-(material_thickness*2)',[height,material_thickness])
         center_stud.obj_y.drivers.y_loc('wall_thickness',[wall_thickness])
         center_stud.obj_z.drivers.z_loc('material_thickness',[material_thickness])
+        qty = center_stud.obj_prompts.prompt_page.prompts['Quantity']
+        qty.set_formula('length/stud_spacing_distance',[length,stud_spacing_distance])
 
-
+        offset = center_stud.obj_prompts.prompt_page.prompts['Array Offset']
+        offset.set_formula('-stud_spacing_distance',[stud_spacing_distance])        
         print("WALL: Draw Time --- %s seconds ---" % (time.time() - start_time))
 
 class Room(bp_types.Assembly):

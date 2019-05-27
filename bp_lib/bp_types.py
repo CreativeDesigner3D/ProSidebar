@@ -73,7 +73,7 @@ class Assembly:
         self.obj_bp = bpy.data.objects.new("OBJ_BP",None)
         self.obj_bp.location = (0,0,0)
         self.obj_bp["obj_bp"] = True
-        self.obj_bp.empty_display_type = 'CUBE'
+        self.obj_bp.empty_display_type = 'ARROWS'
         self.obj_bp.empty_display_size = .1           
         coll.objects.link(self.obj_bp)
 

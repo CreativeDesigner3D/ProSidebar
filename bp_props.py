@@ -196,7 +196,25 @@ class Prompt(PropertyGroup):
             self.text_value = value
 
     def set_formula(self,expression,variables):
-        driver = self.id_data.driver_add('prompt_page.prompts["' + self.name + '"].distance_value')
+        data_path = ""
+        if self.prompt_type == 'FLOAT':
+            data_path = 'prompt_page.prompts["' + self.name + '"].float_value'
+        if self.prompt_type == 'DISTANCE':
+            data_path = 'prompt_page.prompts["' + self.name + '"].distance_value'
+        if self.prompt_type == 'ANGLE':
+            data_path = 'prompt_page.prompts["' + self.name + '"].angle_value'
+        if self.prompt_type == 'QUANTITY':
+            data_path = 'prompt_page.prompts["' + self.name + '"].quantity_value'
+        if self.prompt_type == 'PERCENTAGE':
+            data_path = 'prompt_page.prompts["' + self.name + '"].precentage_value'
+        if self.prompt_type == 'CHECKBOX':
+            data_path = 'prompt_page.prompts["' + self.name + '"].checkbox_value'
+        if self.prompt_type == 'COMBOBOX':
+            data_path = 'prompt_page.prompts["' + self.name + '"].combobox_index'
+        if self.prompt_type == 'TEXT':
+            data_path = 'prompt_page.prompts["' + self.name + '"].text_value'
+
+        driver = self.id_data.driver_add(data_path)
         add_driver_variables(driver,variables)
         driver.driver.expression = expression
 

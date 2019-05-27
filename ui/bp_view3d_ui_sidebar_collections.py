@@ -34,9 +34,12 @@ class VIEW3D_PT_collection_info(Panel):
 
         for i in range(0,indent_amount):
             row.label(text="",icon='BLANK1')
+
+        row.prop(collection.bp_props,'is_expanded',text="",icon='TRIA_DOWN' if collection.bp_props.is_expanded else 'TRIA_RIGHT',emboss=False)
         row.operator('bp_collection.set_active_collection',text=collection.name,emboss=False,icon=icon).collection_name = collection.name
-        for child in collection.children:
-            self.draw_collection(layout,child,indent_amount + 1)
+        if collection.bp_props.is_expanded:
+            for child in collection.children:
+                self.draw_collection(layout,child,indent_amount + 1)
 
     def draw(self, context):
         layout = self.layout

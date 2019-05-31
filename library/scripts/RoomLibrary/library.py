@@ -92,52 +92,59 @@ class Wall(bp_types.Assembly):
 
         #Add Parts
         bottom_plate = self.add_assembly(Stud())
-        bottom_plate.obj_bp.location.x = 0
-        bottom_plate.obj_bp.location.y = 0
-        bottom_plate.obj_bp.location.z = 0
-        bottom_plate.obj_x.drivers.x_loc('length',[length])
-        bottom_plate.obj_y.drivers.y_loc('wall_thickness',[wall_thickness])
-        bottom_plate.obj_z.drivers.z_loc('material_thickness',[material_thickness])
+        bottom_plate.set_name('Bottom Plate')
+        bottom_plate.loc_x(value=0)
+        bottom_plate.loc_y(value=0)
+        bottom_plate.loc_z(value=0)
+        bottom_plate.dim_x('length',[length])
+        bottom_plate.dim_y('wall_thickness',[wall_thickness])
+        bottom_plate.dim_z('material_thickness',[material_thickness])
 
-        bottom_plate = self.add_assembly(Stud())
-        bottom_plate.obj_bp.drivers.z_loc('height',[height])
-        bottom_plate.obj_bp.location.y = 0
-        bottom_plate.obj_bp.location.z = 0
-        bottom_plate.obj_x.drivers.x_loc('length',[length])
-        bottom_plate.obj_y.drivers.y_loc('wall_thickness',[wall_thickness])
-        bottom_plate.obj_z.drivers.z_loc('-material_thickness',[material_thickness])
+        top_plate = self.add_assembly(Stud())
+        top_plate.set_name('Top Plate')
+        top_plate.loc_x(value=0)
+        top_plate.loc_y(value=0)
+        top_plate.loc_z('height',[height])
+        top_plate.dim_x('length',[length])
+        top_plate.dim_y('wall_thickness',[wall_thickness])
+        top_plate.dim_z('-material_thickness',[material_thickness])
 
         first_stud = self.add_assembly(Stud())
-        first_stud.obj_bp.drivers.z_loc('material_thickness',[material_thickness])
-        first_stud.obj_bp.location.y = 0
-        first_stud.obj_bp.location.z = 0
-        first_stud.obj_bp.rotation_euler.y = math.radians(-90)
-        first_stud.obj_x.drivers.x_loc('height-(material_thickness*2)',[height,material_thickness])
-        first_stud.obj_y.drivers.y_loc('wall_thickness',[wall_thickness])
-        first_stud.obj_z.drivers.z_loc('-material_thickness',[material_thickness])
+        first_stud.set_name('First Stud')
+        first_stud.loc_x(value=0)
+        first_stud.loc_y(value=0)
+        first_stud.loc_z('material_thickness',[material_thickness])
+        first_stud.rot_y(value=math.radians(-90))
+        first_stud.dim_x('height-(material_thickness*2)',[height,material_thickness])
+        first_stud.dim_y('wall_thickness',[wall_thickness])
+        first_stud.dim_z('-material_thickness',[material_thickness])
 
         last_stud = self.add_assembly(Stud())
-        last_stud.obj_bp.drivers.x_loc('length',[length])
-        last_stud.obj_bp.location.y = 0
-        last_stud.obj_bp.drivers.z_loc('material_thickness',[material_thickness])
-        last_stud.obj_bp.rotation_euler.y = math.radians(-90)
-        last_stud.obj_x.drivers.x_loc('height-(material_thickness*2)',[height,material_thickness])
-        last_stud.obj_y.drivers.y_loc('wall_thickness',[wall_thickness])
-        last_stud.obj_z.drivers.z_loc('material_thickness',[material_thickness])
+        last_stud.set_name('Last Stud')
+        last_stud.loc_x('length',[length])
+        last_stud.loc_y(value=0)
+        last_stud.loc_z('material_thickness',[material_thickness])
+        last_stud.rot_y(value=math.radians(-90))
+        last_stud.dim_x('height-(material_thickness*2)',[height,material_thickness])
+        last_stud.dim_y('wall_thickness',[wall_thickness])
+        last_stud.dim_z('material_thickness',[material_thickness])
 
         center_stud = self.add_assembly(Stud())
-        center_stud.obj_bp.drivers.x_loc('stud_spacing_distance',[stud_spacing_distance])
-        center_stud.obj_bp.location.y = 0
-        center_stud.obj_bp.drivers.z_loc('material_thickness',[material_thickness])
-        center_stud.obj_bp.rotation_euler.y = math.radians(-90)
-        center_stud.obj_x.drivers.x_loc('height-(material_thickness*2)',[height,material_thickness])
-        center_stud.obj_y.drivers.y_loc('wall_thickness',[wall_thickness])
-        center_stud.obj_z.drivers.z_loc('material_thickness',[material_thickness])
-        qty = center_stud.obj_prompts.prompt_page.prompts['Quantity']
-        qty.set_formula('length/stud_spacing_distance',[length,stud_spacing_distance])
+        center_stud.set_name('Center Stud')
+        center_stud.loc_x('stud_spacing_distance',[stud_spacing_distance])
+        center_stud.loc_y(value=0)
+        center_stud.loc_z('material_thickness',[material_thickness])
+        center_stud.rot_y(value=math.radians(-90))
+        center_stud.dim_x('height-(material_thickness*2)',[height,material_thickness])
+        center_stud.dim_y('wall_thickness',[wall_thickness])
+        center_stud.dim_z('material_thickness',[material_thickness])
 
-        offset = center_stud.obj_prompts.prompt_page.prompts['Array Offset']
-        offset.set_formula('-stud_spacing_distance',[stud_spacing_distance])        
+        qty = center_stud.get_prompt('Quantity')
+        offset = center_stud.get_prompt('Array Offset')
+
+        qty.set_formula('(length-material_thickness)/stud_spacing_distance',[length,material_thickness,stud_spacing_distance])
+        offset.set_formula('-stud_spacing_distance',[stud_spacing_distance])  
+             
         print("WALL: Draw Time --- %s seconds ---" % (time.time() - start_time))
 
 class Room(bp_types.Assembly):
@@ -168,39 +175,43 @@ class Room(bp_types.Assembly):
         wall_thickness = wall_thickness.get_var("wall_thickness")
 
         front_wall = self.add_assembly(Wall())
-        front_wall.obj_bp.location.x = 0
-        front_wall.obj_bp.location.y = 0
-        front_wall.obj_bp.location.z = 0
-        front_wall.obj_bp.rotation_euler.z = math.radians(0)
-        front_wall.obj_x.drivers.x_loc('length',[length])
-        front_wall.obj_y.drivers.y_loc('wall_thickness',[wall_thickness])
-        front_wall.obj_z.drivers.z_loc('height',[height])
+        front_wall.set_name("Front Wall")
+        front_wall.loc_x(value=0)
+        front_wall.loc_y(value=0)
+        front_wall.loc_z(value=0)
+        front_wall.rot_z(value=math.radians(0))
+        front_wall.dim_x('length',[length])
+        front_wall.dim_y('wall_thickness',[wall_thickness])
+        front_wall.dim_z('height',[height])
 
         back_wall = self.add_assembly(Wall())
-        back_wall.obj_bp.location.x = 0
-        back_wall.obj_bp.drivers.y_loc('depth-wall_thickness',[depth,wall_thickness])
-        back_wall.obj_bp.location.z = 0
-        back_wall.obj_bp.rotation_euler.z = math.radians(0)
-        back_wall.obj_x.drivers.x_loc('length',[length])
-        back_wall.obj_y.drivers.y_loc('wall_thickness',[wall_thickness])
-        back_wall.obj_z.drivers.z_loc('height',[height])
+        back_wall.set_name("Back Wall")
+        back_wall.loc_x(value=0)
+        back_wall.loc_y('depth-wall_thickness',[depth,wall_thickness])
+        back_wall.loc_z(value=0)
+        back_wall.rot_z(value=math.radians(0))
+        back_wall.dim_x('length',[length])
+        back_wall.dim_y('wall_thickness',[wall_thickness])
+        back_wall.dim_z('height',[height])
 
         left_wall = self.add_assembly(Wall())
-        left_wall.obj_bp.drivers.x_loc('length',[length])
-        left_wall.obj_bp.drivers.y_loc('wall_thickness',[wall_thickness])
-        left_wall.obj_bp.location.z = 0
-        left_wall.obj_bp.rotation_euler.z = math.radians(90)
-        left_wall.obj_x.drivers.x_loc('depth-(wall_thickness*2)',[depth,wall_thickness])
-        left_wall.obj_y.drivers.y_loc('wall_thickness',[wall_thickness])
-        left_wall.obj_z.drivers.z_loc('height',[height])      
+        left_wall.set_name("Left Wall")
+        left_wall.loc_x('length',[length])
+        left_wall.loc_y('wall_thickness',[wall_thickness])
+        left_wall.loc_z(value=0)
+        left_wall.rot_z(value=math.radians(90))
+        left_wall.dim_x('depth-(wall_thickness*2)',[depth,wall_thickness])
+        left_wall.dim_y('wall_thickness',[wall_thickness])
+        left_wall.dim_z('height',[height])      
 
         right_wall = self.add_assembly(Wall())
-        right_wall.obj_bp.location.x = 0
-        right_wall.obj_bp.drivers.y_loc('wall_thickness',[wall_thickness])
-        right_wall.obj_bp.location.z = 0
-        right_wall.obj_bp.rotation_euler.z = math.radians(90)
-        right_wall.obj_x.drivers.x_loc('depth-(wall_thickness*2)',[depth,wall_thickness])
-        right_wall.obj_y.drivers.y_loc('-wall_thickness',[wall_thickness])
-        right_wall.obj_z.drivers.z_loc('height',[height])            
+        right_wall.set_name("Right Wall")
+        right_wall.loc_x(value=0)
+        right_wall.loc_y('wall_thickness',[wall_thickness])
+        right_wall.loc_z(value=0)
+        right_wall.rot_z(value=math.radians(90))
+        right_wall.dim_x('depth-(wall_thickness*2)',[depth,wall_thickness])
+        right_wall.dim_y('-wall_thickness',[wall_thickness])
+        right_wall.dim_z('height',[height])            
 
         print("ROOM: Draw Time --- %s seconds ---" % (time.time() - start_time))

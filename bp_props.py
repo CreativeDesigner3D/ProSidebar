@@ -364,18 +364,33 @@ class BP_Object_Driver_Props(PropertyGroup):
         add_driver_variables(driver,variables)
         driver.driver.expression = expression
 
-    def x_loc(self,expression,variables):
+    def loc_x(self,expression,variables):
         driver = self.id_data.driver_add('location',0)
         add_driver_variables(driver,variables)
         driver.driver.expression = expression
 
-    def y_loc(self,expression,variables):
+    def loc_y(self,expression,variables):
         driver = self.id_data.driver_add('location',1)
         add_driver_variables(driver,variables)
         driver.driver.expression = expression
 
-    def z_loc(self,expression,variables):
+    def loc_z(self,expression,variables):
         driver = self.id_data.driver_add('location',2)
+        add_driver_variables(driver,variables)
+        driver.driver.expression = expression
+
+    def rot_x(self,expression,variables):
+        driver = self.id_data.driver_add('rotation_euler',0)
+        add_driver_variables(driver,variables)
+        driver.driver.expression = expression
+
+    def rot_y(self,expression,variables):
+        driver = self.id_data.driver_add('rotation_euler',1)
+        add_driver_variables(driver,variables)
+        driver.driver.expression = expression
+
+    def rot_z(self,expression,variables):
+        driver = self.id_data.driver_add('rotation_euler',2)
         add_driver_variables(driver,variables)
         driver.driver.expression = expression
 

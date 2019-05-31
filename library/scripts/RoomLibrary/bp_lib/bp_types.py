@@ -156,3 +156,64 @@ class Assembly:
 
     def add_cube(self,name,obj_bp,obj_x,obj_y,obj_z):
         pass
+
+    def set_name(self,name):
+        self.coll.name = name
+
+    def get_prompt(self,name):
+        if name in self.obj_prompts.prompt_page.prompts:
+            return self.obj_prompts.prompt_page.prompts[name]        
+
+    def loc_x(self,expression="",variables=[],value=0):
+        if expression == "":
+            self.obj_bp.location.x = value
+        else:
+            self.obj_bp.drivers.loc_x(expression,variables)
+
+    def loc_y(self,expression="",variables=[],value=0):
+        if expression == "":
+            self.obj_bp.location.y = value
+        else:
+            self.obj_bp.drivers.loc_y(expression,variables)
+
+    def loc_z(self,expression="",variables=[],value=0):
+        if expression == "":
+            self.obj_bp.location.z = value
+        else:
+            self.obj_bp.drivers.loc_z(expression,variables)           
+
+    def rot_x(self,expression="",variables=[],value=0):
+        if expression == "":
+            self.obj_bp.rotation_euler.x = value
+        else:
+            self.obj_bp.drivers.rot_x(expression,variables)             
+
+    def rot_y(self,expression="",variables=[],value=0):
+        if expression == "":
+            self.obj_bp.rotation_euler.y = value
+        else:
+            self.obj_bp.drivers.rot_y(expression,variables)      
+
+    def rot_z(self,expression="",variables=[],value=0):
+        if expression == "":
+            self.obj_bp.rotation_euler.z = value
+        else:
+            self.obj_bp.drivers.rot_z(expression,variables)      
+
+    def dim_x(self,expression="",variables=[],value=0):
+        if expression == "":
+            self.obj_x.location.x = value
+        else:
+            self.obj_x.drivers.loc_x(expression,variables)          
+
+    def dim_y(self,expression="",variables=[],value=0):
+        if expression == "":
+            self.obj_y.location.y = value
+        else:
+            self.obj_y.drivers.loc_y(expression,variables)    
+
+    def dim_z(self,expression="",variables=[],value=0):
+        if expression == "":
+            self.obj_z.location.z = value
+        else:
+            self.obj_z.drivers.loc_z(expression,variables)                                                                      

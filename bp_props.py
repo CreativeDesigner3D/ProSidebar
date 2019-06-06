@@ -46,6 +46,17 @@ def update_world_selection(self,context):
         world = bpy.data.worlds[self.selected_world_index]
         context.scene.world = world
 
+def add_driver_variables(driver,variables):
+    for var in variables:
+        new_var = driver.driver.variables.new()
+        new_var.type = 'SINGLE_PROP'
+        new_var.name = var.name
+        new_var.targets[0].data_path = var.data_path
+        new_var.targets[0].id = var.obj
+
+def update_library_paths(self,context):
+    utils_library.write_xml_file()
+
 
 class Variable():
 
@@ -59,18 +70,6 @@ class Variable():
         self.name = name
 
 
-def add_driver_variables(driver,variables):
-    for var in variables:
-        new_var = driver.driver.variables.new()
-        new_var.type = 'SINGLE_PROP'
-        new_var.name = var.name
-        new_var.targets[0].data_path = var.data_path
-        new_var.targets[0].id = var.obj
-
-def update_library_paths(self,context):
-    utils_library.write_xml_file()
-
-
 class Tag(bpy.types.PropertyGroup):
     pass
 
@@ -82,55 +81,6 @@ class Library_Item(bpy.types.PropertyGroup):
     placement_id: bpy.props.StringProperty(name="Placement ID")
     prompts_id: bpy.props.StringProperty(name="Prompts ID")
     tags: bpy.props.CollectionProperty(name="Tags", type=Tag)
-
-
-class BP_Window_Manager_Library_Props(bpy.types.PropertyGroup):
-    library_items: bpy.props.CollectionProperty(name="Library Items", type=Library_Item)
-
-    object_library_path: bpy.props.StringProperty(name="Object Library Path",
-                                                   default="",
-                                                   subtype='DIR_PATH',
-                                                   update=update_library_paths)
-    
-    collection_library_path: bpy.props.StringProperty(name="Collection Library Path",
-                                                  default="",
-                                                  subtype='DIR_PATH',
-                                                  update=update_library_paths)
-    
-    material_library_path: bpy.props.StringProperty(name="Material Library Path",
-                                                     default="",
-                                                     subtype='DIR_PATH',
-                                                     update=update_library_paths)        
-
-    script_library_path: bpy.props.StringProperty(name="Script Library Path",
-                                                  default="",
-                                                  subtype='DIR_PATH',
-                                                  update=update_library_paths)
-
-    object_category: bpy.props.StringProperty(name="Object Category",
-                                               default="",
-                                               update=update_library_paths)   
-        
-    collection_category: bpy.props.StringProperty(name="Collection Category",
-                                              default="",
-                                              update=update_library_paths)  
-    
-    material_category: bpy.props.StringProperty(name="Material Category",
-                                                 default="",
-                                                 update=update_library_paths)  
-                
-
-    @classmethod
-    def register(cls):
-        bpy.types.WindowManager.bp_lib = bpy.props.PointerProperty(
-            name="BP Library",
-            description="Blender Pro Library Properties",
-            type=cls,
-        )
-        
-    @classmethod
-    def unregister(cls):
-        del bpy.types.WindowManager.bp_lib
 
 
 class Combobox_Item(PropertyGroup):
@@ -160,22 +110,23 @@ class Prompt(PropertyGroup):
     combobox_columns: IntProperty(name="Combobox Columns")
 
     def get_var(self,name):
+        prompt_path = 'prompt_page.prompts["' + self.name + '"]'
         if self.prompt_type == 'FLOAT':
-            return Variable(self.id_data,'prompt_page.prompts["' + self.name + '"].float_value',name)
+            return Variable(self.id_data, prompt_path + '.float_value',name)
         if self.prompt_type == 'DISTANCE':
-            return Variable(self.id_data,'prompt_page.prompts["' + self.name + '"].distance_value',name)
+            return Variable(self.id_data, prompt_path + '.distance_value',name)
         if self.prompt_type == 'ANGLE':
-            return Variable(self.id_data,'prompt_page.prompts["' + self.name + '"].angle_value',name)
+            return Variable(self.id_data, prompt_path + '.angle_value',name)
         if self.prompt_type == 'QUANTITY':
-            return Variable(self.id_data,'prompt_page.prompts["' + self.name + '"].quantity_value',name)
+            return Variable(self.id_data, prompt_path + '.quantity_value',name)
         if self.prompt_type == 'PERCENTAGE':
-            return Variable(self.id_data,'prompt_page.prompts["' + self.name + '"].percentage_value',name)
+            return Variable(self.id_data, prompt_path + '.percentage_value',name)
         if self.prompt_type == 'CHECKBOX':
-            return Variable(self.id_data,'prompt_page.prompts["' + self.name + '"].checkbox_value',name)
+            return Variable(self.id_data, prompt_path + '.checkbox_value',name)
         if self.prompt_type == 'COMBOBOX':
-            return Variable(self.id_data,'prompt_page.prompts["' + self.name + '"].combobox_index',name) #TODO: IMPLEMENT UI LIST
+            return Variable(self.id_data, prompt_path + '.combobox_index',name) #TODO: IMPLEMENT UI LIST
         if self.prompt_type == 'TEXT':
-            return Variable(self.id_data,'prompt_page.prompts["' + self.name + '"].text_value',name)       
+            return Variable(self.id_data, prompt_path + '.text_value',name)       
 
     def set_value(self,value):
         if self.prompt_type == 'FLOAT':
@@ -196,23 +147,24 @@ class Prompt(PropertyGroup):
             self.text_value = value
 
     def set_formula(self,expression,variables):
+        prompt_path = 'prompt_page.prompts["' + self.name + '"]'
         data_path = ""
         if self.prompt_type == 'FLOAT':
-            data_path = 'prompt_page.prompts["' + self.name + '"].float_value'
+            data_path = prompt_path + '.float_value'
         if self.prompt_type == 'DISTANCE':
-            data_path = 'prompt_page.prompts["' + self.name + '"].distance_value'
+            data_path = prompt_path + '.distance_value'
         if self.prompt_type == 'ANGLE':
-            data_path = 'prompt_page.prompts["' + self.name + '"].angle_value'
+            data_path = prompt_path + '.angle_value'
         if self.prompt_type == 'QUANTITY':
-            data_path = 'prompt_page.prompts["' + self.name + '"].quantity_value'
+            data_path = prompt_path + '.quantity_value'
         if self.prompt_type == 'PERCENTAGE':
-            data_path = 'prompt_page.prompts["' + self.name + '"].precentage_value'
+            data_path = prompt_path + '.precentage_value'
         if self.prompt_type == 'CHECKBOX':
-            data_path = 'prompt_page.prompts["' + self.name + '"].checkbox_value'
+            data_path = prompt_path + '.checkbox_value'
         if self.prompt_type == 'COMBOBOX':
-            data_path = 'prompt_page.prompts["' + self.name + '"].combobox_index'
+            data_path = prompt_path + '.combobox_index'
         if self.prompt_type == 'TEXT':
-            data_path = 'prompt_page.prompts["' + self.name + '"].text_value'
+            data_path = prompt_path + '.text_value'
 
         driver = self.id_data.driver_add(data_path)
         add_driver_variables(driver,variables)
@@ -273,6 +225,55 @@ class Prompt_Page(PropertyGroup):
         prompt.name = prompt_name
         prompt.tab_index = self.tab_index
         return prompt
+
+
+class BP_Window_Manager_Library_Props(bpy.types.PropertyGroup):
+    library_items: bpy.props.CollectionProperty(name="Library Items", type=Library_Item)
+
+    object_library_path: bpy.props.StringProperty(name="Object Library Path",
+                                                   default="",
+                                                   subtype='DIR_PATH',
+                                                   update=update_library_paths)
+    
+    collection_library_path: bpy.props.StringProperty(name="Collection Library Path",
+                                                  default="",
+                                                  subtype='DIR_PATH',
+                                                  update=update_library_paths)
+    
+    material_library_path: bpy.props.StringProperty(name="Material Library Path",
+                                                     default="",
+                                                     subtype='DIR_PATH',
+                                                     update=update_library_paths)        
+
+    script_library_path: bpy.props.StringProperty(name="Script Library Path",
+                                                  default="",
+                                                  subtype='DIR_PATH',
+                                                  update=update_library_paths)
+
+    object_category: bpy.props.StringProperty(name="Object Category",
+                                               default="",
+                                               update=update_library_paths)   
+        
+    collection_category: bpy.props.StringProperty(name="Collection Category",
+                                              default="",
+                                              update=update_library_paths)  
+    
+    material_category: bpy.props.StringProperty(name="Material Category",
+                                                 default="",
+                                                 update=update_library_paths)  
+                
+
+    @classmethod
+    def register(cls):
+        bpy.types.WindowManager.bp_lib = bpy.props.PointerProperty(
+            name="BP Library",
+            description="Blender Pro Library Properties",
+            type=cls,
+        )
+        
+    @classmethod
+    def unregister(cls):
+        del bpy.types.WindowManager.bp_lib
 
 
 class BP_Scene_Props(PropertyGroup):

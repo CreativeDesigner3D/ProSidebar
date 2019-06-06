@@ -136,10 +136,53 @@ class ASSEMBLY_OT_connect_mesh_to_hooks_in_assembly(Operator):
                 
         return {'FINISHED'}
 
+class ASSEMBLY_OT_create_assembly_script(Operator):
+    bl_idname = "bp_assembly.create_assembly_script"
+    bl_label = "Create Assembly Script"
+    bl_options = {'UNDO'}
+    
+    @classmethod
+    def poll(cls, context):
+        return True
+    
+    def execute(self, context):
+        obj = context.object
+        coll = bp_utils.get_assembly_collection(obj)
+        assembly = bp_types.Assembly(coll)
+
+        #Create New Script
+        text = bpy.data.texts.new(coll.name)
+
+        #Add Imports
+        text.write('import bpy\n')
+        #Figure out how to import bp_types
+                
+        #Add Class Def
+        text.write('class ' + coll.name + '(bp_types.Assembly):\n')
+        text.write('    def draw(self):\n')
+        text.write('    self.create_assembly()\n')
+
+        #Add Prompts
+        for prompt in assembly.obj_prompts.prompt_page.prompts:
+            pass
+
+        #Add Empty Objects Except Built-in Assembly Objects
+        #for obj in assembly.empty_objs:
+        for obj in assembly.obj_bp.children:
+            if obj.type == 'EMPTY':
+                pass #Assign Drivers and Constraints
+
+        #Add Mesh Objects This needs to be done after empties for hooks
+        #for obj in assembly.mesh_objs:
+        for obj in assembly.obj_bp.children:
+            pass
+        return {'FINISHED'}
+
 classes = (
     ASSEMBLY_OT_create_new_assembly,
     ASSEMBLY_OT_add_object,
-    ASSEMBLY_OT_connect_mesh_to_hooks_in_assembly
+    ASSEMBLY_OT_connect_mesh_to_hooks_in_assembly,
+    ASSEMBLY_OT_create_assembly_script
 )
 
 register, unregister = bpy.utils.register_classes_factory(classes)

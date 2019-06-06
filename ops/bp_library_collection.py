@@ -90,7 +90,7 @@ class LIBRARY_OT_add_collection_from_library(bpy.types.Operator):
     
     drawing_plane = None
     grp = None
-    parent_objects = []
+    parent_obj_dict = {}
     collection_objects = []
     
     @classmethod
@@ -105,8 +105,8 @@ class LIBRARY_OT_add_collection_from_library(bpy.types.Operator):
         return True
 
     def invoke(self,context,event):
-        self.parent_objects = []
         self.collection_objects = []
+        self.parent_obj_dict = {}
         clear_collection_categories(self,context)
         update_collection_category(self,context)
         wm = context.window_manager
@@ -132,7 +132,8 @@ class LIBRARY_OT_add_collection_from_library(bpy.types.Operator):
         for obj in coll.objects:
             self.collection_objects.append(obj)
             if obj.parent is None:
-                self.parent_objects.append(obj)   
+                self.parent_obj_dict[obj] = (obj.location.x, obj.location.y, obj.location.z)
+
         for child in coll.children:
             self.get_collection_objects(child)
 
@@ -157,6 +158,13 @@ class LIBRARY_OT_add_collection_from_library(bpy.types.Operator):
         self.drawing_plane = context.active_object
         self.drawing_plane.display_type = 'WIRE'
         self.drawing_plane.dimensions = (100,100,1)
+
+    def position_collection(self,selected_point,selected_obj):
+        for obj, location in self.parent_obj_dict.items():
+            obj.location = selected_point
+            obj.location.x += location[0]
+            obj.location.y += location[1]
+            obj.location.z += location[2]
 
     def modal(self, context, event):
         context.area.tag_redraw()
@@ -199,10 +207,6 @@ class LIBRARY_OT_add_collection_from_library(bpy.types.Operator):
         else:
             return False
 
-    def position_collection(self,selected_point,selected_obj):
-        for obj in self.parent_objects:
-            obj.location = selected_point
-
     def cancel_drop(self,context):
         obj_list = []
         obj_list.append(self.drawing_plane)
@@ -216,7 +220,7 @@ class LIBRARY_OT_add_collection_from_library(bpy.types.Operator):
         if self.drawing_plane:
             bp_utils.delete_obj_list([self.drawing_plane])
         bpy.ops.object.select_all(action='DESELECT')
-        for obj in self.parent_objects:
+        for obj, location in self.parent_obj_dict.items():
             obj.select_set(True)  
             context.view_layer.objects.active = obj             
         #SELECT BASE POINTS

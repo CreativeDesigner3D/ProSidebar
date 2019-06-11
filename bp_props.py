@@ -170,6 +170,9 @@ class Prompt(PropertyGroup):
         add_driver_variables(driver,variables)
         driver.driver.expression = expression
 
+    def draw_prompt_properties(self,layout):
+        pass #RENAME PROMPT, #LOCK VALUE, #TAB INDEX, #IF COMBOBOX THEN COLUMN NUMBER
+
     def draw(self,layout):
         row = layout.row()
         row.label(text=self.name)
@@ -190,11 +193,55 @@ class Prompt(PropertyGroup):
         if self.prompt_type == 'TEXT':
             row.prop(self,"text_value",text="")
 
+class Calculator_Prompt(PropertyGroup):
+    distance_value: FloatProperty(name="Distance Value",subtype='DISTANCE')
+    equal: BoolProperty(name="Equal",default=True)
+
+    def draw(self,layout):
+        pass
+
+class Calculator(PropertyGroup):
+    prompts: CollectionProperty(name="Prompts",type=Calculator_Prompt)
+    total_distance: FloatProperty(name="Distance Value",subtype='DISTANCE')
+
+    def set_total_distance(self,expression="",variables=[],value=0):
+        pass
+
+    def draw_calculator(self,layout):
+        pass
+
+    def add_calculator_prompt(self,name):
+        prompt = self.prompts.add()
+        prompt.name = name
+
+    def remove_calculator_prompt(self,name):
+        pass
+
+    def calculate(self):
+        non_equal_prompts_total_value = 0
+        equal_prompt_qty = 0
+        calc_prompts = []
+        for prompt in self.prompts:
+            if prompt.equal:
+                equal_prompt_qty += 1
+                calc_prompts.append(prompt)
+            else:
+                non_equal_prompts_total_value += prompt.distance_value
+
+        if equal_prompt_qty > 0:
+            prompt_value = (self.total_distance - non_equal_prompts_total_value) / equal_prompt_qty
+
+            for prompt in calc_prompts:
+                prompt.distance_value = prompt_value
+
+            self.id_data.location = self.id_data.location #NOT SURE THIS IS NEEDED
+
 
 class Prompt_Page(PropertyGroup):
     tabs: CollectionProperty(type=Tab, name="Tabs")
     tab_index: IntProperty(name="Tab Index")
     prompts: CollectionProperty(type=Prompt, name="Prompts")
+    calculators: CollectionProperty(type=Calculator, name="Calculators")
     
     @classmethod
     def register(cls):
@@ -212,10 +259,19 @@ class Prompt_Page(PropertyGroup):
         tab = self.tabs.add()
         tab.name = name
 
+    def delete_prompt(self,name):
+        for index, prompt in enumerate(self.prompts):
+            if prompt.name == name:
+                self.prompts.remove(index)
+
+    def delete_tab(self,name):
+        for index, tab in enumerate(self.tab):
+            if tab.name == name:
+                self.tabs.remove(index)
+
     def draw_prompts(self,layout,data_type):
         props = layout.operator('bp_prompts.add_prompt')
-        props.data_type = data_type
-        props.data_name = self.id_data.name
+        props.obj_name = self.id_data.name
         for prompt in self.prompts:
             prompt.draw(layout)
     
@@ -406,11 +462,13 @@ class BP_Object_Driver_Props(PropertyGroup):
 classes = (
     Tag,
     Library_Item,
-    BP_Window_Manager_Library_Props,
     Combobox_Item,
     Tab,
     Prompt,
+    Calculator_Prompt,
+    Calculator,
     Prompt_Page,    
+    BP_Window_Manager_Library_Props,
     BP_Scene_Props,
     BP_Collection_Props,
     BP_Object_Props,

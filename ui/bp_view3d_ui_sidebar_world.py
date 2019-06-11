@@ -39,32 +39,6 @@ class VIEW3D_PT_worlds(Panel):
         #         box.prop(node,'rotation')
 
 
-class VIEW3D_PT_world_prompts(Panel):
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"
-    bl_category = "World"
-    bl_label = "Prompts"
-    bl_options = {'DEFAULT_CLOSED'}
-    
-    @classmethod
-    def poll(cls, context):
-        if context.scene.world:
-            return True
-        else:
-            return False
-
-    def draw_header(self, context):
-        layout = self.layout
-        obj = context.object
-        layout.label(text="",icon='LINENUMBERS_ON')
-
-    def draw(self, context):
-        layout = self.layout
-        world = context.scene.world
-        if world:
-            world.prompt_page.draw_prompts(layout,'WORLD')
-
-
 class VIEW3D_MT_add_world(bpy.types.Menu):
     bl_label = "Add World"
 
@@ -86,7 +60,6 @@ class BP_UL_worlds(UIList):
 classes = (
     VIEW3D_PT_worlds,
     VIEW3D_MT_add_world,
-    VIEW3D_PT_world_prompts,
     BP_UL_worlds,
 )
 

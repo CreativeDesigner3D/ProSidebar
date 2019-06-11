@@ -59,7 +59,7 @@ class VIEW3D_PT_assembly(Panel):
                 s_col.prop(assembly.obj_bp,'rotation_euler',text="Rotation")
 
             if active_coll.bp_props.assembly_tabs == 'PROMPTS':
-                assembly.obj_prompts.prompt_page.draw_prompts(box,'OBJECT')
+                assembly.obj_prompts.prompt_page.draw_prompts(box)
 
             if active_coll.bp_props.assembly_tabs == 'OBJECTS':
                 box.operator('bp_assembly.add_object',icon='ADD')

@@ -41,8 +41,8 @@ class WORLD_OT_delete_world(Operator):
 
     def draw(self, context):
         layout = self.layout
-        layout.label("Are you sure you want to delete the world?")
-        layout.label("World Name: " + self.world_name)
+        layout.label(text="Are you sure you want to delete the world?")
+        layout.label(text="World Name: " + self.world_name)
 
 class WORLD_OT_create_world_from_hdr(Operator):
     """Creates a New World from a HDR"""

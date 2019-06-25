@@ -27,16 +27,18 @@ class VIEW3D_PT_collection_info(Panel):
         row.alignment = 'LEFT'
         if bpy.context.view_layer.active_layer_collection.name == collection.name:
             icon='CHECKBOX_HLT'
-            # row.label(text="",icon='FILE_TICK')
         else:
             icon='BLANK1'
-            # row.label(text="",icon='BLANK1')
 
         for i in range(0,indent_amount):
             row.label(text="",icon='BLANK1')
 
-        row.prop(collection.bp_props,'is_expanded',text="",icon='TRIA_DOWN' if collection.bp_props.is_expanded else 'TRIA_RIGHT',emboss=False)
+        if len(collection.children) > 0:
+            row.prop(collection.bp_props,'is_expanded',text="",icon='TRIA_DOWN' if collection.bp_props.is_expanded else 'TRIA_RIGHT',emboss=False)
+        else:
+            row.label(text="",icon='BLANK1')
         row.operator('bp_collection.set_active_collection',text=collection.name,emboss=False,icon=icon).collection_name = collection.name
+        row.operator('bp_collection.delete_collection',text="",icon='X',emboss = False).collection_name = collection.name
         if collection.bp_props.is_expanded:
             for child in collection.children:
                 self.draw_collection(layout,child,indent_amount + 1)

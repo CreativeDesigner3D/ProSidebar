@@ -80,9 +80,37 @@ class COLLECTION_OT_create_collection(Operator):
         layout.prop(self,'collection_name')
 
 
+class COLLECTION_OT_delete_collection(Operator):
+    bl_idname = "bp_collection.delete_collection"
+    bl_label = "Delete Collection"
+    bl_description = "This will delete the collection"
+    bl_options = {'UNDO'}
+
+    collection_name: StringProperty(name="Collection Name",default="New Collection")
+
+    @classmethod
+    def poll(cls, context):
+        return True
+
+    def execute(self, context):
+        coll = bpy.data.collections[self.collection_name]
+        bpy.data.collections.remove(coll)
+        return {'FINISHED'}
+
+    def invoke(self,context,event):
+        wm = context.window_manager
+        return wm.invoke_props_dialog(self, width=400)
+
+    def draw(self, context):
+        layout = self.layout
+        layout.label(text="Are you sure you want to remove the collection?")
+        layout.label(text="Colleciton Name: " + self.collection_name)
+
+
 classes = (
     COLLECTION_OT_create_collection,
-    COLLECTION_OT_set_active_collection
+    COLLECTION_OT_set_active_collection,
+    COLLECTION_OT_delete_collection
 )
 
 register, unregister = bpy.utils.register_classes_factory(classes)

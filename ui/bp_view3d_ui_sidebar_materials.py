@@ -36,9 +36,10 @@ class VIEW3D_PT_materials(Panel):
         if len(bpy.data.materials) > 0:
             layout.template_list("BP_UL_materials", "", bpy.data, "materials", scene.bp_props, "selected_material_index", rows=4)
             
-            # layout.template_list("MATERIAL_UL_matslots", "", bpy.data, "materials", scene.bp_props, "selected_material_index", rows=4)
-            mat = bpy.data.materials[scene.bp_props.selected_material_index]
-            layout.prop(mat,'name')
+            if scene.bp_props.selected_material_index <= len(bpy.data.materials):
+                mat = bpy.data.materials[scene.bp_props.selected_material_index]
+                layout.prop(mat,'name')
+                layout.prop(mat,'diffuse_color',text="Viewport Display")
         layout.operator('library.assign_material',text="Assign Selected Material",icon='NONE')
 
 class BP_UL_materials(UIList):

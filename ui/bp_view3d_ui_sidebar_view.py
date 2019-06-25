@@ -160,11 +160,58 @@ class VIEW3D_PT_view3d_cursor(Panel):
             layout.column().prop(cursor, "rotation_euler", text="Rotation")
         layout.prop(cursor, "rotation_mode", text="")
 
+class VIEW3D_PT_interface(Panel):
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+    bl_category = "View"
+    bl_label = "Interface"
+
+    def draw_header(self, context):
+        layout = self.layout
+        layout.label(text="",icon='COLOR')
+
+    def draw(self, context):
+        layout = self.layout
+        props = layout.operator("bp_general.split_region",text="Show Timeline",icon='TIME')
+        props.space_type = 'DOPESHEET_EDITOR'
+        props.space_sub_type = 'GPENCIL'
+        props.split_direction = 'HORIZONTAL'
+        props.split_factor = .2
+
+        props = layout.operator("bp_general.split_region",text="Show Node Editor",icon='NODETREE')
+        props.space_type = 'NODE_EDITOR'
+        props.split_direction = 'VERTICAL'
+        props.split_factor = .5
+
+        props = layout.operator("bp_general.split_region",text="Show UV Editor",icon='UV')
+        props.space_type = 'IMAGE_EDITOR'
+        props.space_sub_type = 'UV'
+        props.split_direction = 'VERTICAL'
+        props.split_factor = .5
+
+        props = layout.operator("bp_general.split_region",text="Show Text Editor",icon='TEXT')
+        props.space_type = 'TEXT_EDITOR'
+        props.split_direction = 'VERTICAL'
+        props.split_factor = .5
+
+        props = layout.operator("bp_general.split_region",text="Show Outliner",icon='OUTLINER')
+        props.space_type = 'OUTLINER'
+        props.split_direction = 'VERTICAL'
+        props.split_factor = .2
+
+        props = layout.operator("bp_general.split_region",text="Show Properties",icon='PROPERTIES')
+        props.space_type = 'PROPERTIES'
+        props.split_direction = 'VERTICAL'
+        props.split_factor = .2
+
+
+
 classes = (
     VIEW3D_PT_view_info,
     VIEW3D_PT_view3d_properties,
     VIEW3D_PT_view3d_camera_lock,
     VIEW3D_PT_view3d_cursor,
+    VIEW3D_PT_interface,
 )
 
 register, unregister = bpy.utils.register_classes_factory(classes)

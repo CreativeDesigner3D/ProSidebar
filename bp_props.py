@@ -269,7 +269,7 @@ class Prompt_Page(PropertyGroup):
             if tab.name == name:
                 self.tabs.remove(index)
 
-    def draw_prompts(self,layout,data_type):
+    def draw_prompts(self,layout):
         props = layout.operator('bp_prompts.add_prompt')
         props.obj_name = self.id_data.name
         for prompt in self.prompts:

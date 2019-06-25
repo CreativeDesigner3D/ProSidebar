@@ -88,6 +88,9 @@ class VIEW3D_PT_scenes_audio(Panel):
         ffmpeg = rd.ffmpeg
         strip = None
         sound = None
+        if context.scene.sequence_editor is None:
+            context.scene.sequence_editor_create()
+
         for sequence in context.scene.sequence_editor.sequences:
             if sequence.type == 'SOUND':
                 strip = sequence

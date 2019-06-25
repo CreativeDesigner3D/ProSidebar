@@ -58,6 +58,7 @@ class VIEW3D_PT_objects(Panel):
             row.operator('object.mode_set',text="Sculpt",icon = 'CHECKBOX_HLT' if obj.mode == 'SCULPT_GPENCIL' else 'BLANK1').mode = 'SCULPT_GPENCIL'
 
     def draw(self, context):
+
         obj = context.object
         layout = self.layout
         
@@ -74,6 +75,7 @@ class VIEW3D_PT_objects(Panel):
             split.popover(panel="VIEW3D_PT_object_selection",text=obj.name,icon=bp_utils.get_object_icon(obj))
             split.menu("VIEW3D_MT_bp_add", text="Add",icon='ADD')
             layout.prop(obj,'name')
+            layout.prop(obj,'parent')
         else:
             row = layout.row(align=True)
             row.scale_y = 1.3            
@@ -292,7 +294,7 @@ class VIEW3D_PT_object_material(Panel):
                     col.prop(gpcolor, "pattern_gridsize", text="Box Size")
 
             # Texture
-            if gpcolor.fill_style == 'TEXTURE' or (gpcolor.texture_mix is True and gpcolor.fill_style == 'SOLID'):
+            if gpcolor.fill_style == 'TEXTURE' or (gpcolor.use_fill_texture_mix is True and gpcolor.fill_style == 'SOLID'):
                 col.template_ID(gpcolor, "fill_image", open="image.open")
 
                 if gpcolor.fill_style == 'TEXTURE':

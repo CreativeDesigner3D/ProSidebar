@@ -36,8 +36,8 @@ class bp_material_OT_delete_material(Operator):
 
     def draw(self, context):
         layout = self.layout
-        layout.label("Are you sure you want to delete the material?")  
-        layout.label("Material Name: " + self.material_name)
+        layout.label(text="Are you sure you want to delete the material?")  
+        layout.label(text="Material Name: " + self.material_name)
 
 classes = (
     bp_material_OT_delete_material,

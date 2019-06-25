@@ -453,7 +453,7 @@ class LIBRARY_OT_assign_material_dialog(bpy.types.Operator):
         layout = self.layout
         layout.label(text=self.obj.name,icon='OBJECT_DATA')
         for index, mat_slot in enumerate(self.obj.material_slots):
-            row = layout.split(percentage=.55)
+            row = layout.split(factor=.55)
             if mat_slot.name == "":
                 row.label(text='No Material')
             else:

@@ -1,33 +1,50 @@
 import bpy
 from bpy.types import Header, Menu, Panel
 
-class DrawMenu(bpy.types.Menu):
-    bl_label = "Draw"
-    bl_idname = "OBJECT_MT_draw_menu"
+class InterfaceMenu(bpy.types.Menu):
+    bl_label = "Interface"
+    bl_idname = "VIEW_MT_interface_menu"
 
     def draw(self, context):
         layout = self.layout
-        layout.operator('bp.draw_plane')
-        layout.label(text="TODO: Draw Cube")
-        layout.label(text="TODO: Draw Lamp")
-        layout.operator('bp_object.particle_paint')
+        props = layout.operator("bp_general.split_region",text="Show Timeline",icon='TIME')
+        props.space_type = 'DOPESHEET_EDITOR'
+        props.space_sub_type = 'GPENCIL'
+        props.split_direction = 'HORIZONTAL'
+        props.split_factor = .2
 
-class LibraryMenu(bpy.types.Menu):
-    bl_label = "Library"
-    bl_idname = "OBJECT_MT_library_menu"
+        props = layout.operator("bp_general.split_region",text="Show Node Editor",icon='NODETREE')
+        props.space_type = 'NODE_EDITOR'
+        props.split_direction = 'VERTICAL'
+        props.split_factor = .5
 
-    def draw(self, context):
-        layout = self.layout
-        layout.operator('bp.object_library',text="Show Library")
+        props = layout.operator("bp_general.split_region",text="Show UV Editor",icon='UV')
+        props.space_type = 'IMAGE_EDITOR'
+        props.space_sub_type = 'UV'
+        props.split_direction = 'VERTICAL'
+        props.split_factor = .5
+
+        props = layout.operator("bp_general.split_region",text="Show Text Editor",icon='TEXT')
+        props.space_type = 'TEXT_EDITOR'
+        props.split_direction = 'VERTICAL'
+        props.split_factor = .5
+
+        props = layout.operator("bp_general.split_region",text="Show Outliner",icon='OUTLINER')
+        props.space_type = 'OUTLINER'
+        props.split_direction = 'VERTICAL'
+        props.split_factor = .2
+
+        props = layout.operator("bp_general.split_region",text="Show Properties",icon='PROPERTIES')
+        props.space_type = 'PROPERTIES'
+        props.split_direction = 'VERTICAL'
+        props.split_factor = .2
 
 def draw_item(self, context):
     layout = self.layout
-    layout.menu(DrawMenu.bl_idname)
-    layout.menu(LibraryMenu.bl_idname)
+    layout.menu(InterfaceMenu.bl_idname)
             
 classes = (
-    DrawMenu,
-    LibraryMenu,
+    InterfaceMenu,
 )
 
 register, unregister = bpy.utils.register_classes_factory(classes)

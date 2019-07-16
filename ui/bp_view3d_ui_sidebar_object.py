@@ -712,28 +712,27 @@ class VIEW3D_PT_object_data(Panel):
 
         #DOF
         box = layout.box()
-        box.label(text="Depth of Field")
-        row = box.row()
-        row.label(text="Focus on Object:")
-        row.prop(cam, "dof_object", text="")
+        box.prop(cam.dof,'use_dof',text="Depth of Field")
+        if cam.dof.use_dof:
+            row = box.row()
+            row.label(text="Focus on Object:")
+            row.prop(cam.dof, "focus_object", text="")
 
-        sub = box.column()
-        sub.active = (cam.dof_object is None)
-        row = sub.row()
-        row.label(text="Focus Distance:")        
-        row.prop(cam, "dof_distance", text="")
+            sub = box.column()
+            sub.active = (cam.dof.focus_object is None)
+            row = sub.row()
+            row.label(text="Focus Distance:")        
+            row.prop(cam.dof, "focus_distance", text="")
 
-        dof_options = cam.gpu_dof
+            flow = box.grid_flow(row_major=True, columns=0, even_columns=True, even_rows=False, align=False)
 
-        flow = box.grid_flow(row_major=True, columns=0, even_columns=True, even_rows=False, align=False)
+            col = flow.column()
+            col.prop(cam.dof, "aperture_fstop")
+            col.prop(cam.dof, "aperture_blades")
 
-        col = flow.column()
-        col.prop(dof_options, "fstop")
-        col.prop(dof_options, "blades")
-
-        col = flow.column()
-        col.prop(dof_options, "rotation")
-        col.prop(dof_options, "ratio")        
+            col = flow.column()
+            col.prop(cam.dof, "aperture_rotation")
+            col.prop(cam.dof, "aperture_ratio")        
 
     def draw_light_properties(self,layout,obj):
         light = obj.data
@@ -1155,6 +1154,11 @@ class VIEW3D_MT_bp_add(bpy.types.Menu):
                 text="Collection Instance",
                 icon='OUTLINER_OB_GROUP_INSTANCE',
             )
+
+        layout.separator()
+
+        layout.operator('bp.draw_plane',icon='MATPLANE')
+        layout.operator('bp_object.particle_paint',icon='SHADERFX')            
 
 classes = (
     VIEW3D_PT_objects,

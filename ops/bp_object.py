@@ -114,7 +114,7 @@ class bp_object_OT_add_camera(bpy.types.Operator):
     bl_options = {'UNDO'}
 
     def execute(self, context):
-        bpy.ops.object.camera_add(view_align=False)
+        bpy.ops.object.camera_add(align='VIEW')
         camera = context.active_object
         bpy.ops.view3d.camera_to_view()
         camera.data.clip_start = bp_unit.inch(1)

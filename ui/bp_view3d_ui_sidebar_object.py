@@ -78,8 +78,10 @@ class VIEW3D_PT_objects(Panel):
             layout.prop(obj,'parent')
         else:
             row = layout.row(align=True)
-            row.scale_y = 1.3            
-            row.menu("VIEW3D_MT_bp_add", text="Add",icon='ADD')
+            row.scale_y = 1.3
+            split = row.split(factor=.7,align=True)
+            split.popover(panel="VIEW3D_PT_object_selection",text="No Selection",icon='DOT')
+            split.menu("VIEW3D_MT_bp_add", text="Add",icon='ADD')
 
 
 class SCENE_UL_objects(UIList):
@@ -116,12 +118,18 @@ class VIEW3D_PT_object_transform(Panel):
     
     def draw_header(self, context):
         layout = self.layout
-        layout.label(text='',icon='ORIENTATION_GIMBAL')
+        layout.label(text='',icon='ORIENTATION_GIMBAL')     
 
     def draw(self, context):
         layout = self.layout
         obj = context.object
         if obj.type not in {'EMPTY','CAMERA','LIGHT'}:
+            if obj.scale.x != 1 or obj.scale.y != 1 or obj.scale.z != 1:
+                props = layout.operator('object.transform_apply',text="Apply Scale",icon='ERROR')
+                props.location = False
+                props.rotation = False
+                props.scale = True
+
             col = layout.column(align=True)
             col.label(text='Dimensions:')
             #X
@@ -877,13 +885,240 @@ class VIEW3D_PT_object_data(Panel):
             col.prop(obj, "show_empty_image_perspective", text="Display Perspective")
 
     def draw_curve_properties(self,layout,obj):
-        pass
-        #SHAPE, GEO, BEVEL, ACTIVE SPLINE   
-        #PATH ANIMATION
+        curve = obj.data
+
+        is_surf = type(curve) is bpy.types.SurfaceCurve
+        is_curve = type(curve) is bpy.types.Curve
+        is_text = type(curve) is bpy.types.TextCurve
+
+        if is_curve:
+            row = layout.row()
+            row.prop(curve, "dimensions", expand=True)
+
+        layout.use_property_split = True
+
+        col = layout.column()
+        sub = col.column(align=True)
+        sub.prop(curve, "resolution_u", text="Resolution Preview U")
+        if is_surf:
+            sub.prop(curve, "resolution_v", text="V")
+
+        sub = col.column(align=True)
+        sub.prop(curve, "render_resolution_u", text="Render U")
+        if is_surf:
+            sub.prop(curve, "render_resolution_v", text="V")
+        col.separator()
+
+        if is_curve:
+            col.prop(curve, "twist_mode")
+            col.prop(curve, "twist_smooth", text="Smooth")
+        elif is_text:
+            col.prop(curve, "use_fast_edit", text="Fast Editing")
+
+        if is_curve or is_text:
+            col = layout.column()
+            col.separator()
+
+            sub = col.column()
+            sub.active = (curve.dimensions == '2D' or (curve.bevel_object is None and curve.dimensions == '3D'))
+            sub.prop(curve, "fill_mode")
+            col.prop(curve, "use_fill_deform")
+
+        if is_curve:
+            col = layout.column()
+            col.separator()
+
+            sub = col.column()
+            sub.prop(curve, "use_radius")
+            sub.prop(curve, "use_stretch")
+            sub.prop(curve, "use_deform_bounds")
+
+        col = layout.column()
+        col.prop(curve, "offset")
+
+        sub = col.column()
+        sub.active = (curve.bevel_object is None)
+        sub.prop(curve, "extrude")
+
+        col.prop(curve, "taper_object")
+
+        if type(curve) is not bpy.types.TextCurve:
+            # This setting makes no sense for texts, since we have no control over start/end of the bevel object curve.
+            sub = col.column()
+            sub.active = curve.taper_object is not None
+            sub.prop(curve, "use_map_taper")
+
+        col = layout.column()
+        sub = col.column()
+        sub.active = (curve.bevel_object is None)
+        sub.prop(curve, "bevel_depth", text="Depth")
+        sub.prop(curve, "bevel_resolution", text="Resolution")
+
+        col.prop(curve, "bevel_object", text="Object")
+
+        sub = col.column()
+        sub.active = curve.bevel_object is not None
+        sub.prop(curve, "use_fill_caps")
+
+        if type(curve) is not bpy.types.TextCurve:
+
+            col = layout.column()
+            col.active = (
+                (curve.bevel_depth > 0.0) or
+                (curve.extrude > 0.0) or
+                (curve.bevel_object is not None)
+            )
+            sub = col.column(align=True)
+            sub.prop(curve, "bevel_factor_start", text="Bevel Start")
+            sub.prop(curve, "bevel_factor_end", text="End")
+
+            sub = col.column(align=True)
+            sub.prop(curve, "bevel_factor_mapping_start", text="Bevel Mapping Start")
+            sub.prop(curve, "bevel_factor_mapping_end", text="End")
 
     def draw_gpencil_properties(self,layout,obj):
         pass
         #LAYERS
+
+    def draw_metaball_properties(self,layout,obj):
+        mball = obj.data
+
+        col = layout.column(align=True)
+        col.prop(mball, "resolution", text="Resolution Viewport")
+        col.prop(mball, "render_resolution", text="Render")
+
+        col.separator()
+
+        col.prop(mball, "threshold", text="Influence Threshold")
+
+        col.separator()
+
+        col.prop(mball, "update_method", text="Update on Edit")
+
+        if obj.mode == 'EDIT':
+            col = layout.column()
+            metaelem = mball.elements.active    
+
+            col.prop(metaelem, "type")
+
+            col.separator()
+
+            col.prop(metaelem, "stiffness", text="Stiffness")
+            col.prop(metaelem, "radius", text="Radius")
+            col.prop(metaelem, "use_negative", text="Negative")
+            col.prop(metaelem, "hide", text="Hide")
+
+            sub = col.column(align=True)
+
+            if metaelem.type in {'CUBE', 'ELLIPSOID'}:
+                sub.prop(metaelem, "size_x", text="Size X")
+                sub.prop(metaelem, "size_y", text="Y")
+                sub.prop(metaelem, "size_z", text="Z")
+
+            elif metaelem.type == 'CAPSULE':
+                sub.prop(metaelem, "size_x", text="Size X")
+
+            elif metaelem.type == 'PLANE':
+                sub.prop(metaelem, "size_x", text="Size X")
+                sub.prop(metaelem, "size_y", text="Y")
+
+    def draw_lattice_properties(self,layout,obj):
+        lat = obj.data
+
+        col = layout.column()
+
+        sub = col.column(align=True)
+        sub.prop(lat, "points_u", text="Resolution U")
+        sub.prop(lat, "points_v", text="V")
+        sub.prop(lat, "points_w", text="W")
+
+        col.separator()
+
+        sub = col.column(align=True)
+        sub.prop(lat, "interpolation_type_u", text="Interpolation U")
+        sub.prop(lat, "interpolation_type_v", text="V")
+        sub.prop(lat, "interpolation_type_w", text="W")
+
+        col.separator()
+
+        col.prop(lat, "use_outside")
+
+        col.separator()
+
+        col.prop_search(lat, "vertex_group", obj, "vertex_groups")
+
+    def draw_light_probe_properties(self,layout,obj):
+        probe = obj.data
+
+        if probe.type == 'GRID':
+            col = layout.column()
+            col.prop(probe, "influence_distance", text="Distance")
+            col.prop(probe, "falloff")
+            col.prop(probe, "intensity")
+
+            sub = col.column(align=True)
+            sub.prop(probe, "grid_resolution_x", text="Resolution X")
+            sub.prop(probe, "grid_resolution_y", text="Y")
+            sub.prop(probe, "grid_resolution_z", text="Z")
+
+        elif probe.type == 'PLANAR':
+            col = layout.column()
+            col.prop(probe, "influence_distance", text="Distance")
+            col.prop(probe, "falloff")
+        else:
+            col = layout.column()
+            col.prop(probe, "influence_type")
+
+            if probe.influence_type == 'ELIPSOID':
+                col.prop(probe, "influence_distance", text="Radius")
+            else:
+                col.prop(probe, "influence_distance", text="Size")
+
+            col.prop(probe, "falloff")
+            col.prop(probe, "intensity")
+
+        sub = col.column(align=True)
+        if probe.type != 'PLANAR':
+            sub.prop(probe, "clip_start", text="Clipping Start")
+        else:
+            sub.prop(probe, "clip_start", text="Clipping Offset")
+
+        if probe.type != 'PLANAR':
+            sub.prop(probe, "clip_end", text="End")        
+
+        if probe.type == 'GRID':
+            col.prop(probe, "visibility_buffer_bias", text="Bias")
+            col.prop(probe, "visibility_bleed_bias", text="Bleed Bias")
+            col.prop(probe, "visibility_blur", text="Blur")
+
+        row = col.row(align=True)
+        row.prop(probe, "visibility_collection")
+        row.prop(probe, "invert_visibility_collection", text="", icon='ARROW_LEFTRIGHT')
+
+        layout.prop(probe, "use_custom_parallax")
+
+        col = layout.column()
+        col.active = probe.use_custom_parallax
+
+        col.prop(probe, "parallax_type")
+
+        if probe.parallax_type == 'ELIPSOID':
+            col.prop(probe, "parallax_distance", text="Radius")
+        else:
+            col.prop(probe, "parallax_distance", text="Size")
+
+        if probe.type == 'PLANAR':
+            col.prop(obj, "empty_display_size", text="Arrow Size")
+            col.prop(probe, "show_data")
+
+        if probe.type in {'GRID', 'CUBEMAP'}:
+            col.prop(probe, "show_influence")
+            col.prop(probe, "show_clip")
+
+        if probe.type == 'CUBEMAP':
+            sub = col.column()
+            sub.active = probe.use_custom_parallax
+            sub.prop(probe, "show_parallax")
 
     def draw(self, context):
         layout = self.layout
@@ -896,30 +1131,30 @@ class VIEW3D_PT_object_data(Panel):
             self.draw_curve_properties(layout,obj)
             self.draw_shape_keys(layout,obj)
         if obj.type == 'FONT':
-            pass
+            self.draw_curve_properties(layout,obj)
         if obj.type == 'EMPTY':
             self.draw_empty_properties(layout,obj)
         if obj.type == 'LATTICE':
-            pass
+            self.draw_lattice_properties(layout,obj)
         if obj.type == 'META':
-            pass                                         
+            self.draw_metaball_properties(layout,obj)                              
         if obj.type == 'LIGHT':
             self.draw_light_properties(layout,obj)
         if obj.type == 'CAMERA':
             self.draw_camera_properties(layout,obj)
             self.draw_camera_background_images(layout,obj)
         if obj.type == 'SURFACE':
-            pass
+            self.draw_curve_properties(layout,obj)
         if obj.type == 'ARMATURE':
-            pass
+            pass #TODO:
         if obj.type == 'SPEAKER':
-            pass
+            pass #TODO
         if obj.type == 'FORCE_FIELD':
             pass
         if obj.type == 'GPENCIL':
             pass 
         if obj.type == 'LIGHT_PROBE':
-            pass
+            self.draw_light_probe_properties(layout,obj)
 
 class VIEW3D_PT_object_drivers(Panel):
     bl_space_type = "VIEW_3D"
@@ -1043,36 +1278,6 @@ class VIEW3D_PT_object_drivers(Panel):
                     
                     self.draw_driver_expression(box,driver)
                     self.draw_driver_variable(box,driver,obj)                    
-
-class VIEW3D_PT_grease_pencil(Panel):
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"
-    bl_category = "Object"
-    bl_label = "Grease Pencil Layers"
-    bl_options = {'DEFAULT_CLOSED'}
-    
-    @classmethod
-    def poll(cls, context):
-        if context.object:
-            if context.object.type == 'GPENCIL':
-                return True
-            else:
-                return False
-        else:
-            return False
-
-    def draw_header(self, context):
-        layout = self.layout
-        obj = context.object
-        layout.label(text="",icon='COLOR')
-
-    def draw(self, context):
-        layout = self.layout
-        props = layout.operator("bp_general.split_region")
-        props.space_type = 'DOPESHEET_EDITOR'
-        props.space_sub_type = 'GPENCIL'
-        props.split_direction = 'HORIZONTAL'
-        props.split_factor = .2
         
 
 class VIEW3D_MT_bp_add(bpy.types.Menu):
@@ -1171,7 +1376,6 @@ classes = (
     VIEW3D_PT_object_modifiers,
     VIEW3D_PT_object_constraints,
     VIEW3D_PT_object_drivers,
-    VIEW3D_PT_grease_pencil,
     VIEW3D_MT_bp_add
 )
 

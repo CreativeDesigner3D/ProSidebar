@@ -49,7 +49,7 @@ class LIBRARY_OT_create_new_folder(bpy.types.Operator):
         
     def draw(self, context):
         layout = self.layout
-        layout.label("Enter the Category Name to Add")
+        layout.label(text="Enter the Category Name to Add")
         layout.prop(self,'folder_name',icon='FILE_FOLDER')
 
     def execute(self, context):

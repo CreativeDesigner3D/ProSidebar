@@ -27,7 +27,10 @@ class VIEW3D_PT_collection_info(Panel):
         row.alignment = 'LEFT'
         if bpy.context.view_layer.active_layer_collection.name == collection.name:
             icon='CHECKBOX_HLT'
+            emboss = True
         else:
+            emboss = False
+            # icon= 'CHECKBOX_DEHLT'
             icon='BLANK1'
 
         for i in range(0,indent_amount):
@@ -37,7 +40,9 @@ class VIEW3D_PT_collection_info(Panel):
             row.prop(collection.bp_props,'is_expanded',text="",icon='TRIA_DOWN' if collection.bp_props.is_expanded else 'TRIA_RIGHT',emboss=False)
         else:
             row.label(text="",icon='BLANK1')
-        row.operator('bp_collection.set_active_collection',text=collection.name,emboss=False,icon=icon).collection_name = collection.name
+
+        row.prop(collection,'hide_viewport',text="",emboss=False,icon='HIDE_OFF' if collection.hide_viewport else 'HIDE_OFF')
+        row.operator('bp_collection.set_active_collection',text=collection.name,emboss=emboss).collection_name = collection.name
         row.operator('bp_collection.delete_collection',text="",icon='X',emboss = False).collection_name = collection.name
         if collection.bp_props.is_expanded:
             for child in collection.children:
@@ -53,15 +58,17 @@ class VIEW3D_PT_collection_info(Panel):
         row.operator("library.add_collection_from_library",text="Collection Library",icon='DISK_DRIVE')
         row.menu('LIBRARY_MT_collection_library',text="",icon="DISCLOSURE_TRI_DOWN")
 
-        layout.operator('bp_collection.create_collection')
+        layout.menu('VIEW3D_MT_bp_create_collection',text="Create Collection",icon="DISCLOSURE_TRI_DOWN")
 
         col = layout.column(align=True)
         box = col.box()
-        box.label(text="Collection Hierarchy",icon='OUTLINER')
+        row = box.row()
+        row.label(text="Collection Hierarchy",icon='OUTLINER')
+        row.operator('bp_collection.set_active_collection_based_on_selection',icon='ARROW_LEFTRIGHT',text="")
         box = col.box()
-        # col = box.column(align=True)
+        col = box.column(align=True)
         
-        self.draw_collection(box,master_collection,0)
+        self.draw_collection(col,master_collection,0)
         active_collection = view_layer.active_layer_collection.collection
 
         col = layout.column(align=True)
@@ -69,6 +76,7 @@ class VIEW3D_PT_collection_info(Panel):
         row = box.row()
         row.label(text="Active Collection",icon='GROUP')
         row.prop(active_collection,'name',text="")
+        row.operator('object.move_to_collection',icon='EXPORT',text="")
 
         col.template_list("COLLECTION_UL_objects", "", active_collection, "objects", active_collection.bp_props, "selected_object_index", rows=4)  
 
@@ -142,15 +150,31 @@ class VIEW3D_PT_collections_panel(Panel):
 class COLLECTION_UL_objects(UIList):
     
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
+        sel_icon = 'RADIOBUT_OFF'
+        if item in context.selected_objects:
+            sel_icon = 'DOT'
+        if item == context.view_layer.objects.active:
+            sel_icon = 'RADIOBUT_ON'
+        layout.label(text="",icon=sel_icon)
         layout.label(text=item.name,icon=bp_utils.get_object_icon(item))
+        
         layout.prop(item,'hide_viewport',emboss=False,icon_only=True)
         layout.prop(item,'hide_select',emboss=False,icon_only=True)
         layout.prop(item,'hide_render',emboss=False,icon_only=True)
+
+class VIEW3D_MT_bp_create_collection(bpy.types.Menu):
+    bl_label = "Create Collection"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.operator('bp_collection.create_empty_collection')
+        layout.operator('bp_collection.create_collection_from_selected_objects')
 
 classes = (
     VIEW3D_PT_collection_info,
     # VIEW3D_PT_collections_panel,
     COLLECTION_UL_objects,
+    VIEW3D_MT_bp_create_collection,
 )
 
 register, unregister = bpy.utils.register_classes_factory(classes)

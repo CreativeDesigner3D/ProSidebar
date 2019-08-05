@@ -90,16 +90,6 @@ class general_OT_split_region(bpy.types.Operator):
 
         bpy.ops.screen.area_split(direction=self.split_direction,factor=self.split_factor)
 
-        # for window in context.window_manager.windows:
-        #     screen = window.screen
-        #     for area in screen.areas:
-        #         areas.append(area)
-        #         if area.type == 'VIEW_3D':
-        #             override = {'window': window, 'screen': screen, 'area': area}
-        #             #When this is called from Top Header Why does this split the top header as well?  
-        #             bpy.ops.screen.area_split(override,direction=self.split_direction,factor=self.split_factor)
-        #             break
-
         for window in context.window_manager.windows:
             screen = window.screen
             for area in screen.areas:           
@@ -108,6 +98,8 @@ class general_OT_split_region(bpy.types.Operator):
                     for space in area.spaces:
                         if space.type == 'DOPESHEET_EDITOR' and self.space_sub_type != "":
                             space.mode = self.space_sub_type
+                        if space.type == 'IMAGE_EDITOR' and self.space_sub_type != "":
+                            space.mode = self.space_sub_type                            
         return {'FINISHED'}
 
 

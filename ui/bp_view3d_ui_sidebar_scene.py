@@ -26,6 +26,7 @@ class VIEW3D_PT_scenes(Panel):
         row = layout.row()
         row.scale_y = 1.3
         row.template_ID(context.window, "scene", new="scene.new", unlink="scene.delete")
+        layout.prop(context.scene, "camera")
 
         # box = layout.box()
         # box.label(text="Scenes",icon='SCENE_DATA')

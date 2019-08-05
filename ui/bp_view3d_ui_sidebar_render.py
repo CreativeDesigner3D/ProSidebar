@@ -59,22 +59,28 @@ class VIEW3D_PT_output_settings(Panel):
         layout = self.layout
         scene = context.scene
         rd = scene.render
+        props = scene.eevee
 
-        col = layout.column(align=True)
+        box = layout.box()
+        box.label(text="General",icon='PREFERENCES')
+
+        col = box.column(align=True)
         row = col.row(align=True)
         row.label(text="Resolution:")
         row.prop(rd, "resolution_x", text="X")
         row.prop(rd, "resolution_y", text="Y")
-        # row = col.row(align=True)
-        # row.label(text=" ")
-        # row.prop(rd, "resolution_percentage", text="%")
 
-        col = layout.column(align=True)
+        col = box.column(align=True)
         row = col.row(align=True)
         row.label(text="Frames:")        
         row.prop(scene, "frame_start", text="Start")
         row.prop(scene, "frame_end", text="End")
-        # col.prop(scene, "frame_step", text="Step")
+
+        col = box.column(align=True)
+        row = col.row(align=True)
+        row.label(text="Samples:")        
+        row.prop(props, "taa_render_samples", text="Render")
+        row.prop(props, "taa_samples", text="Viewport")
 
         image_settings = rd.image_settings
         ffmpeg = rd.ffmpeg
@@ -740,84 +746,61 @@ class BPRENDER_PT_simplify_greasepencil(BPRenderButtonsPanel, Panel):
         sub.active = rd.simplify_gpencil_view_fill
         sub.prop(rd, "simplify_gpencil_remove_lines", text="Lines")
 
-
-
-
-
-
-
-
-class VIEW3D_PT_eevee_render_settings(Panel):
+class BPRenderFreestyleButtonsPanel:
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
-    bl_label = "Eevee Render Settings"
     bl_category = "Render"
+    # COMPAT_ENGINES must be defined in each subclass, external engines can add themselves here
+
+    @classmethod
+    def poll(cls, context):
+        scene = context.scene
+        with_freestyle = bpy.app.build_options.freestyle
+        return scene and with_freestyle and(context.engine in cls.COMPAT_ENGINES)
+
+
+class BPRENDER_PT_freestyle(BPRenderFreestyleButtonsPanel, Panel):
+    bl_label = "Freestyle"
     bl_options = {'DEFAULT_CLOSED'}
-    
+    # bl_order = 10
+    COMPAT_ENGINES = {'BLENDER_RENDER', 'BLENDER_EEVEE'}
+
     def draw_header(self, context):
-        layout = self.layout
-        layout.label(text='',icon='SETTINGS')
+        rd = context.scene.render
+        self.layout.prop(rd, "use_freestyle", text="")
 
     def draw(self, context):
         layout = self.layout
-        scene = context.scene
-        props = scene.eevee
+        layout.use_property_split = True
+        layout.use_property_decorate = False  # No animation.
 
-        col = layout.column(align=True)
-        col.label(text="Sampling")
-        row = col.row()
-        row.prop(props, "taa_samples", text="Viewport")
-        row.prop(props, "taa_render_samples", text="Render")
+        rd = context.scene.render
 
-        # col.prop(props, "use_taa_reprojection")
+        layout.active = rd.use_freestyle
 
-        layout.prop(props, "use_gtao")
-        if props.use_gtao:
-            col = layout.column()
-            col.prop(props, "gtao_distance")
-            col.prop(props, "gtao_factor")
-            col.prop(props, "gtao_quality")
-            col.prop(props, "use_gtao_bent_normals")
-            col.prop(props, "use_gtao_bounce")
+        layout.prop(rd, "line_thickness_mode", expand=True)
 
-        layout.prop(props, "use_motion_blur")
-        if props.use_motion_blur:
-            col = layout.column()
-            col.prop(props, "motion_blur_samples")
-            col.prop(props, "motion_blur_shutter")
+        if (rd.line_thickness_mode == 'ABSOLUTE'):
+            layout.prop(rd, "line_thickness")
 
-        layout.prop(props,"use_dof")
-        if props.use_dof:
-            col = layout.column()
-            col.prop(props, "bokeh_max_size")
-
-        layout.prop(props, "use_bloom")
-        if props.use_bloom:
-            col = layout.column()
-            col.prop(props, "bloom_threshold")
-            col.prop(props, "bloom_knee")
-            col.prop(props, "bloom_radius")
-            col.prop(props, "bloom_color")
-            col.prop(props, "bloom_intensity")
-            col.prop(props, "bloom_clamp")        
 
 classes = (
     VIEW3D_PT_render,
     VIEW3D_PT_output_settings,
-    VIEW3D_PT_eevee_render_settings,
+    BPRENDER_PT_eevee_ambient_occlusion,
+    BPRENDER_PT_eevee_screen_space_reflections,
+    BPRENDER_PT_eevee_bloom,
+    BPRENDER_PT_freestyle,
+    BPRENDER_PT_eevee_sampling,
     BPRENDER_PT_color_management,
     BPRENDER_PT_color_management_curves,
-    BPRENDER_PT_eevee_ambient_occlusion,
     BPRENDER_PT_eevee_motion_blur,
     BPRENDER_PT_eevee_depth_of_field,
-    BPRENDER_PT_eevee_bloom,
     BPRENDER_PT_eevee_volumetric,
     BPRENDER_PT_eevee_volumetric_lighting,
     BPRENDER_PT_eevee_volumetric_shadows,
     BPRENDER_PT_eevee_subsurface_scattering,
-    BPRENDER_PT_eevee_screen_space_reflections,
     BPRENDER_PT_eevee_shadows,
-    BPRENDER_PT_eevee_sampling,
     BPRENDER_PT_eevee_indirect_lighting,
     BPRENDER_PT_eevee_indirect_lighting_display,
     BPRENDER_PT_eevee_film,

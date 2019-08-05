@@ -41,6 +41,13 @@ def update_object_selection(self,context):
         obj.select_set(True)
         context.view_layer.objects.active = obj
 
+def update_object_selection_from_collection(self,context):
+    if self.selected_object_index < len(context.view_layer.active_layer_collection.collection.objects):
+        bpy.ops.object.select_all(action = 'DESELECT')
+        obj = context.view_layer.active_layer_collection.collection.objects[self.selected_object_index]
+        obj.select_set(True)
+        context.view_layer.objects.active = obj
+
 def update_world_selection(self,context):
     if self.selected_world_index <= len(bpy.data.worlds) - 1:
         world = bpy.data.worlds[self.selected_world_index]
@@ -360,7 +367,7 @@ class BP_Scene_Props(PropertyGroup):
 
 class BP_Collection_Props(PropertyGroup):
     is_expanded: BoolProperty(name="Is Expanded", default=False)
-    selected_object_index: IntProperty(name="Select Object Index", default=False)
+    selected_object_index: IntProperty(name="Select Object Index", default=False,update = update_object_selection_from_collection)
     assembly_tabs: bpy.props.EnumProperty(name="Assembly Tabs",
                                           items=[('MAIN',"Main","Show the Scene Options"),
                                                  ('PROMPTS',"Prompts","Show the Assembly Prompts"),

@@ -257,12 +257,12 @@ def get_selection_point(context, event, ray_max=10000.0,objects=None,floor=None,
                     if obj.type == 'MESH' and obj.hide_select == False:
                         yield (obj, obj.matrix_world.copy())
     
-                    if obj.instance_type != 'NONE':
-                        obj.dupli_list_create(scene)
-                        for dob in obj.dupli_list:
-                            obj_dupli = dob.object
-                            if obj_dupli.type == 'MESH':
-                                yield (obj_dupli, dob.matrix.copy())
+                    # if obj.instance_type != 'NONE':
+                    #     obj.dupli_list_create(scene)
+                    #     for dob in obj.dupli_list:
+                    #         obj_dupli = dob.object
+                    #         if obj_dupli.type == 'MESH':
+                    #             yield (obj_dupli, dob.matrix.copy())
  
             # obj.dupli_list_clear()
  

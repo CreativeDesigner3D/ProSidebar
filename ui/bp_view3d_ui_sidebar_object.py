@@ -217,165 +217,6 @@ class VIEW3D_PT_object_transform(Panel):
             row.prop(obj,"rotation_euler",index=2,text="Z")
 
 
-class VIEW3D_PT_object_material(Panel):
-    bl_space_type = 'VIEW_3D'
-    bl_region_type = 'UI'
-    bl_label = "Materials"
-    bl_category = "Object"
-    # bl_parent_id = 'VIEW3D_PT_objects'
-    bl_options = {'DEFAULT_CLOSED'}
-    
-    @classmethod
-    def poll(cls, context):
-        return context.object
-    
-    def draw_header(self, context):
-        layout = self.layout
-        layout.label(text='',icon='MATERIAL')
-
-    def draw_gpencil_properties(self,context,layout,obj):
-        mat = obj.material_slots[obj.active_material_index].material
-        if mat is not None and mat.grease_pencil is not None:
-            gpcolor = mat.grease_pencil
-            box = layout.box()
-            row = box.row()
-            row.label(text="",icon='SOLO_OFF')
-            row.prop(gpcolor, "show_stroke")
-            row = box.row(align=True)
-            row.label(text="Line Type:")
-            row.prop(gpcolor, "mode",text="")
-            row.prop(gpcolor, "stroke_style", text="")
-
-            if gpcolor.stroke_style == 'TEXTURE':
-                row = box.row()
-                row.enabled = not gpcolor.lock
-                box = row.column(align=True)
-                box.template_ID(gpcolor, "stroke_image", open="image.open")
-                if gpcolor.mode == 'LINE':
-                    box.prop(gpcolor, "pixel_size", text="UV Factor")
-
-                box.prop(gpcolor, "use_stroke_pattern", text="Use As Pattern")
-
-            if gpcolor.stroke_style == 'SOLID' or gpcolor.use_stroke_pattern is True:
-                row = box.row()
-                row.label(text="Color:")
-                row.prop(gpcolor, "color", text="")
-
-            if gpcolor.mode in {'DOTS', 'BOX'}:
-                box.prop(gpcolor, "use_follow_path", text="Follow Drawing Path")
-
-            box = layout.box()
-            row = box.row()
-            row.label(text="",icon='SOLO_ON')            
-            row.prop(gpcolor, "show_fill")
-            col = box.column()
-            col.active = not gpcolor.lock
-            col.prop(gpcolor, "fill_style", text="Style")
-
-            if gpcolor.fill_style == 'GRADIENT':
-                col.prop(gpcolor, "gradient_type")
-
-            if gpcolor.fill_style != 'TEXTURE':
-                row = col.row()
-                row.label(text="Color:")
-                row.prop(gpcolor, "fill_color", text="")
-
-                if gpcolor.fill_style in {'GRADIENT', 'CHESSBOARD'}:
-                    col.prop(gpcolor, "mix_color", text="Secondary Color")
-
-                if gpcolor.fill_style == 'GRADIENT':
-                    col.prop(gpcolor, "mix_factor", text="Mix Factor", slider=True)
-
-                if gpcolor.fill_style in {'GRADIENT', 'CHESSBOARD'}:
-                    col.prop(gpcolor, "flip", text="Flip Colors")
-
-                    col.prop(gpcolor, "pattern_shift", text="Location")
-                    col.prop(gpcolor, "pattern_scale", text="Scale")
-
-                if gpcolor.gradient_type == 'RADIAL' and gpcolor.fill_style not in {'SOLID', 'CHESSBOARD'}:
-                    col.prop(gpcolor, "pattern_radius", text="Radius")
-                else:
-                    if gpcolor.fill_style != 'SOLID':
-                        col.prop(gpcolor, "pattern_angle", text="Angle")
-
-                if gpcolor.fill_style == 'CHESSBOARD':
-                    col.prop(gpcolor, "pattern_gridsize", text="Box Size")
-
-            # Texture
-            if gpcolor.fill_style == 'TEXTURE' or (gpcolor.use_fill_texture_mix is True and gpcolor.fill_style == 'SOLID'):
-                col.template_ID(gpcolor, "fill_image", open="image.open")
-
-                if gpcolor.fill_style == 'TEXTURE':
-                    col.prop(gpcolor, "use_fill_pattern", text="Use As Pattern")
-                    if gpcolor.use_fill_pattern is True:
-                        col.prop(gpcolor, "fill_color", text="Color")
-
-                col.prop(gpcolor, "texture_offset", text="Offset")
-                col.prop(gpcolor, "texture_scale", text="Scale")
-                col.prop(gpcolor, "texture_angle")
-                col.prop(gpcolor, "texture_opacity")
-                col.prop(gpcolor, "texture_clamp", text="Clip Image")
-
-                if gpcolor.use_fill_pattern is False:
-                    col.prop(gpcolor, "texture_mix", text="Mix With Color")
-
-                    if gpcolor.texture_mix is True:
-                        col.prop(gpcolor, "fill_color", text="Mix Color")
-                        col.prop(gpcolor, "mix_factor", text="Mix Factor", slider=True)
-
-    def draw(self, context):
-        layout = self.layout
-        obj = context.object
-        slot = None
-        if len(obj.material_slots) - 1 > obj.active_material_index:
-            slot = obj.material_slots[obj.active_material_index]
-
-        is_sortable = len(obj.material_slots) > 1
-        rows = 3
-        if (is_sortable):
-            rows = 5
-
-        row = layout.row()
-
-        if obj.type == 'GPENCIL':
-            row.template_list("GPENCIL_UL_matslots", "", obj, "material_slots", obj, "active_material_index", rows=rows)
-        else:
-            row.template_list("MATERIAL_UL_matslots", "", obj, "material_slots", obj, "active_material_index", rows=rows)
-
-        col = row.column(align=True)
-        col.operator("object.material_slot_add", icon='ADD', text="")
-        col.operator("object.material_slot_remove", icon='REMOVE', text="")
-
-        col.separator()
-
-        col.menu("MATERIAL_MT_context_menu", icon='DOWNARROW_HLT', text="")
-
-        if is_sortable:
-            col.separator()
-
-            col.operator("object.material_slot_move", icon='TRIA_UP', text="").direction = 'UP'
-            col.operator("object.material_slot_move", icon='TRIA_DOWN', text="").direction = 'DOWN'
-
-        row = layout.row()
-
-        row.template_ID(obj, "active_material", new="material.new")
-
-        if slot:
-            icon_link = 'MESH_DATA' if slot.link == 'DATA' else 'OBJECT_DATA'
-            row.prop(slot, "link", icon=icon_link, icon_only=True)
-
-        if obj.mode == 'EDIT':
-            row = layout.row(align=True)
-            row.operator("object.material_slot_assign", text="Assign")
-            row.operator("object.material_slot_select", text="Select")
-            row.operator("object.material_slot_deselect", text="Deselect")
-
-        if obj.type == 'GPENCIL':
-            self.draw_gpencil_properties(context,layout,obj)
-        else:
-            layout.operator("bp_general.open_new_editor",text="Open Material Editor",icon='MATERIAL').space_type = 'NODE_EDITOR'
-
-
 class VIEW3D_PT_object_modifiers(Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
@@ -891,29 +732,71 @@ class VIEW3D_PT_object_data(Panel):
         is_curve = type(curve) is bpy.types.Curve
         is_text = type(curve) is bpy.types.TextCurve
 
+        if is_text:
+            row = layout.split(factor=0.25)
+            row.label(text="Font")
+            row.template_ID(curve, "font", open="font.open", unlink="font.unlink")            
+
         if is_curve:
             row = layout.row()
             row.prop(curve, "dimensions", expand=True)
 
+        row = layout.row(align=True)
+        row.label(text="Resolution")
+        row.prop(curve, "resolution_u", text="Preview")
+        row.prop(curve, "render_resolution_u", text="Render")
+
+        if is_surf:
+            row = layout.row(align=True)
+            row.label(text="Resolution V")
+            row.prop(curve, "resolution_v", text="Preview")
+            row.prop(curve, "render_resolution_v", text="Render")
+            return #DON'T DRAW ANY MORE PROPERTIES FOR SURFACE TYPE
+
+        if is_curve and curve.dimensions == '3D':
+            row = layout.row(align=True)
+            row.label(text="Twist")
+            row.prop(curve, "twist_mode",text="")
+            row.prop(curve, "twist_smooth", text="Smooth")
+
+        row = layout.row()
+        row.label(text="Extrusion Object")
+        row.prop(curve, "bevel_object", text="")
+
+        row = layout.row()
+        row.label(text="Extrusion Offset")
+        row.prop(curve, "offset",text="")
+
+        if curve.bevel_object is None:
+            layout.prop(curve, "bevel_depth", text="Depth")
+            layout.prop(curve, "bevel_resolution", text="Resolution")
+        else:
+            row = layout.row()
+            row.alignment = 'RIGHT'
+            row.prop(curve, "use_fill_caps")
+
+        if type(curve) is not bpy.types.TextCurve:
+
+            col = layout.column()
+            col.active = (
+                (curve.bevel_depth > 0.0) or
+                (curve.extrude > 0.0) or
+                (curve.bevel_object is not None)
+            )
+            row = col.row(align=True)
+            # row = sub.row(align=True)
+            row.label(text="Bevel")
+            row.prop(curve, "bevel_factor_start", text="Start")
+            row.prop(curve, "bevel_factor_end", text="End")
+
+            #TODO: RESEARCH WHEN THESE WOULD BE USED
+            # sub = col.column(align=True)
+            # sub.prop(curve, "bevel_factor_mapping_start", text="Bevel Mapping Start")
+            # sub.prop(curve, "bevel_factor_mapping_end", text="End")
+
         layout.use_property_split = True
 
         col = layout.column()
-        sub = col.column(align=True)
-        sub.prop(curve, "resolution_u", text="Resolution Preview U")
-        if is_surf:
-            sub.prop(curve, "resolution_v", text="V")
-
-        sub = col.column(align=True)
-        sub.prop(curve, "render_resolution_u", text="Render U")
-        if is_surf:
-            sub.prop(curve, "render_resolution_v", text="V")
-        col.separator()
-
-        if is_curve:
-            col.prop(curve, "twist_mode")
-            col.prop(curve, "twist_smooth", text="Smooth")
-        elif is_text:
-            col.prop(curve, "use_fast_edit", text="Fast Editing")
 
         if is_curve or is_text:
             col = layout.column()
@@ -924,14 +807,15 @@ class VIEW3D_PT_object_data(Panel):
             sub.prop(curve, "fill_mode")
             col.prop(curve, "use_fill_deform")
 
-        if is_curve:
-            col = layout.column()
-            col.separator()
+        #TODO: RESEARCH WHEN THESE WOULD BE USED
+        # if is_curve:
+        #     col = layout.column()
+        #     col.separator()
 
-            sub = col.column()
-            sub.prop(curve, "use_radius")
-            sub.prop(curve, "use_stretch")
-            sub.prop(curve, "use_deform_bounds")
+        #     sub = col.column()
+        #     sub.prop(curve, "use_radius")
+        #     sub.prop(curve, "use_stretch")
+        #     sub.prop(curve, "use_deform_bounds")
 
         col = layout.column()
         col.prop(curve, "offset")
@@ -954,27 +838,11 @@ class VIEW3D_PT_object_data(Panel):
         sub.prop(curve, "bevel_depth", text="Depth")
         sub.prop(curve, "bevel_resolution", text="Resolution")
 
-        col.prop(curve, "bevel_object", text="Object")
+        # col.prop(curve, "bevel_object", text="Object")
 
-        sub = col.column()
-        sub.active = curve.bevel_object is not None
-        sub.prop(curve, "use_fill_caps")
-
-        if type(curve) is not bpy.types.TextCurve:
-
-            col = layout.column()
-            col.active = (
-                (curve.bevel_depth > 0.0) or
-                (curve.extrude > 0.0) or
-                (curve.bevel_object is not None)
-            )
-            sub = col.column(align=True)
-            sub.prop(curve, "bevel_factor_start", text="Bevel Start")
-            sub.prop(curve, "bevel_factor_end", text="End")
-
-            sub = col.column(align=True)
-            sub.prop(curve, "bevel_factor_mapping_start", text="Bevel Mapping Start")
-            sub.prop(curve, "bevel_factor_mapping_end", text="End")
+        # sub = col.column()
+        # sub.active = curve.bevel_object is not None
+        # sub.prop(curve, "use_fill_caps")
 
     def draw_gpencil_properties(self,layout,obj):
         pass
@@ -1372,7 +1240,6 @@ classes = (
     VIEW3D_PT_object_transform,
     VIEW3D_PT_object_data,
     VIEW3D_PT_object_view_options,
-    VIEW3D_PT_object_material,
     VIEW3D_PT_object_modifiers,
     VIEW3D_PT_object_constraints,
     VIEW3D_PT_object_drivers,

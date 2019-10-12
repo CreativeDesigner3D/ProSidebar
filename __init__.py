@@ -1,13 +1,13 @@
 bl_info = {
-    "name": "BlenderPro Sidebar",
+    "name": "Pro Sidebar",
     "author": "Andrew Peel",
     "version": (0, 0, 1),
     "blender": (2, 80, 0),
-    "location": "Everywhere",
-    "description": "New Interfaces for 2.8",
+    "location": "3D Viewport Sidebar",
+    "description": "New Sidebar Interface for the 3D Viewport",
     "warning": "",
     "wiki_url": "",
-    "category": "BlenderPro",
+    "category": "3D View",
 }
 
 from .ui import bp_filebrowser_ui

@@ -5,7 +5,6 @@ from bpy.app.handlers import persistent
 @persistent
 def load_library_on_file_load(scene=None):
     utils_library.update_props_from_xml_file()
-    utils_library.load_library_scripts()
 
 def register():
     bpy.app.handlers.load_post.append(load_library_on_file_load)

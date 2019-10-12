@@ -402,8 +402,8 @@ class VIEW3D_PT_object_data(Panel):
                 sub.operator("object.vertex_group_deselect", text="Deselect")
         
                 box.prop(bpy.context.tool_settings, "vertex_group_weight", text="Weight")  
-            else:
-                box.operator("bp_assembly.connect_meshes_to_hooks_in_assembly", text="Connect Mesh Hooks").obj_name = obj.name
+            # else:
+            #     box.operator("bp_assembly.connect_meshes_to_hooks_in_assembly", text="Connect Mesh Hooks").obj_name = obj.name
         else:   
             row.operator('object.vertex_group_add',icon='ADD',text="Add")        
 
@@ -1022,130 +1022,7 @@ class VIEW3D_PT_object_data(Panel):
         if obj.type == 'GPENCIL':
             pass 
         if obj.type == 'LIGHT_PROBE':
-            self.draw_light_probe_properties(layout,obj)
-
-class VIEW3D_PT_object_drivers(Panel):
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"
-    bl_category = "Object"
-    bl_label = "Drivers"
-    bl_options = {'DEFAULT_CLOSED'}
-    
-    @classmethod
-    def poll(cls, context):
-        if context.object:
-            return True
-        else:
-            return False
-
-    def draw_header(self, context):
-        layout = self.layout
-        layout.label(text="",icon='AUTO')
-
-    def draw_driver_expression(self,layout,driver):
-        row = layout.row(align=True)
-        # row.prop(driver.driver,'show_debug_info',text="",icon='DECORATE')
-        if driver.driver.is_valid:
-            row.prop(driver.driver,"expression",text="",expand=True,icon='DECORATE')
-            if driver.mute:
-                row.prop(driver,"mute",text="",icon='DECORATE')
-            else:
-                row.prop(driver,"mute",text="",icon='DECORATE')
-        else:
-            row.prop(driver.driver,"expression",text="",expand=True,icon='ERROR')
-            if driver.mute:
-                row.prop(driver,"mute",text="",icon='DECORATE')
-            else:
-                row.prop(driver,"mute",text="",icon='DECORATE')
-
-    def draw_driver_variable(self,layout,driver,obj):
-        for var in driver.driver.variables:
-            col = layout.column()
-            boxvar = col.box()
-            row = boxvar.row(align=True)
-            row.prop(var,"name",text="",icon='FORWARD')
-            
-            props = row.operator("bp_driver.remove_variable",text="",icon='X',emboss=False)
-            props.object_name = obj.name
-            props.data_path = driver.data_path
-            props.array_index = driver.array_index
-            props.var_name = var.name
-
-            for target in var.targets:
-                if obj.bp_props.show_driver_debug_info:
-                    row = boxvar.row()
-                    row.prop(var,"type",text="")
-                    row = boxvar.row()
-                    row.prop(target,"id",text="")
-                    row = boxvar.row(align=True)
-                    row.prop(target,"data_path",text="",icon='ANIM_DATA')
-
-                if target.id and target.data_path != "":
-                    value = eval('bpy.data.objects["' + target.id.name + '"]'"." + target.data_path)
-                else:
-                    value = "ERROR#"
-                row = boxvar.row()
-                row.alignment = 'CENTER'
-                if type(value).__name__ == 'str':
-                    row.label(text="Value: " + value)
-                elif type(value).__name__ == 'float':
-                    row.label(text="Value: " + str(value))
-                elif type(value).__name__ == 'int':
-                    row.label(text="Value: " + str(value))
-                elif type(value).__name__ == 'bool':
-                    row.label(text="Value: " + str(value))       
-
-    def draw(self, context):
-        layout = self.layout
-        obj = context.object
-        if obj:
-            if not obj.animation_data:
-                layout.label(text="There are no drivers assigned to the object",icon='ERROR')
-            else:
-                if len(obj.animation_data.drivers) == 0:
-                    layout.label(text="There are no drivers assigned to the object",icon='ERROR')
-                else:
-                    layout.prop(obj.bp_props,'show_driver_debug_info')
-                for driver in obj.animation_data.drivers:
-                    box = layout.box()
-                    row = box.row()
-                    driver_name = driver.data_path
-                    if driver_name in {"location","rotation_euler","dimensions" ,"lock_scale",'lock_location','lock_rotation'}:
-                        if driver.array_index == 0:
-                            driver_name = driver_name + " X"
-                        if driver.array_index == 1:
-                            driver_name = driver_name + " Y"
-                        if driver.array_index == 2:
-                            driver_name = driver_name + " Z"    
-                    value = eval('bpy.data.objects["' + obj.name + '"].' + driver.data_path)
-                    if type(value).__name__ == 'str':
-                        row.label(text=driver_name + " = " + str(value),icon='AUTO')
-                    elif type(value).__name__ == 'float':
-                        row.label(text=driver_name + " = " + str(value),icon='AUTO')
-                    elif type(value).__name__ == 'int':
-                        row.label(text=driver_name + " = " + str(value),icon='AUTO')
-                    elif type(value).__name__ == 'bool':
-                        row.label(text=driver_name + " = " + str(value),icon='AUTO')
-                    elif type(value).__name__ == 'bpy_prop_array':
-                        row.label(text=driver_name + " = " + str(value[driver.array_index]),icon='AUTO')
-                    elif type(value).__name__ == 'Vector':
-                        row.label(text=driver_name + " = " + str(value[driver.array_index]),icon='AUTO')
-                    elif type(value).__name__ == 'Euler':
-                        row.label(text=driver_name + " = " + str(value[driver.array_index]),icon='AUTO')
-                    else:
-                        row.label(text=driver_name + " = " + str(type(value)),icon='AUTO')
-
-                    coll = bp_utils.get_assembly_collection(obj)
-                    if coll:
-                        assembly = bp_types.Assembly(coll)
-                        props = row.operator('bp_driver.get_vars_from_object',text="",icon='DRIVER')
-                        props.object_name = obj.name
-                        props.var_object_name = assembly.obj_prompts.name
-                        props.data_path = driver.data_path
-                        props.array_index = driver.array_index
-                    
-                    self.draw_driver_expression(box,driver)
-                    self.draw_driver_variable(box,driver,obj)                    
+            self.draw_light_probe_properties(layout,obj)             
         
 
 class VIEW3D_MT_bp_add(bpy.types.Menu):
@@ -1242,7 +1119,6 @@ classes = (
     VIEW3D_PT_object_view_options,
     VIEW3D_PT_object_modifiers,
     VIEW3D_PT_object_constraints,
-    VIEW3D_PT_object_drivers,
     VIEW3D_MT_bp_add
 )
 

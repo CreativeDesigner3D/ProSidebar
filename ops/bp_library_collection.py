@@ -53,8 +53,8 @@ class LIBRARY_MT_collection_library(bpy.types.Menu):
         layout = self.layout
         layout.operator('library.save_collection_to_library',icon='BACK')
         layout.separator()
-        layout.operator('library.open_browser_window',icon='FILE_FOLDER').path = get_library_path()
-        layout.operator('library.create_new_folder',icon='NEWFOLDER').path = get_library_path()        
+        layout.operator('bp_general.open_browser_window',icon='FILE_FOLDER').path = get_library_path()
+        layout.operator('bp_general.create_new_folder',icon='NEWFOLDER').path = get_library_path()        
         layout.operator('library.change_collection_library_path',icon='FILE_FOLDER')        
 
 class LIBRARY_OT_change_collection_library_path(bpy.types.Operator):
@@ -318,6 +318,7 @@ class LIBRARY_OT_save_collection_to_library(bpy.types.Operator):
         else:
             path = os.path.join(get_library_path() ,self.collection_category) 
         files = os.listdir(path) if os.path.exists(path) else []
+        
         if self.create_new_category:
             row = layout.split(factor=.6)
             row.label(text="Enter new folder name:",icon='FILE_FOLDER')
@@ -328,9 +329,11 @@ class LIBRARY_OT_save_collection_to_library(bpy.types.Operator):
             row.label(text="Select folder to save to:",icon='FILE_FOLDER')
             row.prop(self,'create_new_category',text="Create New",icon='NEWFOLDER')
             layout.prop(self,'collection_category',text="",icon='FILE_FOLDER')
+
         layout.label(text="Name: " + self.collection_name)
         if self.collection_name + ".blend" in files or self.collection_name + ".png" in files:
             layout.label(text="File already exists",icon="ERROR")
+
         if bpy.data.filepath != "" and bpy.data.is_dirty:
             row = layout.split(factor=.6)
             row.label(text="File is not saved",icon="ERROR")

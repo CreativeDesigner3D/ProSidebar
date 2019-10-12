@@ -53,8 +53,8 @@ class LIBRARY_MT_material_library(bpy.types.Menu):
         layout = self.layout
         layout.operator('library.save_material_to_library',icon='BACK')
         layout.separator()
-        layout.operator('library.open_browser_window',icon='FILE_FOLDER').path = get_library_path()
-        layout.operator('library.create_new_folder',icon='NEWFOLDER').path = get_library_path()        
+        layout.operator('bp_general.open_browser_window',icon='FILE_FOLDER').path = get_library_path()
+        layout.operator('bp_general.create_new_folder',icon='NEWFOLDER').path = get_library_path()        
         layout.operator('library.change_material_library_path',icon='FILE_FOLDER')     
         
 class LIBRARY_OT_change_material_library_path(bpy.types.Operator):
@@ -403,20 +403,49 @@ class LIBRARY_OT_save_material_to_library(bpy.types.Operator):
         
     def draw(self, context):
         layout = self.layout
-        path = os.path.join(get_library_path() ,self.material_category) 
-        files = os.listdir(path)        
-        layout.label(text="Select folder to save material to")
-        layout.prop(self,'material_category',text="",icon='FILE_FOLDER')
+        if self.create_new_category:
+            path = os.path.join(get_library_path() ,self.new_category_name) 
+        else:
+            path = os.path.join(get_library_path() ,self.material_category) 
+        files = os.listdir(path) if os.path.exists(path) else []
+
+        if self.create_new_category:
+            row = layout.split(factor=.6)
+            row.label(text="Enter new folder name:",icon='FILE_FOLDER')
+            row.prop(self,'create_new_category',text="Create New",icon='NEWFOLDER')
+            layout.prop(self,'new_category_name',text="",icon='FILE_FOLDER')
+        else:
+            row = layout.split(factor=.6)
+            row.label(text="Select folder to save to:",icon='FILE_FOLDER')
+            row.prop(self,'create_new_category',text="Create New",icon='NEWFOLDER')
+            layout.prop(self,'material_category',text="",icon='FILE_FOLDER')
+            
         layout.label(text="Name: " + self.mat_name)
+        
         if self.mat_name + ".blend" in files or self.mat_name + ".png" in files:
-            layout.label(text="File already exists",icon="ERROR")           
+            layout.label(text="File already exists",icon="ERROR")   
+
+        # layout = self.layout
+        # path = os.path.join(get_library_path() ,self.material_category) 
+        # files = os.listdir(path)        
+        # layout.label(text="Select folder to save material to")
+        # layout.prop(self,'material_category',text="",icon='FILE_FOLDER')
+        # layout.label(text="Name: " + self.mat_name)
+        # if self.mat_name + ".blend" in files or self.mat_name + ".png" in files:
+        #     layout.label(text="File already exists",icon="ERROR")           
         
     def execute(self, context):
         if bpy.data.filepath == "":
             bpy.ops.wm.save_as_mainfile(filepath=os.path.join(bpy.app.tempdir,"temp_blend.blend"))
         
+
+
         mat_to_save = bpy.data.materials[context.scene.bp_props.selected_material_index]
-        directory_to_save_to = os.path.join(get_library_path() ,self.material_category)
+        if self.create_new_category:
+            os.makedirs(os.path.join(get_library_path() ,self.new_category_name))
+            directory_to_save_to = os.path.join(get_library_path() ,self.new_category_name)
+        else:
+            directory_to_save_to = os.path.join(get_library_path() ,self.material_category)
         
         thumbnail_script_path = self.create_material_thumbnail_script(directory_to_save_to, bpy.data.filepath, mat_to_save.name)
         save_script_path = self.create_material_save_script(directory_to_save_to, bpy.data.filepath, mat_to_save.name)

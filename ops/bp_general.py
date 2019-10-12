@@ -66,6 +66,9 @@ class general_OT_open_texture_editor(bpy.types.Operator):
         for window in context.window_manager.windows:
             if len(window.screen.areas) == 1 and window.screen.areas[0].type == 'PREFERENCES':
                 window.screen.areas[0].type = 'IMAGE_EDITOR'
+                for space in window.screen.areas[0].spaces:
+                    if space.type == 'IMAGE_EDITOR':
+                        space.mode = 'UV'
         return {'FINISHED'} 
 
 class general_OT_split_region(bpy.types.Operator):
@@ -103,11 +106,39 @@ class general_OT_split_region(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class general_OT_create_new_folder(bpy.types.Operator):
+    bl_idname = "bp_general.create_new_folder"
+    bl_label = "Create New Folder"
+    
+    path: bpy.props.StringProperty(name="Path",description="Path to Add Folder to To")
+    folder_name: bpy.props.StringProperty(name="Folder Name",description="Folder Name to Create")
+
+    def check(self, context):
+        return True
+
+    def invoke(self,context,event):
+        wm = context.window_manager
+        return wm.invoke_props_dialog(self, width=350)
+        
+    def draw(self, context):
+        layout = self.layout
+        layout.label(text="Enter the folder name to add")
+        layout.prop(self,'folder_name',icon='FILE_FOLDER')
+
+    def execute(self, context):
+        path = os.path.join(self.path, self.folder_name)
+        
+        if not os.path.exists(path):
+            os.makedirs(path)
+            
+        return {'FINISHED'}
+
 classes = (
     general_OT_open_browser_window,
     general_OT_open_new_editor,
     general_OT_open_texture_editor,
     general_OT_split_region,
+    general_OT_create_new_folder
 )
 
 register, unregister = bpy.utils.register_classes_factory(classes)

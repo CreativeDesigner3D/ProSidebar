@@ -55,8 +55,8 @@ class LIBRARY_MT_object_library(bpy.types.Menu):
         
         layout.operator('library.save_object_to_library',icon='BACK')
         layout.separator()
-        layout.operator('library.open_browser_window',icon='FILE_FOLDER').path = get_library_path()
-        layout.operator('library.create_new_folder',icon='NEWFOLDER').path = get_library_path()        
+        layout.operator('bp_general.open_browser_window',icon='FILE_FOLDER').path = get_library_path()
+        layout.operator('bp_general.create_new_folder',icon='NEWFOLDER').path = get_library_path()        
         layout.operator('library.change_object_library_path',icon='FILE_FOLDER')
         
 class LIBRARY_OT_change_object_library_path(bpy.types.Operator):

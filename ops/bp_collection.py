@@ -41,6 +41,8 @@ class COLLECTION_OT_set_active_collection(Operator):
                 self.search_children(child)
 
     def execute(self, context):
+        if context.object and context.object.mode != 'OBJECT':
+            bpy.ops.object.mode_set(mode='OBJECT')
         self.search_children(context.view_layer.layer_collection)
         if self.collection_name == context.view_layer.layer_collection.collection.name:
             context.view_layer.active_layer_collection = context.view_layer.layer_collection

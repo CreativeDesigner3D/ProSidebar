@@ -95,6 +95,8 @@ class LIBRARY_OT_add_collection_from_library(bpy.types.Operator):
     
     @classmethod
     def poll(cls, context):
+        if context.object and context.object.mode != 'OBJECT':
+            return False        
         return True
 
     def check(self, context):

@@ -29,6 +29,10 @@ class VIEW3D_PT_material_library(Panel):
         row.scale_y = 1.3
         row.operator("library.add_material_from_library",text="Material Library",icon='DISK_DRIVE')
         row.menu('LIBRARY_MT_material_library',text="",icon="DISCLOSURE_TRI_DOWN")
+        row = layout.row(align=True)
+        row.scale_y = 1.3
+        row.menu('VIEW3D_MT_add_material',text="Add Material",icon="ADD")
+        
 
 
 class VIEW3D_PT_all_materials(Panel):
@@ -229,9 +233,10 @@ class VIEW3D_MT_add_material(bpy.types.Menu):
 
     def draw(self, context):
         layout = self.layout
-        layout.operator("material.new",icon='ZOOMIN')
-        layout.operator("material.create_principled_material",icon='SMOOTH')
-        layout.operator("material.create_material_from_image",icon='IMAGE_COL')               
+        layout.operator("material.new",icon='ADD')
+        # layout.operator("material.create_principled_material",icon='SMOOTH')
+        layout.operator("bp_material.create_material_from_image",icon='FILE_IMAGE')               
+        
 
 
 class VIEW3D_PT_material_settings(Panel):
@@ -247,8 +252,6 @@ class VIEW3D_PT_material_settings(Panel):
         rd = scene.render
 
         layout = self.layout
-        # layout.use_property_split = True
-        # layout.use_property_decorate = False
 
         mat = bpy.data.materials[context.scene.bp_props.selected_material_index]
 

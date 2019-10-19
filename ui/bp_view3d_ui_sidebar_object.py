@@ -67,6 +67,8 @@ class VIEW3D_PT_objects(Panel):
         row.operator("library.add_object_from_library",text="Object Library",icon='DISK_DRIVE')
         row.menu('LIBRARY_MT_object_library',text="",icon="DISCLOSURE_TRI_DOWN")
 
+        # layout.operator('bp_object.set_base_point')
+        
         if obj:
             self.draw_modes(obj,layout)
             row = layout.row(align=True)
@@ -501,7 +503,8 @@ class VIEW3D_PT_object_data(Panel):
             
         cam = obj.data
 
-        layout.prop(view, "lock_camera")
+        box = layout.box()
+        box.prop(view, "lock_camera")
 
         box = layout.box()
         box.label(text="Lens Settings:")
@@ -725,6 +728,74 @@ class VIEW3D_PT_object_data(Panel):
             col.prop(obj, "show_empty_image_orthographic", text="Display Orthographic")
             col.prop(obj, "show_empty_image_perspective", text="Display Perspective")
 
+    def draw_text_properties(self,layout,obj):
+        curve = obj.data
+
+        box = layout.box()
+        box.label(text="Font Selection")
+        row = box.split(factor=0.25)
+        row.label(text="Font")
+        row.template_ID(curve, "font", open="font.open", unlink="font.unlink") 
+
+        if len(bpy.context.selected_objects) > 1:
+            box.operator('bp_object.update_selected_text_with_active_font',text="Change Selected Text to - " + curve.font.name,icon='FILE_REFRESH')    
+
+        box = layout.box()
+        box.label(text="Alignment and Spacing")
+        col = box.column()
+        col.prop(curve, "align_x", text="Horizontal")
+        col.prop(curve, "align_y", text="Vertical")
+
+        row = box.row(align=True)
+        row.label(text="Offset")
+        row.prop(curve, "offset_x", text="X")
+        row.prop(curve, "offset_y", text="Y")
+
+        col = box.column(align=True)
+        row = col.row(align=True)
+        row.label(text="Character Spacing")
+        row.prop(curve, "space_character", text="")
+        row = col.row(align=True)
+        row.label(text="Word Spacing")        
+        row.prop(curve, "space_word", text="")
+        row = col.row(align=True)
+        row.label(text="Line Spacing")        
+        row.prop(curve, "space_line", text="")
+
+        box = layout.box()
+        box.label(text="Geometry")    
+        row = box.row()
+        row.label(text="Extrude")    
+        row.prop(curve, "extrude",text="")
+        row = box.row()
+        row.label(text="Offset")           
+        row.prop(curve, "offset",text="")
+        
+        row = box.row(align=True)
+        row.label(text="Bevel")
+        row.prop(curve, "bevel_depth", text="Depth")
+        row.prop(curve, "bevel_resolution", text="Resolution")
+
+        row = box.split(factor=0.5)
+        row.label(text="Taper Object")
+        row.prop(curve, "taper_object",text="")
+
+        row = box.split(factor=0.5)
+        row.label(text="Bevel Object")        
+        row.prop(curve, "bevel_object", text="")
+
+        if curve.bevel_object is not None:
+            row = box.row()
+            row.alignment = 'RIGHT'
+            row.prop(curve, "use_fill_caps")
+
+        row = box.row()
+        row.label(text="Fill Mode")
+        row.prop(curve, "fill_mode",expand=True)
+        row = box.row()
+        row.alignment = 'RIGHT'
+        row.prop(curve, "use_fill_deform")
+
     def draw_curve_properties(self,layout,obj):
         curve = obj.data
 
@@ -732,117 +803,77 @@ class VIEW3D_PT_object_data(Panel):
         is_curve = type(curve) is bpy.types.Curve
         is_text = type(curve) is bpy.types.TextCurve
 
-        if is_text:
-            row = layout.split(factor=0.25)
-            row.label(text="Font")
-            row.template_ID(curve, "font", open="font.open", unlink="font.unlink")            
-
+        box = layout.box()
+        box.label(text="Curve Settings")
         if is_curve:
-            row = layout.row()
+            row = box.row()
+            row.label(text="Type")
             row.prop(curve, "dimensions", expand=True)
 
-        row = layout.row(align=True)
+        row = box.row(align=True)
         row.label(text="Resolution")
         row.prop(curve, "resolution_u", text="Preview")
         row.prop(curve, "render_resolution_u", text="Render")
 
         if is_surf:
-            row = layout.row(align=True)
+            row = box.row(align=True)
             row.label(text="Resolution V")
             row.prop(curve, "resolution_v", text="Preview")
             row.prop(curve, "render_resolution_v", text="Render")
             return #DON'T DRAW ANY MORE PROPERTIES FOR SURFACE TYPE
 
         if is_curve and curve.dimensions == '3D':
-            row = layout.row(align=True)
+            row = box.row(align=True)
             row.label(text="Twist")
             row.prop(curve, "twist_mode",text="")
             row.prop(curve, "twist_smooth", text="Smooth")
 
-        row = layout.row()
-        row.label(text="Extrusion Object")
+        box = layout.box()
+        box.label(text="Geometry")    
+        row = box.row()
+        row.label(text="Extrude")    
+        row.prop(curve, "extrude",text="")
+        row = box.row()
+        row.label(text="Offset")           
+        row.prop(curve, "offset",text="")
+        
+        row = box.row(align=True)
+        row.label(text="Bevel")
+        row.prop(curve, "bevel_depth", text="Depth")
+        row.prop(curve, "bevel_resolution", text="Resolution")
+
+        row = box.row(align=True)
+        row.label(text="Start/End")
+        row.prop(curve, "bevel_factor_start", text="Start")
+        row.prop(curve, "bevel_factor_end", text="End")
+
+        row = box.split(factor=0.5)
+        row.label(text="Taper Object")
+        row.prop(curve, "taper_object",text="")
+
+        row = box.split(factor=0.5)
+        row.label(text="Bevel Object")        
         row.prop(curve, "bevel_object", text="")
 
-        row = layout.row()
-        row.label(text="Extrusion Offset")
-        row.prop(curve, "offset",text="")
-
-        if curve.bevel_object is None:
-            layout.prop(curve, "bevel_depth", text="Depth")
-            layout.prop(curve, "bevel_resolution", text="Resolution")
-        else:
-            row = layout.row()
+        if curve.bevel_object is not None:
+            row = box.row()
             row.alignment = 'RIGHT'
             row.prop(curve, "use_fill_caps")
 
-        if type(curve) is not bpy.types.TextCurve:
+        row = box.row()
+        row.label(text="Fill Mode")
+        row.prop(curve, "fill_mode",expand=True)
+        row = box.row()
+        row.alignment = 'RIGHT'
+        row.prop(curve, "use_fill_deform")
 
-            col = layout.column()
-            col.active = (
-                (curve.bevel_depth > 0.0) or
-                (curve.extrude > 0.0) or
-                (curve.bevel_object is not None)
-            )
-            row = col.row(align=True)
-            # row = sub.row(align=True)
-            row.label(text="Bevel")
-            row.prop(curve, "bevel_factor_start", text="Start")
-            row.prop(curve, "bevel_factor_end", text="End")
 
-            #TODO: RESEARCH WHEN THESE WOULD BE USED
-            # sub = col.column(align=True)
-            # sub.prop(curve, "bevel_factor_mapping_start", text="Bevel Mapping Start")
-            # sub.prop(curve, "bevel_factor_mapping_end", text="End")
-
-        layout.use_property_split = True
-
-        col = layout.column()
-
-        if is_curve or is_text:
-            col = layout.column()
-            col.separator()
-
-            sub = col.column()
-            sub.active = (curve.dimensions == '2D' or (curve.bevel_object is None and curve.dimensions == '3D'))
-            sub.prop(curve, "fill_mode")
-            col.prop(curve, "use_fill_deform")
-
-        #TODO: RESEARCH WHEN THESE WOULD BE USED
-        # if is_curve:
-        #     col = layout.column()
-        #     col.separator()
-
-        #     sub = col.column()
-        #     sub.prop(curve, "use_radius")
-        #     sub.prop(curve, "use_stretch")
-        #     sub.prop(curve, "use_deform_bounds")
-
-        col = layout.column()
-        col.prop(curve, "offset")
-
-        sub = col.column()
-        sub.active = (curve.bevel_object is None)
-        sub.prop(curve, "extrude")
-
-        col.prop(curve, "taper_object")
-
-        if type(curve) is not bpy.types.TextCurve:
-            # This setting makes no sense for texts, since we have no control over start/end of the bevel object curve.
-            sub = col.column()
-            sub.active = curve.taper_object is not None
-            sub.prop(curve, "use_map_taper")
-
-        col = layout.column()
-        sub = col.column()
-        sub.active = (curve.bevel_object is None)
-        sub.prop(curve, "bevel_depth", text="Depth")
-        sub.prop(curve, "bevel_resolution", text="Resolution")
-
-        # col.prop(curve, "bevel_object", text="Object")
-
-        # sub = col.column()
-        # sub.active = curve.bevel_object is not None
-        # sub.prop(curve, "use_fill_caps")
+        act_spline = curve.splines.active
+        box = layout.box()
+        box.label(text="Active Spline")
+        row = box.row()
+        row.prop(act_spline, "use_cyclic_u")
+        row.prop(act_spline, "use_smooth")
 
     def draw_gpencil_properties(self,layout,obj):
         pass
@@ -999,7 +1030,7 @@ class VIEW3D_PT_object_data(Panel):
             self.draw_curve_properties(layout,obj)
             self.draw_shape_keys(layout,obj)
         if obj.type == 'FONT':
-            self.draw_curve_properties(layout,obj)
+            self.draw_text_properties(layout,obj)
         if obj.type == 'EMPTY':
             self.draw_empty_properties(layout,obj)
         if obj.type == 'LATTICE':
@@ -1018,9 +1049,9 @@ class VIEW3D_PT_object_data(Panel):
         if obj.type == 'SPEAKER':
             pass #TODO
         if obj.type == 'FORCE_FIELD':
-            pass
+            pass #TODO
         if obj.type == 'GPENCIL':
-            pass 
+            pass #TODO
         if obj.type == 'LIGHT_PROBE':
             self.draw_light_probe_properties(layout,obj)             
         
@@ -1108,7 +1139,9 @@ class VIEW3D_MT_bp_add(bpy.types.Menu):
         layout.separator()
 
         layout.operator('bp.draw_plane',icon='MATPLANE')
-        layout.operator('bp_object.particle_paint',icon='SHADERFX')            
+        layout.operator('bp_object.particle_paint',icon='SHADERFX')   
+        layout.operator('bp_object.place_area_lamp',icon='LIGHT_AREA')   
+
 
 classes = (
     VIEW3D_PT_objects,

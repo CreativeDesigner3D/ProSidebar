@@ -6,10 +6,6 @@ from bpy.types import (
         UIList,
         )
 
-#TODO: ADD EEVEE RENDERING SETTINGS
-#TODO: ADD CYCLES RENDERING SETTINGS
-#TODO: ADD WORKBENCH RENDERING SETTINGS
-
 class RenderPanel:
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
@@ -437,6 +433,7 @@ class BPRENDER_PT_eevee_shadows(BPRenderButtonsPanel, Panel):
 
 class BPRENDER_PT_eevee_sampling(BPRenderButtonsPanel, Panel):
     bl_label = "Sampling"
+    bl_options = {'DEFAULT_CLOSED'}
     COMPAT_ENGINES = {'BLENDER_EEVEE'}
 
     @classmethod

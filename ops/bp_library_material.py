@@ -92,7 +92,7 @@ class LIBRARY_OT_add_material_from_library(bpy.types.Operator):
     mat = None
     
     @classmethod
-    def poll(cls, context):
+    def poll(cls, context):  
         if context.object and context.object.mode != 'OBJECT':
             return False
         return True

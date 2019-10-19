@@ -95,6 +95,9 @@ class LIBRARY_OT_add_collection_from_library(bpy.types.Operator):
     
     @classmethod
     def poll(cls, context):
+        active_col = context.view_layer.active_layer_collection.collection
+        if active_col.hide_viewport:
+            return False
         if context.object and context.object.mode != 'OBJECT':
             return False        
         return True

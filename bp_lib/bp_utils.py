@@ -302,3 +302,8 @@ def get_selection_point(context, event, ray_max=10000.0,objects=None,floor=None,
                         best_obj = obj
                         
     return best_hit, best_obj    
+
+def calc_distance(point1,point2):
+    """ This gets the distance between two points (X,Y,Z)
+    """
+    return math.sqrt((point1[0]-point2[0])**2 + (point1[1]-point2[1])**2 + (point1[2]-point2[2])**2)      

@@ -4,7 +4,7 @@ import subprocess
 from ..bp_lib import bp_utils
 from ..bp_utils import utils_library
 
-COLLECTION_FOLDER = os.path.join(utils_library.LIBRARY_FOLDER,"collections")
+COLLECTION_FOLDER = os.path.join(utils_library.DEFAULT_LIBRARY_ROOT_FOLDER,"collections")
 preview_collections = {}
 preview_collections["collection_categories"] = utils_library.create_image_preview_collection()
 preview_collections["collection_items"] = utils_library.create_image_preview_collection()
@@ -118,14 +118,21 @@ class LIBRARY_OT_add_collection_from_library(bpy.types.Operator):
         wm_props = wm.bp_lib
         if wm_props.collection_category != "":
             self.collection_category = wm_props.collection_category
-        return wm.invoke_props_dialog(self, width=200)
+        return wm.invoke_props_dialog(self, width=200 if len(self.collection_category) > 0 else 300)
         
     def draw(self, context):
         layout = self.layout
-        layout.prop(self,'collection_category',text="",icon='FILE_FOLDER')  
-        layout.template_icon_view(self,"collection_name",show_labels=True)  
-        layout.label(text=self.collection_name)
-        
+        if len(self.collection_category) == 0:
+            layout.label(text="No Assets Found",icon='ERROR')
+            layout.label(text="Use the menu to the right to save assets.")
+        else:        
+            layout.prop(self,'collection_category',text="",icon='FILE_FOLDER')  
+            if len(self.collection_name) > 0:
+                layout.template_icon_view(self,"collection_name",show_labels=True)  
+                layout.label(text=self.collection_name)
+            else:
+                layout.label(text="No Collections Found In Category")
+
     def execute(self, context):
         self.create_drawing_plane(context)
         self.grp = self.get_collection(context)
@@ -322,33 +329,34 @@ class LIBRARY_OT_save_collection_to_library(bpy.types.Operator):
             path = os.path.join(get_library_path() ,self.collection_category) 
         files = os.listdir(path) if os.path.exists(path) else []
         
-        if self.create_new_category:
+        if self.create_new_category or len(self.collection_category) == 0:
             row = layout.split(factor=.6)
             row.label(text="Enter new folder name:",icon='FILE_FOLDER')
-            row.prop(self,'create_new_category',text="Create New",icon='NEWFOLDER')
+            if len(self.collection_category) > 0:
+                row.prop(self,'create_new_category',text="Create New",icon='NEWFOLDER')
             layout.prop(self,'new_category_name',text="",icon='FILE_FOLDER')
+            if self.new_category_name == "":
+                layout.label(text="You must provide a category name",icon='ERROR')
+            else:
+                layout.label(text="") #DONT ADJUST INTERFACE            
         else:
             row = layout.split(factor=.6)
             row.label(text="Select folder to save to:",icon='FILE_FOLDER')
             row.prop(self,'create_new_category',text="Create New",icon='NEWFOLDER')
             layout.prop(self,'collection_category',text="",icon='FILE_FOLDER')
 
-        layout.label(text="Name: " + self.collection_name)
+        layout.label(text="Collection Name: " + self.collection_name)
         if self.collection_name + ".blend" in files or self.collection_name + ".png" in files:
             layout.label(text="File already exists",icon="ERROR")
-
-        if bpy.data.filepath != "" and bpy.data.is_dirty:
-            row = layout.split(factor=.6)
-            row.label(text="File is not saved",icon="ERROR")
-            row.prop(self,'save_file',text="Auto Save")
         
     def execute(self, context):
         if bpy.data.filepath == "":
             bpy.ops.wm.save_as_mainfile(filepath=os.path.join(bpy.app.tempdir,"temp_blend.blend"))
                     
         collection_to_save = context.view_layer.active_layer_collection.collection
-        if self.create_new_category:
-            os.makedirs(os.path.join(get_library_path() ,self.new_category_name))
+        if self.create_new_category or len(self.collection_category) == 0:
+            if not os.path.exists(os.path.join(get_library_path() ,self.new_category_name)):
+                os.makedirs(os.path.join(get_library_path() ,self.new_category_name))
             
             directory_to_save_to = os.path.join(get_library_path() ,self.new_category_name) 
         else:

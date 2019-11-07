@@ -4,8 +4,9 @@ from ..bp_lib.xml import BlenderProXML
 import xml.etree.ElementTree as ET
 from importlib import import_module
 
+DEFAULT_LIBRARY_ROOT_FOLDER = os.path.join(bpy.utils.user_resource('SCRIPTS'), "creative_designer")
 LIBRARY_FOLDER = os.path.join(os.path.dirname(__file__),"data")
-LIBRARY_PATH_FILENAME = "blender_pro_paths.xml"
+LIBRARY_PATH_FILENAME = "creative_designer_paths.xml"
 
 def get_wm_props():
     wm = bpy.context.window_manager
@@ -17,12 +18,12 @@ def get_thumbnail_file_path():
 def get_library_path_file():
     """ Returns the path to the file that stores all of the library paths.
     """
-    path = os.path.join(bpy.utils.user_resource('SCRIPTS'), "blender_pro")
+    # path = os.path.join(bpy.utils.user_resource('SCRIPTS'), "creative_designer")
 
-    if not os.path.exists(path):
-        os.makedirs(path)
+    if not os.path.exists(DEFAULT_LIBRARY_ROOT_FOLDER):
+        os.makedirs(DEFAULT_LIBRARY_ROOT_FOLDER)
         
-    return os.path.join(path,LIBRARY_PATH_FILENAME)
+    return os.path.join(DEFAULT_LIBRARY_ROOT_FOLDER,LIBRARY_PATH_FILENAME)
 
 def get_folder_enum_previews(path,key):
     """ Returns: ImagePreviewCollection

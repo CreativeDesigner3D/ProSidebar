@@ -4,7 +4,7 @@ import subprocess
 from ..bp_lib import bp_utils
 from ..bp_utils import utils_library
 
-OBJECT_FOLDER = os.path.join(utils_library.LIBRARY_FOLDER,"objects")
+OBJECT_FOLDER = os.path.join(utils_library.DEFAULT_LIBRARY_ROOT_FOLDER,"objects")
 preview_collections = {}
 preview_collections["object_categories"] = utils_library.create_image_preview_collection()
 preview_collections["object_items"] = utils_library.create_image_preview_collection()
@@ -116,16 +116,20 @@ class LIBRARY_OT_add_object_from_library(bpy.types.Operator):
         wm_props = wm.bp_lib
         if wm_props.object_category != "":
             self.object_category = wm_props.object_category              
-        return wm.invoke_props_dialog(self, width=200)
+        return wm.invoke_props_dialog(self, width=200 if len(self.object_category) > 0 else 300)
         
     def draw(self, context):
         layout = self.layout
-        layout.prop(self,'object_category',text="",icon='FILE_FOLDER')  
-        if len(self.object_name) > 0:
-            layout.template_icon_view(self,"object_name",show_labels=True)  
-            layout.label(text=self.object_name)
+        if len(self.object_category) == 0:
+            layout.label(text="No Assets Found",icon='ERROR')
+            layout.label(text="Use the menu to the right to save assets.")
         else:
-            layout.label(text="No Objects Found In Category")
+            layout.prop(self,'object_category',text="",icon='FILE_FOLDER')  
+            if len(self.object_name) > 0:
+                layout.template_icon_view(self,"object_name",show_labels=True)  
+                layout.label(text=self.object_name)
+            else:
+                layout.label(text="No Objects Found In Category")
         
     def execute(self, context):
         self.create_drawing_plane(context)
@@ -241,24 +245,30 @@ class LIBRARY_OT_save_object_to_library(bpy.types.Operator):
         
     def draw(self, context):
         layout = self.layout
+
         if self.create_new_category:
             path = os.path.join(get_library_path() ,self.new_category_name) 
         else:
             path = os.path.join(get_library_path() ,self.object_category) 
         files = os.listdir(path) if os.path.exists(path) else []
 
-        if self.create_new_category:
+        if self.create_new_category or len(self.object_category) == 0:
             row = layout.split(factor=.6)
             row.label(text="Enter new folder name:",icon='FILE_FOLDER')
-            row.prop(self,'create_new_category',text="Create New",icon='NEWFOLDER')
+            if len(self.object_category) > 0:
+                row.prop(self,'create_new_category',text="Create New",icon='NEWFOLDER')
             layout.prop(self,'new_category_name',text="",icon='FILE_FOLDER')
+            if self.new_category_name == "":
+                layout.label(text="You must provide a category name",icon='ERROR')
+            else:
+                layout.label(text="") #DONT ADJUST INTERFACE
         else:
             row = layout.split(factor=.6)
             row.label(text="Select folder to save to:",icon='FILE_FOLDER')
             row.prop(self,'create_new_category',text="Create New",icon='NEWFOLDER')
             layout.prop(self,'object_category',text="",icon='FILE_FOLDER')
             
-        layout.label(text="Name: " + self.obj_name)
+        layout.label(text="Object Name: " + self.obj_name)
         
         if self.obj_name + ".blend" in files or self.obj_name + ".png" in files:
             layout.label(text="File already exists",icon="ERROR")        
@@ -318,8 +328,9 @@ class LIBRARY_OT_save_object_to_library(bpy.types.Operator):
             bpy.ops.wm.save_as_mainfile(filepath=os.path.join(bpy.app.tempdir,"temp_blend.blend"))
         
         obj_to_save = context.object
-        if self.create_new_category:
-            os.makedirs(os.path.join(get_library_path() ,self.new_category_name))
+        if self.create_new_category or len(self.object_category) == 0:
+            if not os.path.exists(os.path.join(get_library_path() ,self.new_category_name)):
+                os.makedirs(os.path.join(get_library_path() ,self.new_category_name))
             
             directory_to_save_to = os.path.join(get_library_path() ,self.new_category_name) 
         else:

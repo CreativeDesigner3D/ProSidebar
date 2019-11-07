@@ -4,7 +4,7 @@ import subprocess
 from ..bp_lib import bp_utils
 from ..bp_utils import utils_library
 
-MATERIAL_FOLDER = os.path.join(utils_library.LIBRARY_FOLDER,"materials")
+MATERIAL_FOLDER = os.path.join(utils_library.DEFAULT_LIBRARY_ROOT_FOLDER,"materials")
 preview_collections = {}
 preview_collections["material_categories"] = utils_library.create_image_preview_collection()
 preview_collections["material_items"] = utils_library.create_image_preview_collection()
@@ -110,13 +110,20 @@ class LIBRARY_OT_add_material_from_library(bpy.types.Operator):
         wm_props = wm.bp_lib
         if wm_props.material_category != "":
             self.material_category = wm_props.material_category        
-        return wm.invoke_props_dialog(self, width=200)
+        return wm.invoke_props_dialog(self, width=200 if len(self.material_category) > 0 else 300)
         
     def draw(self, context):
         layout = self.layout
-        layout.prop(self,'material_category',text="",icon='FILE_FOLDER')  
-        layout.template_icon_view(self,"material_name",show_labels=True)  
-        layout.label(text=self.material_name)
+        if len(self.material_category) == 0:
+            layout.label(text="No Assets Found",icon='ERROR')
+            layout.label(text="Use the menu to the right to save assets.")
+        else:        
+            layout.prop(self,'material_category',text="",icon='FILE_FOLDER')  
+            if len(self.material_name) > 0:
+                layout.template_icon_view(self,"material_name",show_labels=True)  
+                layout.label(text=self.material_name)
+            else:
+                layout.label(text="No Materials Found In Category")
         
     def execute(self, context):
         self.mat = self.get_material(context)
@@ -409,18 +416,23 @@ class LIBRARY_OT_save_material_to_library(bpy.types.Operator):
             path = os.path.join(get_library_path() ,self.material_category) 
         files = os.listdir(path) if os.path.exists(path) else []
 
-        if self.create_new_category:
+        if self.create_new_category or len(self.material_category) == 0:
             row = layout.split(factor=.6)
             row.label(text="Enter new folder name:",icon='FILE_FOLDER')
-            row.prop(self,'create_new_category',text="Create New",icon='NEWFOLDER')
+            if len(self.material_category) > 0:
+                row.prop(self,'create_new_category',text="Create New",icon='NEWFOLDER') 
             layout.prop(self,'new_category_name',text="",icon='FILE_FOLDER')
+            if self.new_category_name == "":
+                layout.label(text="You must provide a category name",icon='ERROR')
+            else:
+                layout.label(text="") #DONT ADJUST INTERFACE            
         else:
             row = layout.split(factor=.6)
             row.label(text="Select folder to save to:",icon='FILE_FOLDER')
             row.prop(self,'create_new_category',text="Create New",icon='NEWFOLDER')
             layout.prop(self,'material_category',text="",icon='FILE_FOLDER')
             
-        layout.label(text="Name: " + self.mat_name)
+        layout.label(text="Material Name: " + self.mat_name)
         
         if self.mat_name + ".blend" in files or self.mat_name + ".png" in files:
             layout.label(text="File already exists",icon="ERROR")   
@@ -438,11 +450,10 @@ class LIBRARY_OT_save_material_to_library(bpy.types.Operator):
         if bpy.data.filepath == "":
             bpy.ops.wm.save_as_mainfile(filepath=os.path.join(bpy.app.tempdir,"temp_blend.blend"))
         
-
-
         mat_to_save = bpy.data.materials[context.scene.bp_props.selected_material_index]
-        if self.create_new_category:
-            os.makedirs(os.path.join(get_library_path() ,self.new_category_name))
+        if self.create_new_category or len(self.material_category) == 0:
+            if not os.path.exists(os.path.join(get_library_path() ,self.new_category_name)):
+                os.makedirs(os.path.join(get_library_path() ,self.new_category_name))
             directory_to_save_to = os.path.join(get_library_path() ,self.new_category_name)
         else:
             directory_to_save_to = os.path.join(get_library_path() ,self.material_category)

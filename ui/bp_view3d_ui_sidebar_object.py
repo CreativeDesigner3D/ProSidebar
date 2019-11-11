@@ -584,7 +584,7 @@ class VIEW3D_PT_object_data(Panel):
 
             col = flow.column()
             col.prop(cam.dof, "aperture_rotation")
-            col.prop(cam.dof, "aperture_ratio")        
+            col.prop(cam.dof, "aperture_ratio")
 
     def draw_light_properties(self,layout,obj):
         light = obj.data
@@ -875,9 +875,91 @@ class VIEW3D_PT_object_data(Panel):
         row.prop(act_spline, "use_cyclic_u")
         row.prop(act_spline, "use_smooth")
 
-    def draw_gpencil_properties(self,layout,obj):
-        pass
-        #LAYERS
+    def draw_gpencil_vertex_groups(self,layout,obj):
+        group = obj.vertex_groups.active
+
+        rows = 2
+        if group:
+            rows = 4
+
+        box = layout.box()
+        row = box.row()
+        row.label(text="Vertex Groups:", icon='GROUP_VERTEX')
+        if len(obj.vertex_groups) > 0:
+            row = box.row()
+            row.template_list("GPENCIL_UL_vgroups", "", obj, "vertex_groups", obj.vertex_groups, "active_index", rows=rows)
+
+            col = row.column(align=True)
+            col.operator("object.vertex_group_add", icon='ADD', text="")
+            col.operator("object.vertex_group_remove", icon='REMOVE', text="").all = False
+            # col.menu("MESH_MT_vertex_group_context_menu", icon='DOWNARROW_HLT', text="")
+            col.menu("GPENCIL_MT_gpencil_vertex_group", icon='DOWNARROW_HLT', text="")
+            if group:
+                col.separator()
+                col.operator("object.vertex_group_move", icon='TRIA_UP', text="").direction = 'UP'
+                col.operator("object.vertex_group_move", icon='TRIA_DOWN', text="").direction = 'DOWN'
+
+            if obj.vertex_groups and (obj.mode == 'EDIT_GPENCIL' or 'SCULPT_GPENCIL'):
+                row = box.row()
+
+                sub = row.row(align=True)
+                sub.operator("gpencil.vertex_group_assign", text="Assign")
+                sub.operator("gpencil.vertex_group_remove_from", text="Remove")
+
+                sub = row.row(align=True)
+                sub.operator("gpencil.vertex_group_select", text="Select")
+                sub.operator("gpencil.vertex_group_deselect", text="Deselect")
+
+                box.prop(bpy.context.tool_settings, "vertex_group_weight", text="Weight")
+
+        else:
+            row.operator('object.vertex_group_add', icon='ADD', text="Add")
+
+    def draw_gpencil_layers(selfself,layout,obj):
+        gpd = obj.data
+
+        if (gpd is None) or (not gpd.layers):
+            layout.operator("gpencil.layer_add", text="New Layer")
+        else:
+            gpl = gpd.layers.active
+
+            layer_rows = 7
+
+            box = layout.box()
+            row = box.row()
+            row.label(text="Layers:", icon='NONE')
+            row = box.row()
+
+            row.template_list("GPENCIL_UL_layer", "", gpd, "layers", gpd.layers, "active_index",
+                              rows=layer_rows, sort_reverse=True, sort_lock=True)
+
+            col = row.column()
+            sub = col.column(align=True)
+            sub.operator("gpencil.layer_add", icon='ADD', text="")
+            sub.operator("gpencil.layer_remove", icon='REMOVE', text="")
+
+            if gpl:
+                sub.menu("GPENCIL_MT_layer_context_menu", icon='DOWNARROW_HLT', text="")
+
+                if len(gpd.layers) > 1:
+                    col.separator()
+
+                    sub = col.column(align=True)
+                    sub.operator("gpencil.layer_move", icon='TRIA_UP', text="").type = 'UP'
+                    sub.operator("gpencil.layer_move", icon='TRIA_DOWN', text="").type = 'DOWN'
+
+                    col.separator()
+
+                    sub = col.column(align=True)
+                    sub.operator("gpencil.layer_isolate", icon='LOCKED', text="").affect_visibility = False
+                    sub.operator("gpencil.layer_isolate", icon='RESTRICT_VIEW_ON', text="").affect_visibility = True
+
+            # Layer main properties
+            row = box.row(align=True)
+
+            if gpl:
+                row.prop(gpl, "blend_mode", text="Blend")
+                row.prop(gpl, "opacity", text="Opacity", slider=True)
 
     def draw_metaball_properties(self,layout,obj):
         mball = obj.data
@@ -1051,7 +1133,8 @@ class VIEW3D_PT_object_data(Panel):
         if obj.type == 'FORCE_FIELD':
             pass #TODO
         if obj.type == 'GPENCIL':
-            pass #TODO
+            self.draw_gpencil_vertex_groups(layout,obj)
+            self.draw_gpencil_layers(layout,obj)
         if obj.type == 'LIGHT_PROBE':
             self.draw_light_probe_properties(layout,obj)             
         

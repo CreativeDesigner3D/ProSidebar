@@ -13,7 +13,7 @@ from bpy.props import (
         StringProperty,
         CollectionProperty,
         )
-import math        
+import math
 from .modifiers import Modifier, Gpencil_Modifier
 from .constraints import Constraint
 from ..bp_lib import bp_unit, bp_utils, bp_types
@@ -1138,6 +1138,123 @@ class VIEW3D_PT_object_data(Panel):
         if obj.type == 'LIGHT_PROBE':
             self.draw_light_probe_properties(layout,obj)             
         
+class VIEW3D_PT_camera_background_image(Panel):
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_label = "Background Images"
+    bl_category = "Object"
+    bl_options = {'DEFAULT_CLOSED'}
+    COMPAT_ENGINES = {'BLENDER_RENDER', 'BLENDER_EEVEE', 'BLENDER_WORKBENCH'}
+
+    @classmethod
+    def poll(cls, context):
+        return context.object
+
+    def draw_header(self, context):
+        if context.active_object is not None:
+            if context.object.type == 'CAMERA':
+                cam = context.object.data
+                self.layout.prop(cam, "show_background_images", text="")
+
+    def draw(self, context):
+        if context.active_object is not None:
+            if context.object.type == 'CAMERA':
+                layout = self.layout
+                layout.use_property_split = True
+                layout.use_property_decorate = False
+
+                cam = context.object.data
+                use_multiview = context.scene.render.use_multiview
+
+                col = layout.column(align=True)
+                row = col.row()
+                row.operator("view3d.background_image_add", text="Add Image")
+                row.operator('bp_object.collapse_all_background_images', text="", icon='FULLSCREEN_EXIT')
+
+                for i, bg in enumerate(cam.background_images):
+                    layout.active = cam.show_background_images
+                    box = layout.box()
+                    row = box.row(align=True)
+                    row.prop(bg, "show_expanded", text="", emboss=False)
+                    if bg.source == 'IMAGE' and bg.image:
+                        row.prop(bg.image, "name", text="", emboss=False)
+                    elif bg.source == 'MOVIE_CLIP' and bg.clip:
+                        row.prop(bg.clip, "name", text="", emboss=False)
+                    elif bg.source and bg.use_camera_clip:
+                        row.label(text="Active Clip")
+                    else:
+                        row.label(text="Not Set")
+
+                    row.prop(
+                        bg,
+                        "show_background_image",
+                        text="",
+                        emboss=False,
+                        icon='RESTRICT_VIEW_OFF' if bg.show_background_image else 'RESTRICT_VIEW_ON',
+                    )
+
+                    row.operator("bp_object.background_image_remove", text="", icon='X').index = i
+
+                    if bg.show_expanded:
+                        row = box.row()
+                        row.prop(bg, "source", expand=True)
+
+                        has_bg = False
+                        if bg.source == 'IMAGE':
+                            row = box.row()
+                            row.template_ID(bg, "image", open="image.open")
+                            if bg.image is not None:
+                                box.template_image(bg, "image", bg.image_user, compact=True)
+                                has_bg = True
+
+                                if use_multiview:
+                                    box.prop(bg.image, "use_multiview")
+
+                                    column = box.column()
+                                    column.active = bg.image.use_multiview
+
+                                    column.label(text="Views Format:")
+                                    column.row().prop(bg.image, "views_format", expand=True)
+
+                                    sub = column.box()
+                                    sub.active = bg.image.views_format == 'STEREO_3D'
+                                    sub.template_image_stereo_3d(bg.image.stereo_3d_format)
+
+                        elif bg.source == 'MOVIE_CLIP':
+                            box.prop(bg, "use_camera_clip", text="Active Clip")
+
+                            column = box.column()
+                            column.active = not bg.use_camera_clip
+                            column.template_ID(bg, "clip", open="clip.open")
+
+                            if bg.clip:
+                                column.template_movieclip(bg, "clip", compact=True)
+
+                            if bg.use_camera_clip or bg.clip:
+                                has_bg = True
+
+                            column = box.column()
+                            column.active = has_bg
+                            column.prop(bg.clip_user, "use_render_undistorted")
+                            column.prop(bg.clip_user, "proxy_render_size")
+
+                        if has_bg:
+                            col = box.column()
+                            col.prop(bg, "alpha", slider=True)
+                            col.row().prop(bg, "display_depth", expand=True)
+
+                            col.row().prop(bg, "frame_method", expand=True)
+
+                            row = box.row()
+                            row.prop(bg, "offset")
+
+                            col = box.column()
+                            col.prop(bg, "rotation")
+                            col.prop(bg, "scale")
+
+                            col.prop(bg, "use_flip_x")
+                            col.prop(bg, "use_flip_y")
+
 
 class VIEW3D_MT_bp_add(bpy.types.Menu):
     bl_label = "Add"
@@ -1235,7 +1352,8 @@ classes = (
     VIEW3D_PT_object_view_options,
     VIEW3D_PT_object_modifiers,
     VIEW3D_PT_object_constraints,
-    VIEW3D_MT_bp_add
+    VIEW3D_MT_bp_add,
+    VIEW3D_PT_camera_background_image
 )
 
 register, unregister = bpy.utils.register_classes_factory(classes)

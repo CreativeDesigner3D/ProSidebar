@@ -62,6 +62,52 @@ class bp_object_OT_collapse_all_constraints(Operator):
             con.show_expanded = False
         return {'FINISHED'}
 
+class bp_object_OT_collapse_all_background_images(Operator):
+    bl_idname = "bp_object.collapse_all_background_images"
+    bl_label = "Collapse All Background Images"
+    bl_description = "Collapse all Camera Background Images"
+    bl_options = {'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        return context.object
+
+    def execute(self, context):
+        cam = context.active_object.data
+        if (len(cam.background_images)):
+            n = 0
+            for bg in cam.background_images:
+                if (bg.show_expanded):
+                    n += 1
+                else:
+                    n -= 1
+            is_close = False
+            if (0 < n):
+                is_close = True
+            for bg in cam.background_images:
+                bg.show_expanded = not is_close
+        return {'FINISHED'}
+
+class bp_object_OT_background_image_remove(Operator):
+    bl_idname = "bp_object.background_image_remove"
+    bl_label = "Remove Background Image"
+    bl_description = "Remove a Background Image from the camera"
+    bl_options = {'UNDO'}
+
+    index = bpy.props.IntProperty()
+
+    @classmethod
+    def poll(cls, context):
+        return context.object
+
+    def execute(self, context):
+        cam = context.active_object.data
+        for i, bg in enumerate(cam.background_images):
+            if i == self.index:
+                bg.show_background_image = False
+                cam.background_images.remove(bg)
+        return {'FINISHED'}
+
 class bp_object_OT_add_text(bpy.types.Operator):
     bl_idname = "bp_object.add_text_dialog"
     bl_label = "Add Text"
@@ -403,6 +449,8 @@ class bp_object_OT_set_base_point(bpy.types.Operator):
 classes = (
     bp_object_OT_select_object,
     bp_object_OT_collapse_all_modifiers,
+    bp_object_OT_collapse_all_background_images,
+    bp_object_OT_background_image_remove,
     bp_object_OT_collapse_all_constraints,
     bp_object_OT_add_text,
     bp_object_OT_add_camera,
@@ -416,4 +464,4 @@ classes = (
 register, unregister = bpy.utils.register_classes_factory(classes)
 
 if __name__ == "__main__":
-    register()                
+    register()

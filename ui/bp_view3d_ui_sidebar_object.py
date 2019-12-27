@@ -13,7 +13,7 @@ from bpy.props import (
         StringProperty,
         CollectionProperty,
         )
-import math        
+import math
 from .modifiers import Modifier, Gpencil_Modifier
 from .constraints import Constraint
 from ..bp_lib import bp_unit, bp_utils, bp_types
@@ -584,7 +584,7 @@ class VIEW3D_PT_object_data(Panel):
 
             col = flow.column()
             col.prop(cam.dof, "aperture_rotation")
-            col.prop(cam.dof, "aperture_ratio")        
+            col.prop(cam.dof, "aperture_ratio")
 
     def draw_light_properties(self,layout,obj):
         light = obj.data
@@ -875,9 +875,91 @@ class VIEW3D_PT_object_data(Panel):
         row.prop(act_spline, "use_cyclic_u")
         row.prop(act_spline, "use_smooth")
 
-    def draw_gpencil_properties(self,layout,obj):
-        pass
-        #LAYERS
+    def draw_gpencil_vertex_groups(self,layout,obj):
+        group = obj.vertex_groups.active
+
+        rows = 2
+        if group:
+            rows = 4
+
+        box = layout.box()
+        row = box.row()
+        row.label(text="Vertex Groups:", icon='GROUP_VERTEX')
+        if len(obj.vertex_groups) > 0:
+            row = box.row()
+            row.template_list("GPENCIL_UL_vgroups", "", obj, "vertex_groups", obj.vertex_groups, "active_index", rows=rows)
+
+            col = row.column(align=True)
+            col.operator("object.vertex_group_add", icon='ADD', text="")
+            col.operator("object.vertex_group_remove", icon='REMOVE', text="").all = False
+            # col.menu("MESH_MT_vertex_group_context_menu", icon='DOWNARROW_HLT', text="")
+            col.menu("GPENCIL_MT_gpencil_vertex_group", icon='DOWNARROW_HLT', text="")
+            if group:
+                col.separator()
+                col.operator("object.vertex_group_move", icon='TRIA_UP', text="").direction = 'UP'
+                col.operator("object.vertex_group_move", icon='TRIA_DOWN', text="").direction = 'DOWN'
+
+            if obj.vertex_groups and (obj.mode == 'EDIT_GPENCIL' or 'SCULPT_GPENCIL'):
+                row = box.row()
+
+                sub = row.row(align=True)
+                sub.operator("gpencil.vertex_group_assign", text="Assign")
+                sub.operator("gpencil.vertex_group_remove_from", text="Remove")
+
+                sub = row.row(align=True)
+                sub.operator("gpencil.vertex_group_select", text="Select")
+                sub.operator("gpencil.vertex_group_deselect", text="Deselect")
+
+                box.prop(bpy.context.tool_settings, "vertex_group_weight", text="Weight")
+
+        else:
+            row.operator('object.vertex_group_add', icon='ADD', text="Add")
+
+    def draw_gpencil_layers(selfself,layout,obj):
+        gpd = obj.data
+
+        if (gpd is None) or (not gpd.layers):
+            layout.operator("gpencil.layer_add", text="New Layer")
+        else:
+            gpl = gpd.layers.active
+
+            layer_rows = 7
+
+            box = layout.box()
+            row = box.row()
+            row.label(text="Layers:", icon='NONE')
+            row = box.row()
+
+            row.template_list("GPENCIL_UL_layer", "", gpd, "layers", gpd.layers, "active_index",
+                              rows=layer_rows, sort_reverse=True, sort_lock=True)
+
+            col = row.column()
+            sub = col.column(align=True)
+            sub.operator("gpencil.layer_add", icon='ADD', text="")
+            sub.operator("gpencil.layer_remove", icon='REMOVE', text="")
+
+            if gpl:
+                sub.menu("GPENCIL_MT_layer_context_menu", icon='DOWNARROW_HLT', text="")
+
+                if len(gpd.layers) > 1:
+                    col.separator()
+
+                    sub = col.column(align=True)
+                    sub.operator("gpencil.layer_move", icon='TRIA_UP', text="").type = 'UP'
+                    sub.operator("gpencil.layer_move", icon='TRIA_DOWN', text="").type = 'DOWN'
+
+                    col.separator()
+
+                    sub = col.column(align=True)
+                    sub.operator("gpencil.layer_isolate", icon='LOCKED', text="").affect_visibility = False
+                    sub.operator("gpencil.layer_isolate", icon='RESTRICT_VIEW_ON', text="").affect_visibility = True
+
+            # Layer main properties
+            row = box.row(align=True)
+
+            if gpl:
+                row.prop(gpl, "blend_mode", text="Blend")
+                row.prop(gpl, "opacity", text="Opacity", slider=True)
 
     def draw_metaball_properties(self,layout,obj):
         mball = obj.data
@@ -1051,10 +1133,128 @@ class VIEW3D_PT_object_data(Panel):
         if obj.type == 'FORCE_FIELD':
             pass #TODO
         if obj.type == 'GPENCIL':
-            pass #TODO
+            self.draw_gpencil_vertex_groups(layout,obj)
+            self.draw_gpencil_layers(layout,obj)
         if obj.type == 'LIGHT_PROBE':
             self.draw_light_probe_properties(layout,obj)             
         
+class VIEW3D_PT_camera_background_image(Panel):
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_label = "Background Images"
+    bl_category = "Object"
+    bl_options = {'DEFAULT_CLOSED'}
+    COMPAT_ENGINES = {'BLENDER_RENDER', 'BLENDER_EEVEE', 'BLENDER_WORKBENCH'}
+
+    @classmethod
+    def poll(cls, context):
+        return context.object
+
+    def draw_header(self, context):
+        if context.active_object is not None:
+            if context.object.type == 'CAMERA':
+                cam = context.object.data
+                self.layout.prop(cam, "show_background_images", text="")
+
+    def draw(self, context):
+        if context.active_object is not None:
+            if context.object.type == 'CAMERA':
+                layout = self.layout
+                layout.use_property_split = True
+                layout.use_property_decorate = False
+
+                cam = context.object.data
+                use_multiview = context.scene.render.use_multiview
+
+                col = layout.column(align=True)
+                row = col.row()
+                row.operator("view3d.background_image_add", text="Add Image")
+                row.operator('bp_object.collapse_all_background_images', text="", icon='FULLSCREEN_EXIT')
+
+                for i, bg in enumerate(cam.background_images):
+                    layout.active = cam.show_background_images
+                    box = layout.box()
+                    row = box.row(align=True)
+                    row.prop(bg, "show_expanded", text="", emboss=False)
+                    if bg.source == 'IMAGE' and bg.image:
+                        row.prop(bg.image, "name", text="", emboss=False)
+                    elif bg.source == 'MOVIE_CLIP' and bg.clip:
+                        row.prop(bg.clip, "name", text="", emboss=False)
+                    elif bg.source and bg.use_camera_clip:
+                        row.label(text="Active Clip")
+                    else:
+                        row.label(text="Not Set")
+
+                    row.prop(
+                        bg,
+                        "show_background_image",
+                        text="",
+                        emboss=False,
+                        icon='RESTRICT_VIEW_OFF' if bg.show_background_image else 'RESTRICT_VIEW_ON',
+                    )
+
+                    row.operator("bp_object.background_image_remove", text="", icon='X').index = i
+
+                    if bg.show_expanded:
+                        row = box.row()
+                        row.prop(bg, "source", expand=True)
+
+                        has_bg = False
+                        if bg.source == 'IMAGE':
+                            row = box.row()
+                            row.template_ID(bg, "image", open="image.open")
+                            if bg.image is not None:
+                                box.template_image(bg, "image", bg.image_user, compact=True)
+                                has_bg = True
+
+                                if use_multiview:
+                                    box.prop(bg.image, "use_multiview")
+
+                                    column = box.column()
+                                    column.active = bg.image.use_multiview
+
+                                    column.label(text="Views Format:")
+                                    column.row().prop(bg.image, "views_format", expand=True)
+
+                                    sub = column.box()
+                                    sub.active = bg.image.views_format == 'STEREO_3D'
+                                    sub.template_image_stereo_3d(bg.image.stereo_3d_format)
+
+                        elif bg.source == 'MOVIE_CLIP':
+                            box.prop(bg, "use_camera_clip", text="Active Clip")
+
+                            column = box.column()
+                            column.active = not bg.use_camera_clip
+                            column.template_ID(bg, "clip", open="clip.open")
+
+                            if bg.clip:
+                                column.template_movieclip(bg, "clip", compact=True)
+
+                            if bg.use_camera_clip or bg.clip:
+                                has_bg = True
+
+                            column = box.column()
+                            column.active = has_bg
+                            column.prop(bg.clip_user, "use_render_undistorted")
+                            column.prop(bg.clip_user, "proxy_render_size")
+
+                        if has_bg:
+                            col = box.column()
+                            col.prop(bg, "alpha", slider=True)
+                            col.row().prop(bg, "display_depth", expand=True)
+
+                            col.row().prop(bg, "frame_method", expand=True)
+
+                            row = box.row()
+                            row.prop(bg, "offset")
+
+                            col = box.column()
+                            col.prop(bg, "rotation")
+                            col.prop(bg, "scale")
+
+                            col.prop(bg, "use_flip_x")
+                            col.prop(bg, "use_flip_y")
+
 
 class VIEW3D_MT_bp_add(bpy.types.Menu):
     bl_label = "Add"
@@ -1152,7 +1352,8 @@ classes = (
     VIEW3D_PT_object_view_options,
     VIEW3D_PT_object_modifiers,
     VIEW3D_PT_object_constraints,
-    VIEW3D_MT_bp_add
+    VIEW3D_MT_bp_add,
+    VIEW3D_PT_camera_background_image
 )
 
 register, unregister = bpy.utils.register_classes_factory(classes)

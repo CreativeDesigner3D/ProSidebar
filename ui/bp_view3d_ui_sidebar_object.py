@@ -1148,7 +1148,10 @@ class VIEW3D_PT_camera_background_image(Panel):
 
     @classmethod
     def poll(cls, context):
-        return context.object
+        if context.object and context.object.type == 'CAMERA':
+            return True
+        else:
+            return False
 
     def draw_header(self, context):
         if context.active_object is not None:

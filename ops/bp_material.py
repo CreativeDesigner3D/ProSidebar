@@ -45,7 +45,7 @@ class bp_material_OT_create_material_from_image(Operator):
     bl_idname = "bp_material.create_material_from_image"
     bl_label = "Create Material From Image"
 
-    filepath = bpy.props.StringProperty(subtype="FILE_PATH")
+    filepath: bpy.props.StringProperty(subtype="FILE_PATH")
 
     def draw(self, context):
         self.layout.operator('file.select_all_toggle')  

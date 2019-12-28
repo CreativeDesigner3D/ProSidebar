@@ -94,7 +94,7 @@ class bp_object_OT_background_image_remove(Operator):
     bl_description = "Remove a Background Image from the camera"
     bl_options = {'UNDO'}
 
-    index = bpy.props.IntProperty()
+    index: bpy.props.IntProperty()
 
     @classmethod
     def poll(cls, context):
@@ -426,7 +426,7 @@ class bp_object_OT_set_base_point(bpy.types.Operator):
     bl_label = "Set Base Point"
     bl_options = {'UNDO'}
 
-    object_name = bpy.props.StringProperty(name="Object Name")
+    object_name: bpy.props.StringProperty(name="Object Name")
 
     def execute(self, context):
         obj = context.object

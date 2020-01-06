@@ -5,12 +5,20 @@ import xml.etree.ElementTree as ET
 from importlib import import_module
 
 DEFAULT_LIBRARY_ROOT_FOLDER = os.path.join(bpy.utils.user_resource('SCRIPTS'), "creative_designer")
+SCRIPT_FOLDER = os.path.join(DEFAULT_LIBRARY_ROOT_FOLDER,"scripts")
+OBJECT_FOLDER = os.path.join(DEFAULT_LIBRARY_ROOT_FOLDER,"objects")
+COLLECTION_FOLDER = os.path.join(DEFAULT_LIBRARY_ROOT_FOLDER,"collections")
+MATERIAL_FOLDER = os.path.join(DEFAULT_LIBRARY_ROOT_FOLDER,"materials")
 LIBRARY_FOLDER = os.path.join(os.path.dirname(__file__),"data")
 LIBRARY_PATH_FILENAME = "creative_designer_paths.xml"
 
 def get_wm_props():
     wm = bpy.context.window_manager
     return wm.bp_lib
+
+def get_scene_props():
+    scene = bpy.context.scene
+    return scene.bp_props    
 
 def get_thumbnail_file_path():
     return os.path.join(os.path.dirname(__file__),"thumbnail.blend")
@@ -24,6 +32,101 @@ def get_library_path_file():
         os.makedirs(DEFAULT_LIBRARY_ROOT_FOLDER)
         
     return os.path.join(DEFAULT_LIBRARY_ROOT_FOLDER,LIBRARY_PATH_FILENAME)
+
+def get_active_category(scene_props,folders):
+    """ Gets the active folder for the active library
+    """
+    if scene_props.library_tabs == 'SCRIPT':
+        pass
+    if scene_props.library_tabs == 'OBJECT':
+        if scene_props.active_object_library in folders:
+            for folder in folders:
+                if scene_props.active_object_library == folder:
+                    return folder
+    if scene_props.library_tabs == 'COLLECTION':
+        if scene_props.active_collection_library in folders:
+            for folder in folders:
+                if scene_props.active_collection_library == folder:
+                    return folder
+    if scene_props.library_tabs == 'MATERIAL':
+        if scene_props.active_material_library in folders:
+            for folder in folders:
+                if scene_props.active_material_library == folder:
+                    return folder                 
+    if scene_props.library_tabs == 'WORLD':
+        pass      
+    if len(folders) > 0:
+        return folders[0]
+
+def get_active_categories(library_tabs):
+    """ Gets a list of all of the categories
+    """
+    path = get_active_library_path(library_tabs)
+    folders = []
+    if path and os.path.exists(path):
+        for fn in os.listdir(path):
+            if os.path.isdir(os.path.join(path,fn)):
+                folders.append(fn)    
+    return folders
+
+def get_active_library_path(library_tabs):
+    if library_tabs == 'SCRIPT':
+        pass        
+    if library_tabs == 'OBJECT':
+        return get_object_library_path()
+    if library_tabs == 'COLLECTION':
+        return get_collection_library_path()
+    if library_tabs == 'MATERIAL':
+        return get_material_library_path()
+    if library_tabs == 'WORLD':
+        pass
+
+def get_script_library_path():
+    props = get_wm_props()
+    if os.path.exists(props.script_library_path):
+        return props.script_library_path
+    else:
+        return SCRIPT_FOLDER
+
+def get_object_library_path():
+    props = get_wm_props()
+    if os.path.exists(props.object_library_path):
+        return props.object_library_path
+    else:
+        return OBJECT_FOLDER
+
+def get_collection_library_path():
+    props = get_wm_props()
+    if os.path.exists(props.collection_library_path):
+        return props.collection_library_path
+    else:
+        return COLLECTION_FOLDER
+
+def get_material_library_path():
+    props = get_wm_props()
+    if os.path.exists(props.material_library_path):
+        return props.material_library_path
+    else:
+        return MATERIAL_FOLDER                
+
+def update_file_browser_path(context,path):
+    for area in context.screen.areas:
+        if area.type == 'FILE_BROWSER':
+            for space in area.spaces:
+                if space.type == 'FILE_BROWSER':
+                    params = space.params
+                    params.directory = str.encode(path)
+                    if not context.screen.show_fullscreen:
+                        params.use_filter = True
+                        params.display_type = 'THUMBNAIL'
+                        params.use_filter_movie = False
+                        params.use_filter_script = False
+                        params.use_filter_sound = False
+                        params.use_filter_text = False
+                        params.use_filter_font = False
+                        params.use_filter_folder = False
+                        params.use_filter_blender = False
+                        params.use_filter_image = True
 
 def get_folder_enum_previews(path,key):
     """ Returns: ImagePreviewCollection
@@ -120,7 +223,7 @@ def update_props_from_xml_file():
     '''
     This gets read on startup and sets the window manager props
     '''
-    wm_props = bpy.context.window_manager.bp_lib
+    wm_props = get_wm_props()
     if os.path.exists(get_library_path_file()):
         tree = ET.parse(get_library_path_file())
         root = tree.getroot()

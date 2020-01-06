@@ -4,17 +4,13 @@ import subprocess
 from ..bp_lib import bp_utils
 from ..bp_utils import utils_library
 
-OBJECT_FOLDER = os.path.join(utils_library.DEFAULT_LIBRARY_ROOT_FOLDER,"objects")
+
 preview_collections = {}
 preview_collections["object_categories"] = utils_library.create_image_preview_collection()
 preview_collections["object_items"] = utils_library.create_image_preview_collection()
 
 def get_library_path():
-    props = utils_library.get_wm_props()
-    if os.path.exists(props.object_library_path):
-        return props.object_library_path
-    else:
-        return OBJECT_FOLDER
+    return utils_library.get_object_library_path()
 
 def enum_object_categories(self,context):
     if context is None:
@@ -59,6 +55,20 @@ class LIBRARY_MT_object_library(bpy.types.Menu):
         layout.operator('bp_general.create_new_folder',icon='NEWFOLDER').path = get_library_path()        
         layout.operator('library.change_object_library_path',icon='FILE_FOLDER')
         
+class LIBRARY_OT_change_object_category(bpy.types.Operator):
+    bl_idname = "library.change_object_category"
+    bl_label = "Change Object Category"
+
+    category: bpy.props.StringProperty(subtype="DIR_PATH")
+
+    def execute(self, context):
+        props = utils_library.get_scene_props()
+        props.active_object_library = self.category
+        path = os.path.join(utils_library.get_active_library_path(props.library_tabs),props.active_object_library)
+        if os.path.exists(path):
+            utils_library.update_file_browser_path(context,path)
+        return {'FINISHED'}
+
 class LIBRARY_OT_change_object_library_path(bpy.types.Operator):
     bl_idname = "library.change_object_library_path"
     bl_label = "Change Object Library Path"
@@ -81,6 +91,106 @@ class LIBRARY_OT_change_object_library_path(bpy.types.Operator):
             wm.bp_lib.object_library_path = self.directory
             clear_object_categories(self,context)
         return {'FINISHED'}
+
+
+class LIBRARY_OT_drop_object_from_library(bpy.types.Operator):
+    bl_idname = "library.drop_object_from_library"
+    bl_label = "Drop Object From Library"
+    
+    filepath: bpy.props.StringProperty(name="Filepath",default="Error")
+
+    obj_name: bpy.props.StringProperty(name="Obj Name")
+    object_category: bpy.props.EnumProperty(name="Object Category",items=enum_object_categories,update=update_object_category)
+    object_name: bpy.props.EnumProperty(name="Object Name",items=enum_object_names)
+    
+    drawing_plane = None
+    obj = None
+    
+    def execute(self, context):
+        self.create_drawing_plane(context)
+        self.obj = self.get_object(context)
+        context.window_manager.modal_handler_add(self)
+        context.area.tag_redraw()
+        return {'RUNNING_MODAL'}
+
+    def get_object(self,context):
+        path, ext = os.path.splitext(self.filepath)
+        object_file_path = os.path.join(path + ".blend")
+        with bpy.data.libraries.load(object_file_path, False, False) as (data_from, data_to):
+                data_to.objects = data_from.objects
+        for obj in data_to.objects:
+            context.view_layer.active_layer_collection.collection.objects.link(obj)
+            return obj
+
+    def create_drawing_plane(self,context):
+        bpy.ops.mesh.primitive_plane_add()
+        plane = context.active_object
+        plane.location = (0,0,0)
+        self.drawing_plane = context.active_object
+        self.drawing_plane.display_type = 'WIRE'
+        self.drawing_plane.dimensions = (100,100,1)
+
+    def modal(self, context, event):
+        context.area.tag_redraw()
+        self.mouse_x = event.mouse_x
+        self.mouse_y = event.mouse_y
+        selected_point, selected_obj = bp_utils.get_selection_point(context,event,exclude_objects=[self.obj])
+
+        self.position_object(selected_point,selected_obj)
+        
+        if self.event_is_place_object(event):
+            return self.finish(context)
+
+        if self.event_is_cancel_command(event):
+            return self.cancel_drop(context)
+        
+        if self.event_is_pass_through(event):
+            return {'PASS_THROUGH'}        
+        
+        return {'RUNNING_MODAL'}
+
+    def event_is_place_object(self,event):
+        if event.type == 'LEFTMOUSE' and event.value == 'PRESS':
+            return True
+        elif event.type == 'NUMPAD_ENTER' and event.value == 'PRESS':
+            return True
+        elif event.type == 'RET' and event.value == 'PRESS':
+            return True
+        else:
+            return False
+
+    def event_is_cancel_command(self,event):
+        if event.type in {'RIGHTMOUSE', 'ESC'}:
+            return True
+        else:
+            return False
+    
+    def event_is_pass_through(self,event):
+        if event.type in {'MIDDLEMOUSE', 'WHEELUPMOUSE', 'WHEELDOWNMOUSE'}:
+            return True
+        else:
+            return False
+
+    def position_object(self,selected_point,selected_obj):
+        self.obj.location = selected_point
+
+    def cancel_drop(self,context):
+        obj_list = []
+        obj_list.append(self.drawing_plane)
+        obj_list.append(self.obj)
+        bp_utils.delete_obj_list(obj_list)
+        return {'CANCELLED'}
+    
+    def finish(self,context):
+        context.window.cursor_set('DEFAULT')
+        if self.drawing_plane:
+            bp_utils.delete_obj_list([self.drawing_plane])
+        bpy.ops.object.select_all(action='DESELECT')
+        self.obj.select_set(True)  
+        context.view_layer.objects.active = self.obj 
+        context.area.tag_redraw()
+        return {'FINISHED'}
+
 
 class LIBRARY_OT_add_object_from_library(bpy.types.Operator):
     bl_idname = "library.add_object_from_library"
@@ -351,12 +461,16 @@ class LIBRARY_OT_save_object_to_library(bpy.types.Operator):
 
 def register():
     bpy.utils.register_class(LIBRARY_MT_object_library)
+    bpy.utils.register_class(LIBRARY_OT_drop_object_from_library)
+    bpy.utils.register_class(LIBRARY_OT_change_object_category)
     bpy.utils.register_class(LIBRARY_OT_add_object_from_library)
     bpy.utils.register_class(LIBRARY_OT_save_object_to_library)
     bpy.utils.register_class(LIBRARY_OT_change_object_library_path)
     
 def unregister():
     bpy.utils.unregister_class(LIBRARY_MT_object_library)
+    bpy.utils.unregister_class(LIBRARY_OT_drop_object_from_library)
+    bpy.utils.unregister_class(LIBRARY_OT_change_object_category)
     bpy.utils.unregister_class(LIBRARY_OT_add_object_from_library)
     bpy.utils.unregister_class(LIBRARY_OT_save_object_to_library)
     bpy.utils.unregister_class(LIBRARY_OT_change_object_library_path)

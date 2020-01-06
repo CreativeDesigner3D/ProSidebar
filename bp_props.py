@@ -14,7 +14,7 @@ from bpy.props import (
         CollectionProperty,
         EnumProperty,
         )
-
+import os
 from .bp_utils import utils_library
 
 def update_object_selection(self,context):
@@ -39,6 +39,13 @@ def update_world_selection(self,context):
 def update_library_paths(self,context):
     utils_library.write_xml_file()
 
+def update_library_tab(self,context):
+    root_path = utils_library.get_active_library_path(self.library_tabs)
+    if not os.path.exists(root_path):
+        os.makedirs(root_path)
+    folders = utils_library.get_active_categories(self.library_tabs)
+    active_folder_name = utils_library.get_active_category(self,folders)
+    utils_library.update_file_browser_path(context,os.path.join(root_path,active_folder_name))
 
 class BP_Window_Manager_Library_Props(bpy.types.PropertyGroup):
 
@@ -89,10 +96,23 @@ class BP_Window_Manager_Library_Props(bpy.types.PropertyGroup):
 
 
 class BP_Scene_Props(PropertyGroup):
+    library_tabs: bpy.props.EnumProperty(name="Library Tabs",
+                                         items=[('OBJECT',"Object","Show the Object Library"),
+                                                ('COLLECTION',"Collection","Show the Collection Library"),
+                                                ('MATERIAL',"Material","Show the Material Library"),
+                                                ('WORLD',"World","Show the World Library"),
+                                                ('SCRIPT',"Script","Show the Script Library")],
+                                         default='SCRIPT',
+                                         update=update_library_tab)
+
+    active_object_library: StringProperty(name="Active Object Library",default="")
+    active_collection_library: StringProperty(name="Active Collection Library",default="")
+    active_material_library: StringProperty(name="Active Material Library",default="")
+
     selected_object_index: IntProperty(name="Selected Object Index", default=0, update = update_object_selection)
     selected_world_index: IntProperty(name="Selected World Index", default=0, update = update_world_selection)
     selected_material_index: IntProperty(name="Selected Material Index", default=0)
-    
+
     @classmethod
     def register(cls):
         bpy.types.Scene.bp_props = PointerProperty(

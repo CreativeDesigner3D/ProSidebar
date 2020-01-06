@@ -4,7 +4,6 @@ import subprocess
 from ..bp_lib import bp_utils
 from ..bp_utils import utils_library
 
-COLLECTION_FOLDER = os.path.join(utils_library.DEFAULT_LIBRARY_ROOT_FOLDER,"collections")
 preview_collections = {}
 preview_collections["collection_categories"] = utils_library.create_image_preview_collection()
 preview_collections["collection_items"] = utils_library.create_image_preview_collection()
@@ -14,7 +13,7 @@ def get_library_path():
     if os.path.exists(props.collection_library_path):
         return props.collection_library_path
     else:
-        return COLLECTION_FOLDER
+        return utils_library.COLLECTION_FOLDER
     
 def enum_collection_categories(self,context):
     if context is None:
@@ -57,6 +56,20 @@ class LIBRARY_MT_collection_library(bpy.types.Menu):
         layout.operator('bp_general.create_new_folder',icon='NEWFOLDER').path = get_library_path()        
         layout.operator('library.change_collection_library_path',icon='FILE_FOLDER')        
 
+class LIBRARY_OT_change_collection_category(bpy.types.Operator):
+    bl_idname = "library.change_collection_category"
+    bl_label = "Change Collection Category"
+
+    category: bpy.props.StringProperty(subtype="DIR_PATH")
+
+    def execute(self, context):
+        props = utils_library.get_scene_props()
+        props.active_collection_library = self.category
+        path = os.path.join(utils_library.get_active_library_path(props.library_tabs),props.active_collection_library)
+        if os.path.exists(path):
+            utils_library.update_file_browser_path(context,path)
+        return {'FINISHED'}
+
 class LIBRARY_OT_change_collection_library_path(bpy.types.Operator):
     bl_idname = "library.change_collection_library_path"
     bl_label = "Change Collection Library Path"
@@ -79,6 +92,140 @@ class LIBRARY_OT_change_collection_library_path(bpy.types.Operator):
             wm.bp_lib.collection_library_path = self.directory
             clear_collection_categories(self,context)
         return {'FINISHED'}
+
+
+class LIBRARY_OT_drop_collection_from_library(bpy.types.Operator):
+    bl_idname = "library.drop_collection_from_library"
+    bl_label = "Drop Collection From Library"
+    
+    filepath: bpy.props.StringProperty(name="Filepath",default="Error")
+
+    obj_name: bpy.props.StringProperty(name="Obj Name")
+    collection_category: bpy.props.EnumProperty(name="Collection Category",items=enum_collection_categories,update=update_collection_category)
+    collection_name: bpy.props.StringProperty(name="Collection Name")
+    
+    drawing_plane = None
+    grp = None
+    parent_obj_dict = {}
+    collection_objects = []
+    
+    @classmethod
+    def poll(cls, context):
+        active_col = context.view_layer.active_layer_collection.collection
+        if active_col.hide_viewport:
+            return False
+        if context.object and context.object.mode != 'OBJECT':
+            return False        
+        return True
+
+    def execute(self, context):
+        self.create_drawing_plane(context)
+        self.grp = self.get_collection(context)
+        context.window_manager.modal_handler_add(self)
+        context.area.tag_redraw()
+        return {'RUNNING_MODAL'}
+
+    def get_collection_objects(self,coll):
+        for obj in coll.objects:
+            self.collection_objects.append(obj)
+            if obj.parent is None:
+                self.parent_obj_dict[obj] = (obj.location.x, obj.location.y, obj.location.z)
+
+        for child in coll.children:
+            self.get_collection_objects(child)
+
+    def get_collection(self,context):
+        path, ext = os.path.splitext(self.filepath)
+        self.collection_name = os.path.basename(path)
+        collection_file_path = os.path.join(path + ".blend")
+        with bpy.data.libraries.load(collection_file_path, False, False) as (data_from, data_to):
+            
+            for coll in data_from.collections:
+                if coll == self.collection_name:
+                    data_to.collections = [coll]
+                    break
+            
+        for coll in data_to.collections:
+            context.view_layer.active_layer_collection.collection.children.link(coll)
+            self.get_collection_objects(coll)
+            return coll
+
+    def create_drawing_plane(self,context):
+        bpy.ops.mesh.primitive_plane_add()
+        plane = context.active_object
+        plane.location = (0,0,0)
+        self.drawing_plane = context.active_object
+        self.drawing_plane.display_type = 'WIRE'
+        self.drawing_plane.dimensions = (100,100,1)
+
+    def position_collection(self,selected_point,selected_obj):
+        for obj, location in self.parent_obj_dict.items():
+            obj.location = selected_point
+            obj.location.x += location[0]
+            obj.location.y += location[1]
+            obj.location.z += location[2]
+
+    def modal(self, context, event):
+        context.area.tag_redraw()
+        self.mouse_x = event.mouse_x
+        self.mouse_y = event.mouse_y
+        selected_point, selected_obj = bp_utils.get_selection_point(context,event,exclude_objects=self.collection_objects)
+
+        self.position_collection(selected_point,selected_obj)
+        
+        if self.event_is_place_collection(event):
+            return self.finish(context)
+
+        if self.event_is_cancel_command(event):
+            return self.cancel_drop(context)
+        
+        if self.event_is_pass_through(event):
+            return {'PASS_THROUGH'}        
+        
+        return {'RUNNING_MODAL'}
+
+    def event_is_place_collection(self,event):
+        if event.type == 'LEFTMOUSE' and event.value == 'PRESS':
+            return True
+        elif event.type == 'NUMPAD_ENTER' and event.value == 'PRESS':
+            return True
+        elif event.type == 'RET' and event.value == 'PRESS':
+            return True
+        else:
+            return False
+
+    def event_is_cancel_command(self,event):
+        if event.type in {'RIGHTMOUSE', 'ESC'}:
+            return True
+        else:
+            return False
+    
+    def event_is_pass_through(self,event):
+        if event.type in {'MIDDLEMOUSE', 'WHEELUPMOUSE', 'WHEELDOWNMOUSE'}:
+            return True
+        else:
+            return False
+
+    def cancel_drop(self,context):
+        obj_list = []
+        obj_list.append(self.drawing_plane)
+        for obj in self.collection_objects:
+            obj_list.append(obj)
+        bp_utils.delete_obj_list(obj_list)
+        return {'CANCELLED'}
+    
+    def finish(self,context):
+        context.window.cursor_set('DEFAULT')
+        if self.drawing_plane:
+            bp_utils.delete_obj_list([self.drawing_plane])
+        bpy.ops.object.select_all(action='DESELECT')
+        for obj, location in self.parent_obj_dict.items():
+            obj.select_set(True)  
+            context.view_layer.objects.active = obj             
+        #SELECT BASE POINTS
+        context.area.tag_redraw()
+        return {'FINISHED'}
+
 
 class LIBRARY_OT_add_collection_from_library(bpy.types.Operator):
     bl_idname = "library.add_collection_from_library"
@@ -151,10 +298,12 @@ class LIBRARY_OT_add_collection_from_library(bpy.types.Operator):
 
     def get_collection(self,context):
         collection_file_path = os.path.join(get_library_path() ,self.collection_category,self.collection_name + ".blend")
+        print('NAME',self.collection_name)
         with bpy.data.libraries.load(collection_file_path, False, False) as (data_from, data_to):
             
             for coll in data_from.collections:
                 if coll == self.collection_name:
+                    print('FOUND',self.collection_name)
                     data_to.collections = [coll]
                     break
             
@@ -381,12 +530,16 @@ class LIBRARY_OT_save_collection_to_library(bpy.types.Operator):
     
 def register():
     bpy.utils.register_class(LIBRARY_MT_collection_library)
+    bpy.utils.register_class(LIBRARY_OT_drop_collection_from_library)
+    bpy.utils.register_class(LIBRARY_OT_change_collection_category)
     bpy.utils.register_class(LIBRARY_OT_add_collection_from_library)
     bpy.utils.register_class(LIBRARY_OT_save_collection_to_library)
     bpy.utils.register_class(LIBRARY_OT_change_collection_library_path)
 
 def unregister():
     bpy.utils.unregister_class(LIBRARY_MT_collection_library)
+    bpy.utils.unregister_class(LIBRARY_OT_drop_collection_from_library)
+    bpy.utils.unregister_class(LIBRARY_OT_change_collection_category)
     bpy.utils.unregister_class(LIBRARY_OT_add_collection_from_library)
     bpy.utils.unregister_class(LIBRARY_OT_save_collection_to_library)
     bpy.utils.unregister_class(LIBRARY_OT_change_collection_library_path)

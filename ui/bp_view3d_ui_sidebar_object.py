@@ -915,7 +915,7 @@ class VIEW3D_PT_object_data(Panel):
         else:
             row.operator('object.vertex_group_add', icon='ADD', text="Add")
 
-    def draw_gpencil_layers(selfself,layout,obj):
+    def draw_gpencil_layers(self,layout,obj):
         gpd = obj.data
 
         if (gpd is None) or (not gpd.layers):

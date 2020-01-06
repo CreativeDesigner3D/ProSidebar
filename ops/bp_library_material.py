@@ -4,7 +4,7 @@ import subprocess
 from ..bp_lib import bp_utils
 from ..bp_utils import utils_library
 
-MATERIAL_FOLDER = os.path.join(utils_library.DEFAULT_LIBRARY_ROOT_FOLDER,"materials")
+
 preview_collections = {}
 preview_collections["material_categories"] = utils_library.create_image_preview_collection()
 preview_collections["material_items"] = utils_library.create_image_preview_collection()
@@ -14,7 +14,7 @@ def get_library_path():
     if os.path.exists(props.material_library_path):
         return props.material_library_path
     else:
-        return MATERIAL_FOLDER
+        return utils_library.MATERIAL_FOLDER
     
 def enum_material_categories(self,context):
     if context is None:
@@ -57,6 +57,20 @@ class LIBRARY_MT_material_library(bpy.types.Menu):
         layout.operator('bp_general.create_new_folder',icon='NEWFOLDER').path = get_library_path()        
         layout.operator('library.change_material_library_path',icon='FILE_FOLDER')     
         
+class LIBRARY_OT_change_material_category(bpy.types.Operator):
+    bl_idname = "library.change_material_category"
+    bl_label = "Change Material Category"
+
+    category: bpy.props.StringProperty(subtype="DIR_PATH")
+
+    def execute(self, context):
+        props = utils_library.get_scene_props()
+        props.active_material_library = self.category
+        path = os.path.join(utils_library.get_active_library_path(props.library_tabs),props.active_material_library)
+        if os.path.exists(path):
+            utils_library.update_file_browser_path(context,path)
+        return {'FINISHED'}
+
 class LIBRARY_OT_change_material_library_path(bpy.types.Operator):
     bl_idname = "library.change_material_library_path"
     bl_label = "Change Material Library Path"
@@ -79,6 +93,114 @@ class LIBRARY_OT_change_material_library_path(bpy.types.Operator):
             wm.bp_lib.material_library_path = self.directory
             clear_material_categories(self,context)
         return {'FINISHED'}
+
+
+class LIBRARY_OT_drop_material_from_library(bpy.types.Operator):
+    bl_idname = "library.drop_material_from_library"
+    bl_label = "Drop Material From Library"
+    
+    filepath: bpy.props.StringProperty(name="Filepath",default="Error")
+
+    obj_name: bpy.props.StringProperty(name="Obj Name")
+    material_category: bpy.props.EnumProperty(name="Material Category",items=enum_material_categories,update=update_material_category)
+    material_name: bpy.props.EnumProperty(name="Material Name",items=enum_material_names)
+    
+    drawing_plane = None
+    mat = None
+    
+    @classmethod
+    def poll(cls, context):  
+        if context.object and context.object.mode != 'OBJECT':
+            return False
+        return True
+        
+    def execute(self, context):
+        self.mat = self.get_material(context)
+        context.window_manager.modal_handler_add(self)
+        context.area.tag_redraw()
+        return {'RUNNING_MODAL'}
+        
+    def get_material(self,context):
+        path, ext = os.path.splitext(self.filepath)
+        material_file_path = os.path.join(path + ".blend")
+        with bpy.data.libraries.load(material_file_path, False, False) as (data_from, data_to):
+            
+            for mat in data_from.materials:
+                data_to.materials = [mat]
+                break
+            
+        for mat in data_to.materials:
+            return mat
+    
+    def modal(self, context, event):
+        context.window.cursor_set('PAINT_BRUSH')
+        context.area.tag_redraw()
+        self.mouse_x = event.mouse_x
+        self.mouse_y = event.mouse_y
+        selected_point, selected_obj = bp_utils.get_selection_point(context,event)
+        bpy.ops.object.select_all(action='DESELECT')
+        if selected_obj:
+            selected_obj.select_set(True)
+            context.view_layer.objects.active = selected_obj
+        
+            if self.event_is_place_material(event):
+                if len(selected_obj.data.uv_layers) == 0:
+                    bpy.ops.object.editmode_toggle()
+                    bpy.ops.mesh.select_all(action='SELECT') 
+                    bpy.ops.uv.smart_project(angle_limit=66, island_margin=0, user_area_weight=0)  
+                    bpy.ops.object.editmode_toggle()
+
+                if len(selected_obj.material_slots) == 0:
+                    bpy.ops.object.material_slot_add()
+
+                if len(selected_obj.material_slots) > 1:
+                    bpy.ops.library.assign_material_dialog('INVOKE_DEFAULT',material_name = self.mat.name, object_name = selected_obj.name)
+                    return self.finish(context)
+                else:
+                    for slot in selected_obj.material_slots:
+                        slot.material = self.mat                  
+                        
+                return self.finish(context)
+
+        if self.event_is_cancel_command(event):
+            return self.cancel_drop(context)
+        
+        if self.event_is_pass_through(event):
+            return {'PASS_THROUGH'}        
+        
+        return {'RUNNING_MODAL'}
+
+    def event_is_place_material(self,event):
+        if event.type == 'LEFTMOUSE' and event.value == 'PRESS':
+            return True
+        elif event.type == 'NUMPAD_ENTER' and event.value == 'PRESS':
+            return True
+        elif event.type == 'RET' and event.value == 'PRESS':
+            return True
+        else:
+            return False
+
+    def event_is_cancel_command(self,event):
+        if event.type in {'RIGHTMOUSE', 'ESC'}:
+            return True
+        else:
+            return False
+    
+    def event_is_pass_through(self,event):
+        if event.type in {'MIDDLEMOUSE', 'WHEELUPMOUSE', 'WHEELDOWNMOUSE'}:
+            return True
+        else:
+            return False
+
+    def cancel_drop(self,context):
+        context.window.cursor_set('DEFAULT')
+        return {'CANCELLED'}
+    
+    def finish(self,context):
+        context.window.cursor_set('DEFAULT')
+        context.area.tag_redraw()
+        return {'FINISHED'}
+
 
 class LIBRARY_OT_add_material_from_library(bpy.types.Operator):
     bl_idname = "library.add_material_from_library"
@@ -555,6 +677,8 @@ class LIBRARY_OT_replace_all_materials(bpy.types.Operator):
         
 def register():
     bpy.utils.register_class(LIBRARY_MT_material_library)
+    bpy.utils.register_class(LIBRARY_OT_change_material_category)
+    bpy.utils.register_class(LIBRARY_OT_drop_material_from_library)
     bpy.utils.register_class(LIBRARY_OT_add_material_from_library)
     bpy.utils.register_class(LIBRARY_OT_save_material_to_library)
     bpy.utils.register_class(LIBRARY_OT_change_material_library_path)
@@ -566,6 +690,8 @@ def register():
     
 def unregister():
     bpy.utils.unregister_class(LIBRARY_MT_material_library)
+    bpy.utils.unregister_class(LIBRARY_OT_change_material_category)
+    bpy.utils.unregister_class(LIBRARY_OT_drop_material_from_library)
     bpy.utils.unregister_class(LIBRARY_OT_add_material_from_library)
     bpy.utils.unregister_class(LIBRARY_OT_save_material_to_library)
     bpy.utils.unregister_class(LIBRARY_OT_change_material_library_path)

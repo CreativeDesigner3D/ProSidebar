@@ -9,6 +9,7 @@ SCRIPT_FOLDER = os.path.join(DEFAULT_LIBRARY_ROOT_FOLDER,"scripts")
 OBJECT_FOLDER = os.path.join(DEFAULT_LIBRARY_ROOT_FOLDER,"objects")
 COLLECTION_FOLDER = os.path.join(DEFAULT_LIBRARY_ROOT_FOLDER,"collections")
 MATERIAL_FOLDER = os.path.join(DEFAULT_LIBRARY_ROOT_FOLDER,"materials")
+WORLD_FOLDER = os.path.join(DEFAULT_LIBRARY_ROOT_FOLDER,"worlds")
 LIBRARY_FOLDER = os.path.join(os.path.dirname(__file__),"data")
 LIBRARY_PATH_FILENAME = "creative_designer_paths.xml"
 
@@ -33,6 +34,9 @@ def get_library_path_file():
         
     return os.path.join(DEFAULT_LIBRARY_ROOT_FOLDER,LIBRARY_PATH_FILENAME)
 
+def get_script_libraries():
+    pass
+
 def get_active_category(scene_props,folders):
     """ Gets the active folder for the active library
     """
@@ -54,7 +58,10 @@ def get_active_category(scene_props,folders):
                 if scene_props.active_material_library == folder:
                     return folder                 
     if scene_props.library_tabs == 'WORLD':
-        pass      
+        if scene_props.active_world_library in folders:
+            for folder in folders:
+                if scene_props.active_world_library == folder:
+                    return folder   
     if len(folders) > 0:
         return folders[0]
 
@@ -79,7 +86,7 @@ def get_active_library_path(library_tabs):
     if library_tabs == 'MATERIAL':
         return get_material_library_path()
     if library_tabs == 'WORLD':
-        pass
+        return get_world_library_path()
 
 def get_script_library_path():
     props = get_wm_props()
@@ -108,6 +115,13 @@ def get_material_library_path():
         return props.material_library_path
     else:
         return MATERIAL_FOLDER                
+
+def get_world_library_path():
+    props = get_wm_props()
+    if os.path.exists(props.world_library_path):
+        return props.world_library_path
+    else:
+        return WORLD_FOLDER   
 
 def update_file_browser_path(context,path):
     for area in context.screen.areas:
@@ -212,6 +226,11 @@ def write_xml_file():
     else:
         xml.add_element_with_text(paths,'Collections',"")
     
+    if os.path.exists(wm_props.world_library_path):
+        xml.add_element_with_text(paths,'Worlds',wm_props.world_library_path)
+    else:
+        xml.add_element_with_text(paths,'Worlds',"")
+
     if os.path.exists(wm_props.script_library_path):
         xml.add_element_with_text(paths,'Scripts',wm_props.script_library_path)
     else:
@@ -248,6 +267,12 @@ def update_props_from_xml_file():
                         wm_props.collection_library_path = item.text
                     else:
                         wm_props.collection_library_path = "" 
+
+                if item.tag == 'Worlds':
+                    if os.path.exists(str(item.text)):
+                        wm_props.world_library_path = item.text
+                    else:
+                        wm_props.world_library_path = "" 
 
                 if item.tag == 'Scripts':
                     if os.path.exists(str(item.text)):

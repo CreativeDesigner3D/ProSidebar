@@ -64,6 +64,11 @@ class BP_Window_Manager_Library_Props(bpy.types.PropertyGroup):
                                                      subtype='DIR_PATH',
                                                      update=update_library_paths)        
 
+    world_library_path: bpy.props.StringProperty(name="World Library Path",
+                                                     default="",
+                                                     subtype='DIR_PATH',
+                                                     update=update_library_paths)   
+
     script_library_path: bpy.props.StringProperty(name="Script Library Path",
                                                   default="",
                                                   subtype='DIR_PATH',
@@ -81,6 +86,9 @@ class BP_Window_Manager_Library_Props(bpy.types.PropertyGroup):
                                                  default="",
                                                  update=update_library_paths)  
                 
+    world_category: bpy.props.StringProperty(name="World Category",
+                                                 default="",
+                                                 update=update_library_paths)                  
 
     @classmethod
     def register(cls):
@@ -108,6 +116,7 @@ class BP_Scene_Props(PropertyGroup):
     active_object_library: StringProperty(name="Active Object Library",default="")
     active_collection_library: StringProperty(name="Active Collection Library",default="")
     active_material_library: StringProperty(name="Active Material Library",default="")
+    active_world_library: StringProperty(name="Active World Library",default="")
 
     selected_object_index: IntProperty(name="Selected Object Index", default=0, update = update_object_selection)
     selected_world_index: IntProperty(name="Selected World Index", default=0, update = update_world_selection)

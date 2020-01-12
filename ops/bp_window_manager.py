@@ -33,7 +33,7 @@ class WM_OT_drag_and_drop(bpy.types.Operator):
         if props.library_tabs == 'MATERIAL':
             bpy.ops.library.drop_material_from_library(filepath=self.filepath)
         if props.library_tabs == 'WORLD':
-            pass        
+            bpy.ops.library.drop_world_from_library(filepath=self.filepath)        
         return {'FINISHED'}
 
 classes = (

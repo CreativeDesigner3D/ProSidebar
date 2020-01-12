@@ -136,8 +136,16 @@ class LIBRARY_OT_drop_object_from_library(bpy.types.Operator):
         self.mouse_y = event.mouse_y
         selected_point, selected_obj = bp_utils.get_selection_point(context,event,exclude_objects=[self.obj])
 
-        self.position_object(selected_point,selected_obj)
-        
+        # if event.type == '' and event.
+
+        if event.ctrl:
+            if event.mouse_y > event.mouse_prev_y:
+                self.obj.rotation_euler.z += .1
+            else:
+                self.obj.rotation_euler.z -= .1
+        else:
+            self.position_object(selected_point,selected_obj)
+
         if self.event_is_place_object(event):
             return self.finish(context)
 

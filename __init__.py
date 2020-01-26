@@ -30,6 +30,7 @@ from .ops import bp_library_collection
 from .ops import bp_library_material
 from .ops import bp_library_object
 from .ops import bp_library_world
+from .ops import bp_library_script
 from .ops import bp_window_manager
 from . import bp_props
 from . import bp_load_library
@@ -55,6 +56,7 @@ def register():
     bp_library_material.register()
     bp_library_object.register()
     bp_library_world.register()
+    bp_library_script.register()
     bp_window_manager.register()
     bp_props.register()
     bp_load_library.register()
@@ -80,6 +82,7 @@ def unregister():
     bp_library_material.unregister()
     bp_library_object.unregister()    
     bp_library_world.unregister()
+    bp_library_script.unregister()
     bp_window_manager.unregister()
     bp_props.unregister()
     bp_load_library.unregister()

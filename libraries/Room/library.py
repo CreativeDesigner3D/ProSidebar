@@ -2,8 +2,9 @@ import bpy
 import math
 from .bp_lib import bp_types, bp_unit, bp_utils
 import time
+from . import base_classes
 
-class Stud(bp_types.Assembly):
+class Stud(base_classes.Part):
     show_in_library = True
 
     def draw(self):
@@ -61,7 +62,7 @@ class Stud(bp_types.Assembly):
         # obj_mesh.bp_props.hook_vertex_group_to_object(self.obj_z.name,self.obj_z)
         print("STUD: Draw Time --- %s seconds ---" % (time.time() - start_time))
 
-class Wall(bp_types.Assembly):
+class Wall(base_classes.Wall):
     show_in_library = True
 
     def draw(self):
@@ -151,7 +152,7 @@ class Wall(bp_types.Assembly):
              
         print("WALL: Draw Time --- %s seconds ---" % (time.time() - start_time))
 
-class Room(bp_types.Assembly):
+class Room(base_classes.Room):
     show_in_library = True
 
     def draw(self):

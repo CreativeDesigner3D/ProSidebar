@@ -1,5 +1,6 @@
 import bpy
 import os
+import codecs
 import subprocess
 from ..bp_lib import bp_utils
 from ..bp_utils import utils_library
@@ -462,7 +463,7 @@ class LIBRARY_OT_save_material_to_library(bpy.types.Operator):
         return wm.invoke_props_dialog(self, width=300)
         
     def create_material_thumbnail_script(self,source_dir,source_file,material_name):
-        file = open(os.path.join(bpy.app.tempdir,"thumb_temp.py"),'w')
+        file = codecs.open(os.path.join(bpy.app.tempdir,"thumb_temp.py"),'w',encoding='utf-8')
         file.write("import bpy\n")
         file.write("with bpy.data.libraries.load(r'" + source_file + "', False, True) as (data_from, data_to):\n")
         file.write("    for mat in data_from.materials:\n")
@@ -497,7 +498,7 @@ class LIBRARY_OT_save_material_to_library(bpy.types.Operator):
         return os.path.join(bpy.app.tempdir,'thumb_temp.py')
         
     def create_material_save_script(self,source_dir,source_file,material_name):
-        file = open(os.path.join(bpy.app.tempdir,"save_temp.py"),'w')
+        file = codecs.open(os.path.join(bpy.app.tempdir,"save_temp.py"),'w',encoding='utf-8')
         file.write("import bpy\n")
         file.write("for mat in bpy.data.materials:\n")
         file.write("    bpy.data.materials.remove(mat,do_unlink=True)\n")

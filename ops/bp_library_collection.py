@@ -1,5 +1,6 @@
 import bpy
 import os
+import codecs
 import subprocess
 from ..bp_lib import bp_utils
 from ..bp_utils import utils_library
@@ -416,7 +417,7 @@ class LIBRARY_OT_save_collection_to_library(bpy.types.Operator):
             self.select_collection_objects(child)
 
     def create_collection_thumbnail_script(self,source_dir,source_file,collection_name):
-        file = open(os.path.join(bpy.app.tempdir,"thumb_temp.py"),'w')
+        file = codecs.open(os.path.join(bpy.app.tempdir,"thumb_temp.py"),'w',encoding='utf-8')
         file.write("import bpy\n")
         file.write("def select_collection_objects(coll):\n")
         file.write("    for obj in coll.objects:\n")
@@ -444,7 +445,7 @@ class LIBRARY_OT_save_collection_to_library(bpy.types.Operator):
         return os.path.join(bpy.app.tempdir,'thumb_temp.py')
         
     def create_collection_save_script(self,source_dir,source_file,collection_name):
-        file = open(os.path.join(bpy.app.tempdir,"save_temp.py"),'w')
+        file = codecs.open(os.path.join(bpy.app.tempdir,"save_temp.py"),'w',encoding='utf-8')
         file.write("import bpy\n")
         file.write("import os\n")
         file.write("for mat in bpy.data.materials:\n")

@@ -46,26 +46,76 @@ class FILEBROWSER_PT_library_tabs(Panel):
         col.prop_enum(props, "library_tabs", 'MATERIAL', icon='MATERIAL', text="  Material") 
         col.prop_enum(props, "library_tabs", 'WORLD', icon='WORLD_DATA', text="  World") 
 
+class FILEBROWSER_PT_library_headers(Panel):
+    bl_space_type = 'FILE_BROWSER'
+    bl_region_type = 'UI'
+    bl_label = "Directory Path"
+    bl_category = "Attributes"
+    bl_options = {'HIDE_HEADER'}
+
+    @classmethod
+    def poll(cls, context):
+        if len(context.area.spaces) > 1:
+            return True   
+        return False
+
+    def is_header_visible(self, context):
+        for region in context.area.regions:
+            if region.type == 'HEADER' and region.height <= 1:
+                return False
+
+        return True
+
+    def is_option_region_visible(self, context, space):
+        if not space.active_operator:
+            return False
+
+        for region in context.area.regions:
+            if region.type == 'TOOL_PROPS' and region.width <= 1:
+                return False
+
+        return True
+
+    def draw(self, context):
+        layout = self.layout
+        space = context.space_data
+        params = space.params
+
+        layout.scale_x = 1.3
+        layout.scale_y = 1.3
+
+        props = utils_library.get_scene_props()
+        
+        if props.library_tabs == 'SCRIPT':
+            lib = utils_library.get_active_script_library()
+
+            row = layout.row(align=True)
+            row.menu('FILEBROWSER_MT_library_menu',icon='SCRIPTPLUGINS',text=lib.name)
+            row.popover(panel="FILEBROWSER_PT_library_settings",text="",icon='SETTINGS')
+
+            if hasattr(bpy.types,lib.panel_id):
+                layout.popover(panel=lib.panel_id,text=lib.name + " Settings",icon='SETTINGS')            
+
+        folders = utils_library.get_active_categories(props.library_tabs)
+        if len(folders) > 0:
+            active_folder_name = utils_library.get_active_category(props,folders)
+            row = layout.row(align=True)
+            row.menu('FILEBROWSER_MT_library_category_menu',icon='FILE_FOLDER',text=active_folder_name)
+            if not props.library_tabs == 'SCRIPT':
+                row.popover(panel="FILEBROWSER_PT_library_settings",text="",icon='SETTINGS')
+        else:
+            layout.popover(panel="FILEBROWSER_PT_library_settings",text="No Assets Found",icon='SETTINGS')
 
 class FILEBROWSER_HT_header_library(Header):
     bl_space_type = 'FILE_BROWSER'
 
     def draw(self, context):
         layout = self.layout
-        props = utils_library.get_scene_props()
-        layout.popover(panel="FILEBROWSER_PT_library_settings",text="",icon='ASSET_MANAGER')
-        
-        if props.library_tabs == 'SCRIPT':
-            layout.popover(panel="FILEBROWSER_PT_library_settings",text="",icon='SETTINGS')
-            layout.menu('FILEBROWSER_MT_library_menu',icon='SCRIPTPLUGINS',text="   Cabinets")
-        else:
-            layout.label(text="",icon='BLANK1')
-        folders = utils_library.get_active_categories(props.library_tabs)
-        if len(folders) > 0:
-            active_folder_name = utils_library.get_active_category(props,folders)
-            layout.menu('FILEBROWSER_MT_library_category_menu',icon='FILE_FOLDER',text="   " + active_folder_name)
-        else:
-            layout.label(text="Reload Library")
+        layout.popover(panel="FILEBROWSER_PT_library_settings",text="Tags",icon='COLOR')
+        layout.popover(panel="FILEBROWSER_PT_library_settings",text="Options",icon='PREFERENCES')
+        row = layout.row()
+        row.alignment = 'RIGHT'
+        row.popover(panel="FILEBROWSER_PT_library_settings",text="Search",icon='VIEWZOOM')
 
 #TODO: Setup settings. Render thumbnail assest in library, open location in explorer.
 class FILEBROWSER_PT_library_settings(Panel):
@@ -77,6 +127,7 @@ class FILEBROWSER_PT_library_settings(Panel):
     def draw(self, context):
         layout = self.layout
         layout.label(text=str(context.space_data.params.directory))
+        layout.operator('library.create_thumbnails_for_library',text="Create Thumbnails for Assets")
 
 #TODO: Setup library. Load folders from explorer.
 class FILEBROWSER_MT_library_menu(Menu):
@@ -84,16 +135,9 @@ class FILEBROWSER_MT_library_menu(Menu):
 
     def draw(self, _context):
         layout = self.layout
-        layout.operator('mesh.primitive_ico_sphere_add')
-        layout.operator('mesh.primitive_ico_sphere_add')
-        layout.operator('mesh.primitive_ico_sphere_add')
-        layout.operator('mesh.primitive_ico_sphere_add')
-        layout.operator('mesh.primitive_ico_sphere_add')
-        layout.operator('mesh.primitive_ico_sphere_add')
-        layout.operator('mesh.primitive_ico_sphere_add')
-        layout.operator('mesh.primitive_ico_sphere_add')
-        layout.operator('mesh.primitive_ico_sphere_add')
-        layout.operator('mesh.primitive_ico_sphere_add')
+        wm_props = utils_library.get_wm_props()
+        for library in wm_props.script_libraries:
+            layout.operator('library.change_script_library',text=library.name,icon='SCRIPTPLUGINS').library = library.name
 
 #TODO: Setup categories. Load folders from explorer.
 class FILEBROWSER_MT_library_category_menu(Menu):
@@ -599,6 +643,7 @@ class FILEBROWSER_MT_context_menu(Menu):
 
 classes = (
     FILEBROWSER_PT_library_tabs,
+    FILEBROWSER_PT_library_headers,
     FILEBROWSER_HT_header_library,
     FILEBROWSER_PT_library_settings,
     FILEBROWSER_MT_library_menu,

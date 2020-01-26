@@ -35,13 +35,67 @@ def get_library_path_file():
     return os.path.join(DEFAULT_LIBRARY_ROOT_FOLDER,LIBRARY_PATH_FILENAME)
 
 def get_script_libraries():
-    pass
+    wm_props = get_wm_props()
+
+    # Store all library paths
+    library_paths = []
+
+    # Search for internal library paths
+    file_path = os.path.dirname(__file__)
+    path, folder = os.path.split(file_path)
+    internal_library_path = os.path.join(path,'libraries')
+    folders = os.listdir(internal_library_path)
+    for folder in folders:
+        lib_path = os.path.join(internal_library_path,folder)
+        if os.path.isdir(lib_path):
+            library_paths.append(lib_path)
+
+    #This is being run multiple times on debug startup so remove all items first
+    for item in wm_props.script_libraries:
+        wm_props.script_libraries.remove(0)
+
+    #Load all Libraries
+    for path in library_paths:
+        print('Loading Library: ',path)
+        if os.path.exists(path):
+            files = os.listdir(path)
+            for file in files:
+                if file == '__init__.py':
+                    path, folder_name = os.path.split(os.path.normpath(path))
+                    sys.path.append(path)
+                    pkg = import_module(folder_name)
+                    lib = wm_props.script_libraries.add()
+                    lib.name = folder_name
+                    for mod_name, mod in inspect.getmembers(pkg):
+                        if mod_name == 'LIBRARY_PATH':
+                            lib.library_path = mod
+                        if mod_name == 'PANEL_ID':
+                            lib.panel_id = mod
+                        if mod_name[:2] != "__": #No need to go through built in modules
+                            for name, obj in inspect.getmembers(mod):
+                                if hasattr(obj,'show_in_library') and name != 'ops' and obj.show_in_library:
+                                    item = lib.library_items.add()
+                                    item.package_name = folder_name
+                                    item.module_name = mod_name
+                                    item.class_name = name
+                                    item.name = name
+
+def get_active_script_library():
+    scene_props = get_scene_props()
+    wm_props = get_wm_props()
+    if scene_props.active_script_library in wm_props.script_libraries:
+        return wm_props.script_libraries[scene_props.active_script_library]
+    else:
+        return wm_props.script_libraries[0]
 
 def get_active_category(scene_props,folders):
     """ Gets the active folder for the active library
     """
     if scene_props.library_tabs == 'SCRIPT':
-        pass
+        if scene_props.active_script_category in folders:
+            for folder in folders:
+                if scene_props.active_script_category == folder:
+                    return folder
     if scene_props.library_tabs == 'OBJECT':
         if scene_props.active_object_library in folders:
             for folder in folders:
@@ -78,7 +132,8 @@ def get_active_categories(library_tabs):
 
 def get_active_library_path(library_tabs):
     if library_tabs == 'SCRIPT':
-        pass        
+        lib = get_active_script_library()  
+        return lib.library_path      
     if library_tabs == 'OBJECT':
         return get_object_library_path()
     if library_tabs == 'COLLECTION':

@@ -47,7 +47,23 @@ def update_library_tab(self,context):
     active_folder_name = utils_library.get_active_category(self,folders)
     utils_library.update_file_browser_path(context,os.path.join(root_path,active_folder_name))
 
+class Script_Library_Item(bpy.types.PropertyGroup):
+    package_name: bpy.props.StringProperty(name="Package Name")
+    module_name: bpy.props.StringProperty(name="Module Name")
+    class_name: bpy.props.StringProperty(name="Class Name")
+    placement_id: bpy.props.StringProperty(name="Placement ID")
+    prompts_id: bpy.props.StringProperty(name="Prompts ID")
+    render_id: bpy.props.StringProperty(name="Render ID")
+    # tags: bpy.props.CollectionProperty(name="Tags", type=Tag) #TODO: Implement Tags
+
+class Script_Library(bpy.types.PropertyGroup):
+    library_items: bpy.props.CollectionProperty(name="Library Items", type=Script_Library_Item)
+    library_path: bpy.props.StringProperty(name="Library Path")
+    panel_id: bpy.props.StringProperty(name="Panel ID")
+
 class BP_Window_Manager_Library_Props(bpy.types.PropertyGroup):
+
+    script_libraries: CollectionProperty(name="Script_Libraries",type=Script_Library)
 
     object_library_path: bpy.props.StringProperty(name="Object Library Path",
                                                    default="",
@@ -113,6 +129,8 @@ class BP_Scene_Props(PropertyGroup):
                                          default='SCRIPT',
                                          update=update_library_tab)
 
+    active_script_library: StringProperty(name="Active Script Library",default="")
+    active_script_category: StringProperty(name="Active Script Category",default="")
     active_object_library: StringProperty(name="Active Object Library",default="")
     active_collection_library: StringProperty(name="Active Collection Library",default="")
     active_material_library: StringProperty(name="Active Material Library",default="")
@@ -149,6 +167,8 @@ class BP_Collection_Props(PropertyGroup):
 
 
 classes = (
+    Script_Library_Item,
+    Script_Library,    
     BP_Window_Manager_Library_Props,
     BP_Scene_Props,
     BP_Collection_Props,

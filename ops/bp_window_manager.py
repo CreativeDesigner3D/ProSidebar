@@ -25,7 +25,7 @@ class WM_OT_drag_and_drop(bpy.types.Operator):
     def execute(self, context):
         props = utils_library.get_scene_props()
         if props.library_tabs == 'SCRIPT':
-            pass        
+            bpy.ops.library.drop_script_from_library(filepath=self.filepath)        
         if props.library_tabs == 'OBJECT':
             bpy.ops.library.drop_object_from_library(filepath=self.filepath)
         if props.library_tabs == 'COLLECTION':

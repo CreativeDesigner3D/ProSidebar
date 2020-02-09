@@ -111,11 +111,15 @@ class FILEBROWSER_HT_header_library(Header):
 
     def draw(self, context):
         layout = self.layout
+        props = utils_library.get_wm_props()
+
         layout.popover(panel="FILEBROWSER_PT_library_settings",text="Tags",icon='COLOR')
+        layout.separator_spacer()
         layout.popover(panel="FILEBROWSER_PT_library_settings",text="Options",icon='PREFERENCES')
+        layout.separator_spacer()
         row = layout.row()
         row.alignment = 'RIGHT'
-        row.popover(panel="FILEBROWSER_PT_library_settings",text="Search",icon='VIEWZOOM')
+        row.prop(props,"file_browser_search_text",text="",icon='VIEWZOOM')
 
 #TODO: Setup settings. Render thumbnail assest in library, open location in explorer.
 class FILEBROWSER_PT_library_settings(Panel):

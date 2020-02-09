@@ -70,12 +70,13 @@ def get_script_libraries():
                         if mod_name == 'LIBRARY_PATH':
                             lib.library_path = mod
                         if mod_name == 'PANEL_ID':
-                            lib.panel_id = mod
+                            lib.panel_id = mod                            
                         if mod_name[:2] != "__": #No need to go through built in modules
                             for name, obj in inspect.getmembers(mod):
                                 if hasattr(obj,'show_in_library') and name != 'ops' and obj.show_in_library:
                                     item = lib.library_items.add()
                                     item.package_name = folder_name
+                                    item.category_name = obj.category_name
                                     item.module_name = mod_name
                                     item.class_name = name
                                     item.name = name

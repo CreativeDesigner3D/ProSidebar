@@ -85,26 +85,25 @@ class FILEBROWSER_PT_library_headers(Panel):
         layout.scale_y = 1.3
 
         props = utils_library.get_scene_props()
-        
+        folders = utils_library.get_active_categories(props.library_tabs)
+        active_folder_name = utils_library.get_active_category(props,folders)
+
         if props.library_tabs == 'SCRIPT':
             lib = utils_library.get_active_script_library()
 
             row = layout.row(align=True)
             row.menu('FILEBROWSER_MT_library_menu',icon='SCRIPTPLUGINS',text=lib.name)
-            row.popover(panel="FILEBROWSER_PT_library_settings",text="",icon='SETTINGS')
-
+            row.menu('FILEBROWSER_MT_library_category_menu',icon='FILE_FOLDER',text=active_folder_name)   
             if hasattr(bpy.types,lib.panel_id):
-                layout.popover(panel=lib.panel_id,text=lib.name + " Settings",icon='SETTINGS')            
-
-        folders = utils_library.get_active_categories(props.library_tabs)
-        if len(folders) > 0:
-            active_folder_name = utils_library.get_active_category(props,folders)
-            row = layout.row(align=True)
-            row.menu('FILEBROWSER_MT_library_category_menu',icon='FILE_FOLDER',text=active_folder_name)
-            if not props.library_tabs == 'SCRIPT':
-                row.popover(panel="FILEBROWSER_PT_library_settings",text="",icon='SETTINGS')
+                row.popover(panel=lib.panel_id,text="",icon='SETTINGS') 
         else:
-            layout.popover(panel="FILEBROWSER_PT_library_settings",text="No Assets Found",icon='SETTINGS')
+            if len(folders) > 0:
+                row = layout.row(align=True)
+                row.menu('FILEBROWSER_MT_library_category_menu',icon='FILE_FOLDER',text=active_folder_name)     
+                row.popover(panel="FILEBROWSER_PT_library_settings",text="",icon='SETTINGS')
+            else:
+                layout.popover(panel="FILEBROWSER_PT_library_settings",text="No Assets Found",icon='SETTINGS')
+
 
 class FILEBROWSER_HT_header_library(Header):
     bl_space_type = 'FILE_BROWSER'

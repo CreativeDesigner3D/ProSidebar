@@ -20,6 +20,9 @@ class Assembly:
     obj_z = None
     obj_prompts = None
 
+    prompt_id = ""
+    placement_id = ""
+
     def __init__(self,collection=None):
         if collection:
             self.coll = collection
@@ -54,6 +57,10 @@ class Assembly:
             for vgroup in vgroupslist:
                 if vgroup not in obj.vertex_groups:
                     obj.vertex_groups.new(name=vgroup)
+
+    def set_id_properties(self,obj):
+        obj["PROMPT_ID"] = self.prompt_id
+        obj["PLACEMENT_ID"] = self.placement_id
 
     def create_assembly(self,assembly_name="New Assembly"):
         """ 
@@ -146,6 +153,7 @@ class Assembly:
         obj.parent = self.obj_bp
         self.coll.objects.link(obj)
         self.update_vector_groups()
+        self.set_id_properties(obj)
 
     def add_assembly(self,assembly):
         if assembly.obj_bp is None:
@@ -153,6 +161,8 @@ class Assembly:
         bpy.ops.bp_collection.set_active_collection(collection_name=self.coll.name)
         assembly.obj_bp.location = (0,0,0)
         assembly.obj_bp.parent = self.obj_bp
+        for obj in assembly.coll.objects:
+            self.set_id_properties(obj)
         return assembly
 
     def add_cube(self,name,obj_bp,obj_x,obj_y,obj_z):

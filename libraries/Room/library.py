@@ -157,8 +157,12 @@ class Room(base_classes.Room):
 
     def draw(self):
         start_time = time.time()
+        
         #Create Assembly
         self.create_assembly("Room")
+
+        #ASSIGN PROPERTY
+        self.coll["IS_ROOM"] = True
 
         #Set Default Dimensions
         self.obj_x.location.x = bp_unit.inch(120) #Length

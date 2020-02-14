@@ -11,6 +11,7 @@ bl_info = {
 }
 
 from .ui import bp_filebrowser_ui
+from .ui import bp_view3d_ui_menu
 from .ui import bp_view3d_ui_sidebar_render
 from .ui import bp_view3d_ui_sidebar_render_cycles
 from .ui import bp_view3d_ui_sidebar_scene
@@ -37,6 +38,7 @@ from . import bp_load_library
 
 def register():
     bp_filebrowser_ui.register()
+    bp_view3d_ui_menu.register()
     bp_view3d_ui_sidebar_render.register()
     bp_view3d_ui_sidebar_render_cycles.register()
     bp_view3d_ui_sidebar_scene.register()
@@ -63,6 +65,7 @@ def register():
 
 def unregister():
     bp_filebrowser_ui.unregister()
+    bp_view3d_ui_menu.unregister()
     bp_view3d_ui_sidebar_render.unregister()
     bp_view3d_ui_sidebar_render_cycles.unregister()
     bp_view3d_ui_sidebar_scene.unregister()

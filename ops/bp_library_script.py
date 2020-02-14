@@ -29,15 +29,13 @@ class LIBRARY_OT_drop_script_from_library(bpy.types.Operator):
         for item in lib.library_items:
             if item.category_name == category_name and item.name == filename:
                 pkg = __import__(item.package_name)
-                item = eval("pkg." + item.module_name + "." + item.class_name + "()")              
+                item = eval("pkg." + item.module_name + "." + item.class_name + "()")
                 item.draw()
 
-        # props = utils_library.get_scene_props()
-        # props.active_script_library = self.library
-        # lib = utils_library.get_active_script_library()
-        # path = lib.library_path
-        # if os.path.exists(path):
-        #     utils_library.update_file_browser_path(context,path)
+                if hasattr(item,"placement_id") and item.placement_id != "":
+                    eval('bpy.ops.' + item.placement_id + '("INVOKE_DEFAULT",obj_bp_name=item.obj_bp.name)')
+                    print('PLACEMENT',item.placement_id,item.obj_bp)
+
         return {'FINISHED'}
 
 

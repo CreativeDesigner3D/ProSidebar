@@ -23,20 +23,19 @@ class Assembly:
     prompt_id = ""
     placement_id = ""
 
-    def __init__(self,collection=None):
-        if collection:
-            self.coll = collection
-            for obj in collection.objects:
-                if "obj_bp" in obj:
-                    self.obj_bp = obj
-                if "obj_x" in obj:
-                    self.obj_x = obj
-                if "obj_y" in obj:
-                    self.obj_y = obj           
-                if "obj_z" in obj:
-                    self.obj_z = obj
-                if "obj_prompts" in obj:
-                    self.obj_prompts = obj                    
+    def __init__(self,obj_bp=None):
+        if obj_bp:
+            self.coll = bpy.context.view_layer.active_layer_collection
+            self.obj_bp = obj_bp
+            for child in obj_bp.children:
+                if "obj_x" in child:
+                    self.obj_x = child
+                if "obj_y" in child:
+                    self.obj_y = child           
+                if "obj_z" in child:
+                    self.obj_z = child
+                if "obj_prompts" in child:
+                    self.obj_prompts = child                    
 
     def update_vector_groups(self):
         """ 
@@ -69,20 +68,20 @@ class Assembly:
         """
         bpy.ops.object.select_all(action='DESELECT')
 
-        layer_collection = bpy.context.view_layer.active_layer_collection
-        coll = bpy.data.collections.new(assembly_name)
-        layer_collection.collection.children.link(coll)
-        bpy.ops.bp_collection.set_active_collection(collection_name=coll.name)
+        self.coll = bpy.context.view_layer.active_layer_collection.collection
+        # coll = bpy.data.collections.new(assembly_name)
+        # layer_collection.collection.children.link(coll)
+        # bpy.ops.bp_collection.set_active_collection(collection_name=coll.name)
 
-        self.coll = coll
-        coll["IS_ASSEMBLY"] = True
+        # self.coll = coll
+        # coll["IS_ASSEMBLY"] = True
 
         self.obj_bp = bpy.data.objects.new("OBJ_BP",None)
         self.obj_bp.location = (0,0,0)
         self.obj_bp["obj_bp"] = True
         self.obj_bp.empty_display_type = 'ARROWS'
         self.obj_bp.empty_display_size = .1           
-        coll.objects.link(self.obj_bp)
+        self.coll.objects.link(self.obj_bp)
 
         self.obj_x = bpy.data.objects.new("OBJ_X",None)
         self.obj_x.location = (0,0,0)
@@ -96,7 +95,7 @@ class Assembly:
         self.obj_x.lock_rotation[0] = True     
         self.obj_x.lock_rotation[1] = True   
         self.obj_x.lock_rotation[2] = True      
-        coll.objects.link(self.obj_x)
+        self.coll.objects.link(self.obj_x)
 
         self.obj_y = bpy.data.objects.new("OBJ_Y",None)
         self.obj_y.location = (0,0,0)
@@ -110,7 +109,7 @@ class Assembly:
         self.obj_y.lock_rotation[0] = True     
         self.obj_y.lock_rotation[1] = True   
         self.obj_y.lock_rotation[2] = True                    
-        coll.objects.link(self.obj_y)      
+        self.coll.objects.link(self.obj_y)      
 
         self.obj_z = bpy.data.objects.new("OBJ_Z",None)
         self.obj_z.location = (0,0,0)
@@ -124,7 +123,7 @@ class Assembly:
         self.obj_z.lock_rotation[0] = True     
         self.obj_z.lock_rotation[1] = True   
         self.obj_z.lock_rotation[2] = True               
-        coll.objects.link(self.obj_z)
+        self.coll.objects.link(self.obj_z)
 
         self.obj_prompts = bpy.data.objects.new("OBJ_PROMPTS",None)
         self.obj_prompts.location = (0,0,0)
@@ -137,7 +136,7 @@ class Assembly:
         self.obj_prompts.lock_rotation[1] = True   
         self.obj_prompts.lock_rotation[2] = True           
         self.obj_prompts["obj_prompts"] = True
-        coll.objects.link(self.obj_prompts)
+        self.coll.objects.link(self.obj_prompts)
 
     def add_empty(self,obj_name):
         obj = bpy.data.objects.new(obj_name,None)
@@ -158,22 +157,22 @@ class Assembly:
     def add_assembly(self,assembly):
         if assembly.obj_bp is None:
             assembly.draw()
-        bpy.ops.bp_collection.set_active_collection(collection_name=self.coll.name)
+        # bpy.ops.bp_collection.set_active_collection(collection_name=self.coll.name)
         assembly.obj_bp.location = (0,0,0)
         assembly.obj_bp.parent = self.obj_bp
-        for obj in assembly.coll.objects:
-            self.set_id_properties(obj)
+        # for obj in assembly.coll.objects:
+        #     self.set_id_properties(obj)
         return assembly
 
     def add_cube(self,name,obj_bp,obj_x,obj_y,obj_z):
         pass
 
     def set_name(self,name):
-        self.coll.name = name
+        self.obj_bp.name = name
 
     def get_prompt(self,name):
         if name in self.obj_prompts.prompt_page.prompts:
-            return self.obj_prompts.prompt_page.prompts[name]        
+            return self.obj_prompts.prompt_page.prompts[name]
 
     def loc_x(self,expression="",variables=[],value=0):
         if expression == "":

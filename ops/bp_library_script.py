@@ -30,11 +30,15 @@ class LIBRARY_OT_drop_script_from_library(bpy.types.Operator):
             if item.category_name == category_name and item.name == filename:
                 pkg = __import__(item.package_name)
                 item = eval("pkg." + item.module_name + "." + item.class_name + "()")
-                item.draw()
+                if hasattr(item,"draw"):
+                    item.draw()
 
                 if hasattr(item,"placement_id") and item.placement_id != "":
-                    eval('bpy.ops.' + item.placement_id + '("INVOKE_DEFAULT",obj_bp_name=item.obj_bp.name)')
-                    print('PLACEMENT',item.placement_id,item.obj_bp)
+                    if item.obj_bp:
+                        eval('bpy.ops.' + item.placement_id + '("INVOKE_DEFAULT",obj_bp_name=item.obj_bp.name)')
+                    else:
+                        eval('bpy.ops.' + item.placement_id + '("INVOKE_DEFAULT")')
+
 
         return {'FINISHED'}
 

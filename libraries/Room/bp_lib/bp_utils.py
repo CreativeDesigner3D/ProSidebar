@@ -42,16 +42,16 @@ def get_object_icon(obj):
     if obj.type == 'LIGHT_PROBE':
         return 'OUTLINER_OB_LIGHTPROBE'  
 
-def get_addon_preferences(context):
-    return bpy.context.preferences.addons["BlenderProSidebar"].preferences
+# def get_addon_preferences(context):
+#     return bpy.context.preferences.addons["BlenderProSidebar"].preferences
 
-def get_assembly_collection(obj):
-    '''
-    Gets the assembly collection that is assigned to the object
-    '''
-    for coll in obj.users_collection:
-        if "IS_ASSEMBLY" in coll:
-            return coll
+# def get_assembly_collection(obj):
+#     '''
+#     Gets the assembly collection that is assigned to the object
+#     '''
+#     for coll in obj.users_collection:
+#         if "IS_ASSEMBLY" in coll:
+#             return coll
 
 def hook_vertex_group_to_object(obj_mesh,vertex_group,obj_hook):
     """ This function adds a hook modifier to the verties 

@@ -35,9 +35,9 @@ class LIBRARY_OT_drop_script_from_library(bpy.types.Operator):
 
                 if hasattr(item,"placement_id") and item.placement_id != "":
                     if item.obj_bp:
-                        eval('bpy.ops.' + item.placement_id + '("INVOKE_DEFAULT",obj_bp_name=item.obj_bp.name)')
+                        eval('bpy.ops.' + item.placement_id + '("INVOKE_DEFAULT",obj_bp_name=item.obj_bp.name,filepath=self.filepath)')
                     else:
-                        eval('bpy.ops.' + item.placement_id + '("INVOKE_DEFAULT")')
+                        eval('bpy.ops.' + item.placement_id + '("INVOKE_DEFAULT",filepath=self.filepath)')
 
 
         return {'FINISHED'}
@@ -116,7 +116,8 @@ class LIBRARY_OT_create_thumbnails_for_library(bpy.types.Operator):
 
         #DRAW ASSET          
         file.write("item = eval('pkg." + library_item.module_name + "." + library_item.class_name + "()')" + "\n")
-        file.write("item.draw()\n")
+        file.write("if hasattr(item,'draw'):\n")
+        file.write("    item.draw()\n")
         file.write("path = os.path.join(pkg.LIBRARY_PATH,'" + library_item.category_name + "','" + library_item.name + "')\n")
 
         #IF BUILD THEN CALL SAVE OPERATOR BEFORE SETTING UP THUMBNAIL DATA
@@ -135,7 +136,8 @@ class LIBRARY_OT_create_thumbnails_for_library(bpy.types.Operator):
         file.write("bpy.context.object.rotation_euler = (1.1093,0,.8149)\n")
 
         #SELECT AND VIEW ASSEMBLY
-        file.write("select_collection_objects(item.coll)\n")
+        file.write("if item.coll:\n")
+        file.write("    select_collection_objects(item.coll)\n")
         file.write("bpy.ops.view3d.camera_to_view_selected()\n")
 
         #TODO: SETUP CUSTOM RENDERING FUNCTIONALITY WITH OPERATOR

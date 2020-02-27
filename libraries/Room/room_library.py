@@ -65,10 +65,6 @@ class Stud(room_types.Part):
 
 class Wall_Mesh(room_types.Wall):
     show_in_library = True
-
-    # If draw function is not found then call placement operator
-    # def draw(self):
-    #     self.create_assembly("Wall Mesh")
     
     def draw_wall(self):
         self.create_assembly("Wall Mesh")
@@ -82,19 +78,58 @@ class Wall_Mesh(room_types.Wall):
         self.obj_y.location.y = props.wall_thickness
         self.obj_z.location.z = props.wall_height
 
+        #Add Objects
+        left_angle_empty = self.add_empty("Left Angle")
+        right_angle_empty = self.add_empty("Right Angle")
+
+        size = (0,0,0)
+        obj_mesh = bp_utils.create_cube_mesh("Wall Mesh",size)
+        self.add_object(obj_mesh)
+
+        #Assign Mesh Hooks
+        vgroup = obj_mesh.vertex_groups[left_angle_empty.name]
+        vgroup.add([1,5],1,'ADD')  
+
+        vgroup = obj_mesh.vertex_groups[right_angle_empty.name]
+        vgroup.add([2,6],1,'ADD')
+
+        vgroup = obj_mesh.vertex_groups[self.obj_x.name]
+        vgroup.add([3,7],1,'ADD')        
+
+        vgroup = obj_mesh.vertex_groups[self.obj_z.name]
+        vgroup.add([4,5,6,7],1,'ADD')        
+
+        hook = obj_mesh.modifiers.new('XHOOK','HOOK')
+        hook.object = self.obj_x
+        hook.vertex_indices_set([3,7])
+
+        hook = obj_mesh.modifiers.new('LEFTANGLE','HOOK')
+        hook.object = left_angle_empty
+        hook.vertex_indices_set([1,5])
+
+        hook = obj_mesh.modifiers.new('RIGHTANGLE','HOOK')
+        hook.object = right_angle_empty
+        hook.vertex_indices_set([2,6])        
+
+        hook = obj_mesh.modifiers.new('ZHOOK','HOOK')
+        hook.object = self.obj_z
+        hook.vertex_indices_set([4,5,6,7])
+
+        #Assign Drivers
         length = self.obj_x.drivers.get_var('location.x','length')
         wall_thickness = self.obj_y.drivers.get_var('location.y','wall_thickness')
-        height = self.obj_z.drivers.get_var('location.z','height')
 
-        wall_mesh = self.add_assembly(Stud())
-        wall_mesh.set_name('Wall Mesh')
-        wall_mesh.loc_x(value=0)
-        wall_mesh.loc_y(value=0)
-        wall_mesh.loc_z(value=0)
-        wall_mesh.dim_x('length',[length])
-        wall_mesh.dim_y('wall_thickness',[wall_thickness])
-        wall_mesh.dim_z('height',[height])
+        left_angle = self.obj_prompts.prompt_page.add_prompt('ANGLE',"Left Angle")
+        right_angle = self.obj_prompts.prompt_page.add_prompt('ANGLE',"Right Angle")
 
+        left_angle_var = left_angle.get_var('left_angle_var')
+        right_angle_var = right_angle.get_var('right_angle_var')
+
+        left_angle_empty.drivers.loc_x('tan(left_angle_var)*wall_thickness',[left_angle_var,wall_thickness])
+        left_angle_empty.drivers.loc_y('wall_thickness',[wall_thickness])
+
+        right_angle_empty.drivers.loc_x('length+tan(right_angle_var)*wall_thickness',[length,right_angle_var,wall_thickness])
+        right_angle_empty.drivers.loc_y('wall_thickness',[wall_thickness])
 
 class Wall(room_types.Wall):
     show_in_library = True

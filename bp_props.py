@@ -121,6 +121,24 @@ class Prompt(PropertyGroup):
         if self.prompt_type == 'TEXT':
             return Variable(self.id_data, prompt_path + '.text_value',name)       
 
+    def get_value(self):
+        if self.prompt_type == 'FLOAT':
+            return self.float_value
+        if self.prompt_type == 'DISTANCE':
+            return self.distance_value
+        if self.prompt_type == 'ANGLE':
+            return self.angle_value
+        if self.prompt_type == 'QUANTITY':
+            return self.quantity_value
+        if self.prompt_type == 'PERCENTAGE':
+            return self.percentage_value
+        if self.prompt_type == 'CHECKBOX':
+            return self.checkbox_value
+        if self.prompt_type == 'COMBOBOX':
+            return self.combobox_index #TODO: IMPLEMENT UI LIST
+        if self.prompt_type == 'TEXT':
+            return self.text_value
+
     def set_value(self,value):
         if self.prompt_type == 'FLOAT':
             self.float_value = value

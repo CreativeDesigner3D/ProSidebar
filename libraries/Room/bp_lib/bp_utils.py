@@ -177,6 +177,11 @@ def create_object_from_verts_and_faces(verts,faces,name):
     # bpy.context.scene.objects.link(obj_new)
     return obj_new
 
+def calc_distance(point1,point2):
+    """ This gets the distance between two points (X,Y,Z)
+    """
+    return math.sqrt((point1[0]-point2[0])**2 + (point1[1]-point2[1])**2 + (point1[2]-point2[2])**2) 
+
 def floor_raycast(context, mx, my):
     '''
     This casts a ray into the 3D view and returns information based on what is under the mouse

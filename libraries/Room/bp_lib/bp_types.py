@@ -156,12 +156,10 @@ class Assembly:
 
     def add_assembly(self,assembly):
         if assembly.obj_bp is None:
-            assembly.draw()
-        # bpy.ops.bp_collection.set_active_collection(collection_name=self.coll.name)
-        assembly.obj_bp.location = (0,0,0)
-        assembly.obj_bp.parent = self.obj_bp
-        # for obj in assembly.coll.objects:
-        #     self.set_id_properties(obj)
+            if hasattr(assembly,'draw'):
+                assembly.draw()
+                assembly.obj_bp.location = (0,0,0)
+                assembly.obj_bp.parent = self.obj_bp
         return assembly
 
     def add_cube(self,name,obj_bp,obj_x,obj_y,obj_z):

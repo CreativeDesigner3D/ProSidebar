@@ -20,3 +20,4 @@ class Window(bp_types.Assembly):
 
 class Door(bp_types.Assembly):
     category_name = "Doors"
+    placement_id = "room.place_door"

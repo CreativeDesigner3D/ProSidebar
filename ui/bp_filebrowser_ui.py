@@ -92,7 +92,7 @@ class FILEBROWSER_PT_library_headers(Panel):
             lib = utils_library.get_active_script_library()
 
             row = layout.row(align=True)
-            row.menu('FILEBROWSER_MT_library_menu',icon='SCRIPTPLUGINS',text=lib.name)
+            row.menu('FILEBROWSER_MT_library_menu',icon='SCRIPTPLUGINS',text=lib.name.replace("_"," "))
             row.menu('FILEBROWSER_MT_library_category_menu',icon='FILE_FOLDER',text=active_folder_name)   
             if hasattr(bpy.types,lib.panel_id):
                 row.popover(panel=lib.panel_id,text="",icon='SETTINGS') 
@@ -100,9 +100,9 @@ class FILEBROWSER_PT_library_headers(Panel):
             if len(folders) > 0:
                 row = layout.row(align=True)
                 row.menu('FILEBROWSER_MT_library_category_menu',icon='FILE_FOLDER',text=active_folder_name)     
-                row.popover(panel="FILEBROWSER_PT_library_settings",text="",icon='SETTINGS')
+                row.popover(panel="FILEBROWSER_PT_library_commands",text="",icon='SETTINGS')
             else:
-                layout.popover(panel="FILEBROWSER_PT_library_settings",text="No Assets Found",icon='SETTINGS')
+                layout.popover(panel="FILEBROWSER_PT_library_commands",text="No Assets Found",icon='SETTINGS')
 
 
 class FILEBROWSER_HT_header_library(Header):
@@ -112,13 +112,14 @@ class FILEBROWSER_HT_header_library(Header):
         layout = self.layout
         props = utils_library.get_wm_props()
 
-        layout.popover(panel="FILEBROWSER_PT_library_settings",text="Tags",icon='COLOR')
+        layout.popover(panel="FILEBROWSER_PT_tags",text="Tags",icon='COLOR')
         layout.separator_spacer()
         layout.popover(panel="FILEBROWSER_PT_library_settings",text="Options",icon='PREFERENCES')
         layout.separator_spacer()
         row = layout.row()
         row.alignment = 'RIGHT'
         row.prop(props,"file_browser_search_text",text="",icon='VIEWZOOM')
+
 
 #TODO: Setup settings. Render thumbnail assest in library, open location in explorer.
 class FILEBROWSER_PT_library_settings(Panel):
@@ -132,6 +133,31 @@ class FILEBROWSER_PT_library_settings(Panel):
         layout.label(text=str(context.space_data.params.directory))
         layout.operator('library.create_thumbnails_for_library',text="Create Thumbnails for Assets")
 
+
+class FILEBROWSER_PT_tags(Panel):
+    bl_space_type = 'FILE_BROWSER'
+    bl_label = "Tags"
+    bl_region_type = 'HEADER'
+    bl_ui_units_x = 18
+
+    def draw(self, context):
+        layout = self.layout
+        layout.label(text="TODO: Create Tags Interface")
+
+
+class FILEBROWSER_PT_library_commands(Panel):
+    bl_space_type = 'FILE_BROWSER'
+    bl_label = "Tags"
+    bl_region_type = 'HEADER'
+    bl_ui_units_x = 18
+
+    def draw(self, context):
+        layout = self.layout
+        layout.operator('library.create_thumbnails_for_library',text="Save Asset to Library")
+        layout.operator('library.create_thumbnails_for_library',text="Create New Category")
+        layout.operator('library.create_thumbnails_for_library',text="Change Library Path")
+
+
 #TODO: Setup library. Load folders from explorer.
 class FILEBROWSER_MT_library_menu(Menu):
     bl_label = "Library"
@@ -140,7 +166,7 @@ class FILEBROWSER_MT_library_menu(Menu):
         layout = self.layout
         wm_props = utils_library.get_wm_props()
         for library in wm_props.script_libraries:
-            layout.operator('library.change_script_library',text=library.name,icon='SCRIPTPLUGINS').library = library.name
+            layout.operator('library.change_script_library',text=library.name.replace("_"," "),icon='SCRIPTPLUGINS').library = library.name
 
 #TODO: Setup categories. Load folders from explorer.
 class FILEBROWSER_MT_library_category_menu(Menu):
@@ -647,9 +673,11 @@ class FILEBROWSER_MT_context_menu(Menu):
 classes = (
     FILEBROWSER_PT_library_tabs,
     FILEBROWSER_PT_library_headers,
+    FILEBROWSER_PT_library_commands,
     FILEBROWSER_HT_header_library,
     FILEBROWSER_PT_library_settings,
     FILEBROWSER_MT_library_menu,
+    FILEBROWSER_PT_tags,
     FILEBROWSER_MT_library_category_menu,
     FILEBROWSER_HT_header,
     FILEBROWSER_PT_display,

@@ -52,8 +52,12 @@ class LIBRARY_OT_change_script_library(bpy.types.Operator):
     def execute(self, context):
         props = utils_library.get_scene_props()
         props.active_script_library = self.library
+
         lib = utils_library.get_active_script_library()
-        path = lib.library_path
+        folders = utils_library.get_active_categories(props.library_tabs)
+        category = utils_library.get_active_category(props,folders)
+
+        path = os.path.join(lib.library_path,category)
         if os.path.exists(path):
             utils_library.update_file_browser_path(context,path)
         return {'FINISHED'}

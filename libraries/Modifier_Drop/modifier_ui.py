@@ -8,8 +8,8 @@ class Modifier_PT_library_settings(bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
-        # props = room_utils.get_room_scene_props(context)
-        # props.draw(layout)
+        layout.operator("modifier.save_current_modifier_stack_to_library",icon='MODIFIER_ON')
+
 
 class Modifier_OT_prompts(bpy.types.Operator):
     bl_idname = "modifier.prompts"

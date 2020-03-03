@@ -46,19 +46,19 @@ class Room_Scene_Props(PropertyGroup):
             col = layout.column(align=True)
 
             box = col.box()
-            box.label(text="General Room Tools",icon='MOD_BUILD')            
-            box.label(text="Auto Add Base Molding")
-            box.label(text="Auto Add Crown Molding")              
-            box.label(text="Add Floor")
+            box.label(text="General Room Tools",icon='MOD_BUILD')   
+            box.operator('room.draw_molding',text="Auto Add Base Molding")
+            box.operator('room.draw_molding',text="Auto Add Crown Molding")              
+            box.operator('room.draw_molding',text="Add Floor")
 
             box = col.box()
             box.label(text="Room Lighting Tools",icon='MOD_BUILD')  
-            box.label(text="Add Room Light")
+            box.operator('room.draw_molding',text="Add Room Light")
 
             box = col.box()
             box.label(text="2D Drawing Tools",icon='MOD_BUILD')  
-            box.label(text="Generate 2D View Scenes")      
-            box.label(text="Show Dimensions")
+            box.operator('room.draw_molding',text="Generate 2D View Scenes")      
+            box.operator('room.draw_molding',text="Show Dimensions")
 
     @classmethod
     def register(cls):

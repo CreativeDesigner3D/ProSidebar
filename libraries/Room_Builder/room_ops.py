@@ -6,6 +6,13 @@ from . import room_utils
 from . import data_walls
 from . import data_doors
 
+class ROOM_OT_draw_molding(bpy.types.Operator):
+    bl_idname = "room.draw_molding"
+    bl_label = "Draw Molding"
+
+    def execute(self, context):
+        pass
+
 class ROOM_OT_draw_multiple_walls(bpy.types.Operator):
     bl_idname = "room.draw_multiple_walls"
     bl_label = "Draw Multiple Walls"
@@ -507,6 +514,8 @@ class ROOM_OT_place_door(bpy.types.Operator):
         context.area.tag_redraw()
         return {'FINISHED'}
 
+
+bpy.utils.register_class(ROOM_OT_draw_molding)
 bpy.utils.register_class(ROOM_OT_draw_multiple_walls)
 bpy.utils.register_class(ROOM_OT_place_square_room)
 bpy.utils.register_class(ROOM_OT_place_door)

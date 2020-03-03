@@ -77,4 +77,18 @@ class MODIFIER_OT_drop_modifier(bpy.types.Operator):
         bpy.ops.modifier.prompts('INVOKE_DEFAULT')
         return {'FINISHED'}
 
-bpy.utils.register_class(MODIFIER_OT_drop_modifier)        
+class MODIFIER_OT_save_current_modifier_stack_to_library(bpy.types.Operator):
+    bl_idname = "modifier.save_current_modifier_stack_to_library"
+    bl_label = "Save Current Modifier Stack to Library"
+    
+    filepath: bpy.props.StringProperty(name="Filepath",default="Error")
+    
+    @classmethod
+    def poll(cls, context):
+        return True
+        
+    def execute(self, context):
+        return {'FINISHED'}
+
+bpy.utils.register_class(MODIFIER_OT_drop_modifier)
+bpy.utils.register_class(MODIFIER_OT_save_current_modifier_stack_to_library)      

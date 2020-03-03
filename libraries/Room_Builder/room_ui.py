@@ -69,6 +69,8 @@ class Room_OT_wall_prompts(bpy.types.Operator):
 
     def invoke(self,context,event):
         wall_bp = room_utils.get_wall_bp(context.object)
+        self.next_wall = None
+        self.previous_wall = None
         self.current_wall = bp_types.Assembly(wall_bp)   
         self.get_previous_wall(context)
         self.get_next_wall(context)
@@ -89,8 +91,8 @@ class Room_OT_wall_prompts(bpy.types.Operator):
         col = layout.column(align=True)
         col.prop(self.current_wall.obj_bp,'rotation_euler',index=2,text="Rotation")
 
-        left_angle.draw(layout)
-        right_angle.draw(layout)
+        # left_angle.draw(layout)
+        # right_angle.draw(layout)
 
         # layout.label(text=str(left_angle.get_value()))
         # layout.label(text=str(right_angle.get_value()))

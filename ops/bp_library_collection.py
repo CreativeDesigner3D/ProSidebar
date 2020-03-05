@@ -120,6 +120,8 @@ class LIBRARY_OT_drop_collection_from_library(bpy.types.Operator):
         return True
 
     def execute(self, context):
+        self.parent_obj_dict = {}
+        self.collection_objects = []
         self.create_drawing_plane(context)
         self.grp = self.get_collection(context)
         context.window_manager.modal_handler_add(self)

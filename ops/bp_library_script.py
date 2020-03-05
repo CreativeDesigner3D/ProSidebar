@@ -84,7 +84,7 @@ class LIBRARY_OT_create_thumbnails_for_library(bpy.types.Operator):
     bl_label = "Create Thumbnails for Library"
     
     library_items: bpy.props.CollectionProperty(name="Library Items",type=Script_Library_Item)
-    build_asset: bpy.props.BoolProperty(name="Build Asset",default=True)
+    build_asset: bpy.props.BoolProperty(name="Build Asset",default=False)
     
     @classmethod
     def poll(cls, context):
@@ -118,10 +118,12 @@ class LIBRARY_OT_create_thumbnails_for_library(bpy.types.Operator):
         file.write("for obj in bpy.data.objects:\n")
         file.write("    bpy.data.objects.remove(obj,do_unlink=True)\n")   
 
-        #DRAW ASSET          
+        #DRAW ASSET
         file.write("item = eval('pkg." + library_item.module_name + "." + library_item.class_name + "()')" + "\n")
         file.write("if hasattr(item,'draw'):\n")
         file.write("    item.draw()\n")
+        file.write("if hasattr(item,'render'):\n")
+        file.write("    item.render()\n")        
         file.write("path = os.path.join(pkg.LIBRARY_PATH,'" + library_item.category_name + "','" + library_item.name + "')\n")
 
         #IF BUILD THEN CALL SAVE OPERATOR BEFORE SETTING UP THUMBNAIL DATA

@@ -5,9 +5,12 @@ import time
 from . import room_types, room_utils
 from . import data_parts
 
-class Wall_Mesh(room_types.Wall):
+class Wall(room_types.Wall):
     show_in_library = True
     
+    def render(self):
+        self.draw_wall()
+
     def draw_wall(self):
         self.create_assembly("Wall Mesh")
         props = room_utils.get_room_scene_props(bpy.context)
@@ -74,8 +77,11 @@ class Wall_Mesh(room_types.Wall):
         right_angle_empty.drivers.loc_y('wall_thickness',[wall_thickness])
 
 
-class Wall(room_types.Wall):
+class Wall_with_Studs(room_types.Wall):
     show_in_library = True
+
+    def render(self):
+        self.draw_wall()
 
     def draw_wall(self):
         start_time = time.time()

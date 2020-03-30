@@ -531,6 +531,123 @@ class LIBRARY_OT_save_collection_to_library(bpy.types.Operator):
         
         return {'FINISHED'}    
     
+class LIBRARY_OT_save_collection_to_asset_library(bpy.types.Operator):
+    bl_idname = "library.save_collection_to_asset_library"
+    bl_label = "Save Collection to Library"
+    
+    collection_name: bpy.props.StringProperty(name="Collection Name")
+    collection_category: bpy.props.EnumProperty(name="Object Category",items=enum_collection_categories,update=update_collection_category)
+    save_file: bpy.props.BoolProperty(name="Save File")
+    create_new_category: bpy.props.BoolProperty(name="Create New Category")
+    new_category_name: bpy.props.StringProperty(name="New Category Name")
+    
+    @classmethod
+    def poll(cls, context):
+        return True #FIGURE OUT WHAT IS ACTIVE
+        # if context.scene.outliner.selected_collection_index + 1 <= len(bpy.data.collections):
+        #     return True
+        # else:
+        #     return False
+
+    def check(self, context):
+        return True
+
+    def invoke(self,context,event):
+        collection = context.view_layer.active_layer_collection.collection
+        self.collection_name = collection.name
+        wm = context.window_manager
+        return wm.invoke_props_dialog(self, width=300)
+
+    def draw(self, context):
+        layout = self.layout
+
+        path = utils_library.get_filebrowser_path(context).decode("utf-8")
+        files = os.listdir(path) if os.path.exists(path) else []
+
+        layout.label(text="Collection Name: " + self.collection_name)
+
+        if self.collection_name + ".blend" in files or self.collection_name + ".png" in files:
+            layout.label(text="File already exists",icon="ERROR")
+
+    def select_collection_objects(self,coll):
+        for obj in coll.objects:
+            obj.select_set(True)
+        for child in coll.children:
+            self.select_collection_objects(child)
+
+    def create_collection_thumbnail_script(self,source_dir,source_file,collection_name):
+        file = codecs.open(os.path.join(bpy.app.tempdir,"thumb_temp.py"),'w',encoding='utf-8')
+        file.write("import bpy\n")
+        file.write("def select_collection_objects(coll):\n")
+        file.write("    for obj in coll.objects:\n")
+        file.write("        obj.select_set(True)\n")
+        file.write("    for child in coll.children:\n")
+        file.write("        select_collection_objects(child)\n")
+        file.write("with bpy.data.libraries.load(r'" + source_file + "', False, True) as (data_from, data_to):\n")
+        file.write("    for collection in data_from.collections:\n")
+        file.write("        if collection == '" + collection_name + "':\n")
+        file.write("            data_to.collections = [collection]\n")
+        file.write("            break\n")
+        file.write("for collection in data_to.collections:\n")
+        file.write("    bpy.context.view_layer.active_layer_collection.collection.children.link(collection)\n")
+        file.write("    select_collection_objects(collection)\n")
+        # file.write("    for obj in collection.objects:\n")
+        # file.write("        bpy.context.scene.objects.link(obj)\n") #TODO: FIX
+        # file.write("        obj.select_set(True)\n")
+        # file.write("        bpy.context.scene.objects.active = obj\n")
+        file.write("    bpy.ops.view3d.camera_to_view_selected()\n")
+        file.write("    render = bpy.context.scene.render\n")
+        file.write("    render.use_file_extension = True\n")
+        file.write("    render.filepath = r'" + os.path.join(source_dir,collection_name) + "'\n")
+        file.write("    bpy.ops.render.render(write_still=True)\n")
+        file.close()
+        return os.path.join(bpy.app.tempdir,'thumb_temp.py')
+        
+    def create_collection_save_script(self,source_dir,source_file,collection_name):
+        file = codecs.open(os.path.join(bpy.app.tempdir,"save_temp.py"),'w',encoding='utf-8')
+        file.write("import bpy\n")
+        file.write("import os\n")
+        file.write("for mat in bpy.data.materials:\n")
+        file.write("    bpy.data.materials.remove(mat,do_unlink=True)\n")
+        file.write("for obj in bpy.data.objects:\n")
+        file.write("    bpy.data.objects.remove(obj,do_unlink=True)\n")               
+        file.write("bpy.context.preferences.filepaths.save_version = 0\n") #TODO: FIX THIS
+        file.write("with bpy.data.libraries.load(r'" + source_file + "', False, True) as (data_from, data_to):\n")
+        file.write("    for collection in data_from.collections:\n")
+        file.write("        if collection == '" + collection_name + "':\n")
+        file.write("            data_to.collections = [collection]\n")
+        file.write("            break\n")
+        file.write("for collection in data_to.collections:\n")
+        file.write("    bpy.context.view_layer.active_layer_collection.collection.children.link(collection)\n")
+        file.write("bpy.ops.wm.save_as_mainfile(filepath=r'" + os.path.join(source_dir,collection_name) + ".blend')\n")
+        file.close()
+        return os.path.join(bpy.app.tempdir,'save_temp.py')
+
+        
+    def execute(self, context):
+        if bpy.data.filepath == "":
+            bpy.ops.wm.save_as_mainfile(filepath=os.path.join(bpy.app.tempdir,"temp_blend.blend"))
+                    
+        directory_to_save_to = utils_library.get_filebrowser_path(context).decode("utf-8")
+        # if not os.path.exists(dir_to_save_to):
+        #     os.makedirs(dir_to_save_to)    
+        
+        thumbnail_script_path = self.create_collection_thumbnail_script(directory_to_save_to, bpy.data.filepath, self.collection_name)
+        save_script_path = self.create_collection_save_script(directory_to_save_to, bpy.data.filepath, self.collection_name)
+
+        # if not os.path.exists(bpy.app.tempdir):
+        #     os.makedirs(bpy.app.tempdir)
+
+#         subprocess.Popen(r'explorer ' + bpy.app.tempdir)
+        
+        subprocess.call(bpy.app.binary_path + ' "' + utils_library.get_thumbnail_file_path() + '" -b --python "' + thumbnail_script_path + '"')   
+        subprocess.call(bpy.app.binary_path + ' -b --python "' + save_script_path + '"')
+        
+        os.remove(thumbnail_script_path)
+        os.remove(save_script_path)        
+        
+        return {'FINISHED'}    
+
 def register():
     bpy.utils.register_class(LIBRARY_MT_collection_library)
     bpy.utils.register_class(LIBRARY_OT_drop_collection_from_library)
@@ -538,6 +655,8 @@ def register():
     bpy.utils.register_class(LIBRARY_OT_add_collection_from_library)
     bpy.utils.register_class(LIBRARY_OT_save_collection_to_library)
     bpy.utils.register_class(LIBRARY_OT_change_collection_library_path)
+    bpy.utils.register_class(LIBRARY_OT_save_collection_to_asset_library)
+    
 
 def unregister():
     bpy.utils.unregister_class(LIBRARY_MT_collection_library)
@@ -546,4 +665,5 @@ def unregister():
     bpy.utils.unregister_class(LIBRARY_OT_add_collection_from_library)
     bpy.utils.unregister_class(LIBRARY_OT_save_collection_to_library)
     bpy.utils.unregister_class(LIBRARY_OT_change_collection_library_path)
+    bpy.utils.unregister_class(LIBRARY_OT_save_collection_to_asset_library)
     

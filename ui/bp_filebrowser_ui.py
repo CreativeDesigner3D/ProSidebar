@@ -99,7 +99,7 @@ class FILEBROWSER_PT_library_headers(Panel):
         else:
             if len(folders) > 0:
                 row = layout.row(align=True)
-                row.menu('FILEBROWSER_MT_library_category_menu',icon='FILE_FOLDER',text=active_folder_name)     
+                row.menu('FILEBROWSER_MT_library_category_menu',icon='FILE_FOLDER',text=active_folder_name)
                 row.popover(panel="FILEBROWSER_PT_library_commands",text="",icon='SETTINGS')
             else:
                 layout.popover(panel="FILEBROWSER_PT_library_commands",text="No Assets Found",icon='SETTINGS')
@@ -130,7 +130,7 @@ class FILEBROWSER_PT_library_settings(Panel):
 
     def draw(self, context):
         layout = self.layout
-        layout.label(text=str(context.space_data.params.directory))
+        layout.label(text=str(context.space_data.params.directory.decode("utf-8")))
         layout.operator('library.create_thumbnails_for_library',text="Create Thumbnails for Assets")
 
 
@@ -147,15 +147,29 @@ class FILEBROWSER_PT_tags(Panel):
 
 class FILEBROWSER_PT_library_commands(Panel):
     bl_space_type = 'FILE_BROWSER'
-    bl_label = "Tags"
+    bl_label = "Library"
     bl_region_type = 'HEADER'
     bl_ui_units_x = 18
 
     def draw(self, context):
         layout = self.layout
-        layout.operator('library.create_thumbnails_for_library',text="Save Asset to Library")
-        layout.operator('library.create_thumbnails_for_library',text="Create New Category")
-        layout.operator('library.create_thumbnails_for_library',text="Change Library Path")
+        props = utils_library.get_scene_props()
+        if props.library_tabs == 'OBJECT':
+            layout.operator('library.save_object_to_asset_library',text="Save Object to Library",icon='BACK')
+            layout.operator('bp_general.create_new_folder',text="Create New Category",icon='NEWFOLDER').path = utils_library.get_object_library_path()
+            layout.operator('library.change_object_library_path',text="Change Library Path",icon='FILE_FOLDER')
+        if props.library_tabs == 'COLLECTION':
+            layout.operator('library.save_collection_to_asset_library',text="Save Collection to Library",icon='BACK')
+            layout.operator('bp_general.create_new_folder',text="Create New Category",icon='NEWFOLDER').path = utils_library.get_collection_library_path()
+            layout.operator('library.change_collection_library_path',text="Change Library Path",icon='FILE_FOLDER')
+        if props.library_tabs == 'MATERIAL':
+            layout.operator('library.save_material_to_library',text="Save Material to Library",icon='BACK')
+            layout.operator('bp_general.create_new_folder',text="Create New Category",icon='NEWFOLDER').path = utils_library.get_material_library_path()
+            layout.operator('library.change_material_library_path',text="Change Library Path",icon='FILE_FOLDER')
+        if props.library_tabs == 'WORLD':
+            layout.operator('library.save_world_to_library',text="Save World to Library",icon='BACK')
+            layout.operator('bp_general.create_new_folder',text="Create New Category",icon='NEWFOLDER').path = utils_library.get_world_library_path()
+            layout.operator('library.change_world_library_path',text="Change Library Path",icon='FILE_FOLDER')
 
 
 #TODO: Setup library. Load folders from explorer.

@@ -34,6 +34,9 @@ def get_library_path_file():
         
     return os.path.join(DEFAULT_LIBRARY_ROOT_FOLDER,LIBRARY_PATH_FILENAME)
 
+def get_filebrowser_path(context):
+    return context.space_data.params.directory
+
 def get_script_libraries():
     wm_props = get_wm_props()
 

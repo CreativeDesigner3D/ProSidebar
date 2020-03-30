@@ -629,14 +629,10 @@ class LIBRARY_OT_save_collection_to_asset_library(bpy.types.Operator):
             bpy.ops.wm.save_as_mainfile(filepath=os.path.join(bpy.app.tempdir,"temp_blend.blend"))
                     
         directory_to_save_to = utils_library.get_filebrowser_path(context).decode("utf-8")
-        # if not os.path.exists(dir_to_save_to):
-        #     os.makedirs(dir_to_save_to)    
-        
+
         thumbnail_script_path = self.create_collection_thumbnail_script(directory_to_save_to, bpy.data.filepath, self.collection_name)
         save_script_path = self.create_collection_save_script(directory_to_save_to, bpy.data.filepath, self.collection_name)
 
-        # if not os.path.exists(bpy.app.tempdir):
-        #     os.makedirs(bpy.app.tempdir)
 
 #         subprocess.Popen(r'explorer ' + bpy.app.tempdir)
         

@@ -188,6 +188,10 @@ class LIBRARY_OT_save_world_to_library(bpy.types.Operator):
     
     @classmethod
     def poll(cls, context):
+        if context.scene.world:
+            return True
+        else:
+            return False
         return True
 
     def check(self, context):
@@ -295,8 +299,112 @@ class LIBRARY_OT_save_world_to_library(bpy.types.Operator):
         subprocess.call(bpy.app.binary_path + ' "' + utils_library.get_thumbnail_file_path() + '" -b --python "' + thumbnail_script_path + '"')   
         subprocess.call(bpy.app.binary_path + ' -b --python "' + save_script_path + '"')
         
-        # os.remove(thumbnail_script_path)
-        # os.remove(save_script_path)
+        os.remove(thumbnail_script_path)
+        os.remove(save_script_path)
+        
+        return {'FINISHED'}
+
+
+class LIBRARY_OT_save_world_to_asset_library(bpy.types.Operator):
+    bl_idname = "library.save_world_to_asset_library"
+    bl_label = "Save World to Library"
+    
+    world_name: bpy.props.StringProperty(name="World Name")
+    world_category: bpy.props.EnumProperty(name="World Category",items=enum_world_categories,update=update_world_category)
+    save_file: bpy.props.BoolProperty(name="Save File")
+    create_new_category: bpy.props.BoolProperty(name="Create New Category")
+    new_category_name: bpy.props.StringProperty(name="New Category Name")
+    
+    world = None
+    
+    @classmethod
+    def poll(cls, context):
+        if context.scene.world:
+            return True
+        else:
+            return False
+        return True
+
+    def check(self, context):
+        return True
+
+    def invoke(self,context,event):
+        self.world_name = context.scene.world.name
+        wm = context.window_manager
+        return wm.invoke_props_dialog(self, width=300)
+        
+    def draw(self, context):
+        layout = self.layout
+
+        path = utils_library.get_filebrowser_path(context).decode("utf-8")
+        files = os.listdir(path) if os.path.exists(path) else []
+            
+        layout.label(text="World Name: " + self.world_name)
+        
+        if self.world_name + ".blend" in files or self.world_name + ".png" in files:
+            layout.label(text="File already exists",icon="ERROR")
+        
+    def create_world_thumbnail_script(self,source_dir,source_file,world_name):
+        file = codecs.open(os.path.join(bpy.app.tempdir,"thumb_temp.py"),'w',encoding='utf-8')
+        file.write("import bpy\n")
+        file.write("with bpy.data.libraries.load(r'" + source_file + "', False, True) as (data_from, data_to):\n")
+        file.write("    for world in data_from.worlds:\n")
+        file.write("        if world == '" + world_name + "':\n")
+        file.write("            data_to.worlds = [world]\n")
+        file.write("            break\n")
+        file.write("for world in data_to.worlds:\n")
+        file.write("    bpy.context.scene.world = world\n")
+        file.write("    bpy.context.scene.camera.data.type = 'PANO'\n")
+        file.write("    bpy.context.scene.camera.data.cycles.panorama_type = 'EQUIRECTANGULAR'\n")
+        file.write("    bpy.context.scene.render.film_transparent = False\n")
+        file.write("    render = bpy.context.scene.render\n")
+        file.write("    render.use_file_extension = True\n")
+        file.write("    render.filepath = r'" + os.path.join(source_dir,world_name) + "'\n")
+        file.write("    bpy.ops.render.render(write_still=True)\n")
+        
+        file.close()
+        
+        return os.path.join(bpy.app.tempdir,'thumb_temp.py')
+        
+    def create_world_save_script(self,source_dir,source_file,world_name):
+        file = codecs.open(os.path.join(bpy.app.tempdir,"save_temp.py"),'w',encoding='utf-8')
+        file.write("import bpy\n")
+        file.write("import os\n")
+        file.write("for mat in bpy.data.materials:\n")
+        file.write("    bpy.data.materials.remove(mat,do_unlink=True)\n")
+        file.write("for obj in bpy.data.objects:\n")
+        file.write("    bpy.data.objects.remove(obj,do_unlink=True)\n")        
+        file.write("for world in bpy.data.worlds:\n")
+        file.write("    bpy.data.worlds.remove(world,do_unlink=True)\n")            
+        file.write("bpy.context.preferences.filepaths.save_version = 0\n")
+        file.write("with bpy.data.libraries.load(r'" + source_file + "', False, True) as (data_from, data_to):\n")
+        file.write("    for world in data_from.worlds:\n")
+        file.write("        if world == '" + world_name + "':\n")
+        file.write("            data_to.worlds = [world]\n")
+        file.write("            break\n")
+        file.write("for world in data_to.worlds:\n")
+        file.write("    bpy.context.scene.world = world\n")
+        file.write("bpy.ops.wm.save_as_mainfile(filepath=r'" + os.path.join(source_dir,world_name) + ".blend')\n")
+        file.close()
+        
+        return os.path.join(bpy.app.tempdir,'save_temp.py')        
+        
+    def execute(self, context):
+        if bpy.data.filepath == "":
+            bpy.ops.wm.save_as_mainfile(filepath=os.path.join(bpy.app.tempdir,"temp_blend.blend"))
+        
+        directory_to_save_to = utils_library.get_filebrowser_path(context).decode("utf-8")
+
+        thumbnail_script_path = self.create_world_thumbnail_script(directory_to_save_to, bpy.data.filepath, self.world_name)
+        save_script_path = self.create_world_save_script(directory_to_save_to, bpy.data.filepath, self.world_name)
+
+        # subprocess.Popen(r'explorer ' + bpy.app.tempdir)
+        
+        subprocess.call(bpy.app.binary_path + ' "' + utils_library.get_thumbnail_file_path() + '" -b --python "' + thumbnail_script_path + '"')   
+        subprocess.call(bpy.app.binary_path + ' -b --python "' + save_script_path + '"')
+        
+        os.remove(thumbnail_script_path)
+        os.remove(save_script_path)
         
         return {'FINISHED'}
 
@@ -307,6 +415,8 @@ def register():
     bpy.utils.register_class(LIBRARY_OT_add_world_from_library)
     bpy.utils.register_class(LIBRARY_OT_save_world_to_library)
     bpy.utils.register_class(LIBRARY_OT_change_world_library_path)
+    bpy.utils.register_class(LIBRARY_OT_save_world_to_asset_library)
+    
     
 def unregister():
     bpy.utils.unregister_class(LIBRARY_MT_world_library)
@@ -315,4 +425,5 @@ def unregister():
     bpy.utils.unregister_class(LIBRARY_OT_add_world_from_library)
     bpy.utils.unregister_class(LIBRARY_OT_save_world_to_library)
     bpy.utils.unregister_class(LIBRARY_OT_change_world_library_path)
+    bpy.utils.unregister_class(LIBRARY_OT_save_world_to_asset_library)
     

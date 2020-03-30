@@ -167,7 +167,7 @@ class FILEBROWSER_PT_library_commands(Panel):
             layout.operator('bp_general.create_new_folder',text="Create New Category",icon='NEWFOLDER').path = utils_library.get_material_library_path()
             layout.operator('library.change_material_library_path',text="Change Library Path",icon='FILE_FOLDER')
         if props.library_tabs == 'WORLD':
-            layout.operator('library.save_world_to_library',text="Save World to Library",icon='BACK')
+            layout.operator('library.save_world_to_asset_library',text="Save World to Library",icon='BACK')
             layout.operator('bp_general.create_new_folder',text="Create New Category",icon='NEWFOLDER').path = utils_library.get_world_library_path()
             layout.operator('library.change_world_library_path',text="Change Library Path",icon='FILE_FOLDER')
 

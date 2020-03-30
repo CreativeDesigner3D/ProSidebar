@@ -676,6 +676,130 @@ class LIBRARY_OT_replace_all_materials(bpy.types.Operator):
                     slot.material = mat
         return {'FINISHED'}
         
+class LIBRARY_OT_save_material_to_asset_library(bpy.types.Operator):
+    bl_idname = "library.save_material_to_asset_library"
+    bl_label = "Save Material to Asset Library"
+    
+    mat_name: bpy.props.StringProperty(name="Material Name")
+    material_category: bpy.props.EnumProperty(name="Material Category",items=enum_material_categories,update=update_material_category)
+    save_file: bpy.props.BoolProperty(name="Save File")
+    create_new_category: bpy.props.BoolProperty(name="Create New Category")
+    new_category_name: bpy.props.StringProperty(name="New Category Name")
+        
+    @classmethod
+    def poll(cls, context):
+        if context.object and context.object.active_material:
+            return True
+        else:
+            return False
+
+    def check(self, context):     
+        return True
+
+    def invoke(self,context,event):
+        mat = context.object.active_material
+        self.mat_name = mat.name
+        wm = context.window_manager
+        return wm.invoke_props_dialog(self, width=300)
+        
+    def create_material_thumbnail_script(self,source_dir,source_file,material_name):
+        file = codecs.open(os.path.join(bpy.app.tempdir,"thumb_temp.py"),'w',encoding='utf-8')
+        file.write("import bpy\n")
+        file.write("with bpy.data.libraries.load(r'" + source_file + "', False, True) as (data_from, data_to):\n")
+        file.write("    for mat in data_from.materials:\n")
+        file.write("        if mat == '" + material_name + "':\n")
+        file.write("            data_to.materials = [mat]\n")
+        file.write("            break\n")
+        file.write("for mat in data_to.materials:\n")
+        file.write("    bpy.ops.mesh.primitive_cube_add()\n")
+        file.write("    obj = bpy.context.view_layer.objects.active\n")
+        file.write("    bpy.ops.object.shade_smooth()\n")
+        file.write("    obj.dimensions = (2,2,2)\n")
+        file.write("    bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)\n")
+        file.write("    mod = obj.modifiers.new('bevel','BEVEL')\n")
+        file.write("    mod.segments = 5\n")
+        file.write("    mod.width = .05\n")
+        file.write("    bpy.ops.object.modifier_apply(modifier='bevel')\n")
+        file.write("    bpy.ops.object.editmode_toggle()\n")
+        file.write("    bpy.ops.mesh.select_all(action='SELECT')\n")
+        file.write("    bpy.ops.uv.smart_project(angle_limit=66, island_margin=0, user_area_weight=0)\n")
+        file.write("    bpy.ops.object.editmode_toggle()\n")
+        file.write("    bpy.ops.object.material_slot_add()\n")
+        file.write("    for slot in obj.material_slots:\n")
+        file.write("        slot.material = mat\n")
+        file.write("    bpy.context.view_layer.objects.active = obj\n")
+        file.write("    bpy.ops.view3d.camera_to_view_selected()\n")
+        file.write("    render = bpy.context.scene.render\n")
+        file.write("    render.use_file_extension = True\n")
+        file.write("    render.filepath = r'" + os.path.join(source_dir,material_name) + "'\n")
+        file.write("    bpy.ops.render.render(write_still=True)\n")
+        file.close()
+        
+        return os.path.join(bpy.app.tempdir,'thumb_temp.py')
+        
+    def create_material_save_script(self,source_dir,source_file,material_name):
+        file = codecs.open(os.path.join(bpy.app.tempdir,"save_temp.py"),'w',encoding='utf-8')
+        file.write("import bpy\n")
+        file.write("for mat in bpy.data.materials:\n")
+        file.write("    bpy.data.materials.remove(mat,do_unlink=True)\n")
+        file.write("for obj in bpy.data.objects:\n")
+        file.write("    bpy.data.objects.remove(obj,do_unlink=True)\n")        
+        file.write("with bpy.data.libraries.load(r'" + source_file + "', False, True) as (data_from, data_to):\n")
+        file.write("    for mat in data_from.materials:\n")
+        file.write("        if mat == '" + material_name + "':\n")
+        file.write("            data_to.materials = [mat]\n")
+        file.write("            break\n")
+        file.write("for mat in data_to.materials:\n")
+        file.write("    bpy.ops.mesh.primitive_cube_add()\n")
+        file.write("    obj = bpy.context.view_layer.objects.active\n")
+        file.write("    bpy.ops.object.shade_smooth()\n")
+        file.write("    obj.dimensions = (2,2,2)\n")
+        file.write("    bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)\n")
+        file.write("    mod = obj.modifiers.new('bevel','BEVEL')\n")
+        file.write("    mod.segments = 5\n")
+        file.write("    mod.width = .05\n")
+        file.write("    bpy.ops.object.modifier_apply(modifier='bevel')\n")
+        file.write("    bpy.ops.object.editmode_toggle()\n")
+        file.write("    bpy.ops.mesh.select_all(action='SELECT')\n")
+        file.write("    bpy.ops.uv.smart_project(angle_limit=66, island_margin=0, user_area_weight=0)\n")
+        file.write("    bpy.ops.object.editmode_toggle()\n")
+        file.write("    bpy.ops.object.material_slot_add()\n")
+        file.write("    for slot in obj.material_slots:\n")
+        file.write("        slot.material = mat\n")
+        file.write("bpy.ops.wm.save_as_mainfile(filepath=r'" + os.path.join(source_dir,material_name) + ".blend')\n")
+        file.close()
+        
+        return os.path.join(bpy.app.tempdir,'save_temp.py')
+        
+    def draw(self, context):
+        layout = self.layout
+
+        path = utils_library.get_filebrowser_path(context).decode("utf-8")
+        files = os.listdir(path) if os.path.exists(path) else []
+            
+        layout.label(text="Material Name: " + self.mat_name)
+        
+        if self.mat_name + ".blend" in files or self.mat_name + ".png" in files:
+            layout.label(text="File already exists",icon="ERROR")         
+        
+    def execute(self, context):
+        if bpy.data.filepath == "":
+            bpy.ops.wm.save_as_mainfile(filepath=os.path.join(bpy.app.tempdir,"temp_blend.blend"))
+        
+        directory_to_save_to = utils_library.get_filebrowser_path(context).decode("utf-8")
+
+        thumbnail_script_path = self.create_material_thumbnail_script(directory_to_save_to, bpy.data.filepath, self.mat_name)
+        save_script_path = self.create_material_save_script(directory_to_save_to, bpy.data.filepath, self.mat_name)
+        
+#         subprocess.Popen(r'explorer ' + bpy.app.tempdir)
+        
+        subprocess.call(bpy.app.binary_path + ' "' + utils_library.get_thumbnail_file_path() + '" -b --python "' + thumbnail_script_path + '"')   
+        subprocess.call(bpy.app.binary_path + ' -b --python "' + save_script_path + '"')
+        
+        os.remove(thumbnail_script_path)
+        os.remove(save_script_path)
+        return {'FINISHED'}
+
 def register():
     bpy.utils.register_class(LIBRARY_MT_material_library)
     bpy.utils.register_class(LIBRARY_OT_change_material_category)
@@ -687,6 +811,7 @@ def register():
     bpy.utils.register_class(LIBRARY_OT_assign_material_dialog)
     bpy.utils.register_class(LIBRARY_OT_assign_material_to_slot)
     bpy.utils.register_class(LIBRARY_OT_replace_all_materials)
+    bpy.utils.register_class(LIBRARY_OT_save_material_to_asset_library)
     
     
 def unregister():
@@ -700,4 +825,5 @@ def unregister():
     bpy.utils.unregister_class(LIBRARY_OT_assign_material_dialog)
     bpy.utils.unregister_class(LIBRARY_OT_assign_material_to_slot)
     bpy.utils.unregister_class(LIBRARY_OT_replace_all_materials)
+    bpy.utils.unregister_class(LIBRARY_OT_save_material_to_asset_library)
     

@@ -57,9 +57,10 @@ class LIBRARY_OT_change_script_library(bpy.types.Operator):
         folders = utils_library.get_active_categories(props.library_tabs)
         category = utils_library.get_active_category(props,folders)
 
-        path = os.path.join(lib.library_path,category)
-        if os.path.exists(path):
-            utils_library.update_file_browser_path(context,path)
+        if lib.library_path != "" and category:
+            path = os.path.join(lib.library_path,category)
+            if os.path.exists(path):
+                utils_library.update_file_browser_path(context,path)
         return {'FINISHED'}
 
 

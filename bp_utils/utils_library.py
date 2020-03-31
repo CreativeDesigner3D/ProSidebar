@@ -54,8 +54,8 @@ def get_script_libraries():
             library_paths.append(lib_path)
 
     #This is being run multiple times on debug startup so remove all items first
-    for item in wm_props.script_libraries:
-        wm_props.script_libraries.remove(0)
+    # for item in wm_props.script_libraries:
+    #     wm_props.script_libraries.remove(0)
 
     #Load all Libraries
     for path in library_paths:

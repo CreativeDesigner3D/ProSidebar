@@ -1,1 +1,0 @@
-IS_ROOM_BP = "IS_ROOM_BP"

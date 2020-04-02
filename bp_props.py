@@ -316,13 +316,28 @@ class Script_Library_Item(bpy.types.PropertyGroup):
     # tags: bpy.props.CollectionProperty(name="Tags", type=Tag) #TODO: Implement Tags
 
 
+class Pointer_Slot(bpy.types.PropertyGroup):
+    pass
+
+
 class Script_Library(bpy.types.PropertyGroup):
     library_items: bpy.props.CollectionProperty(name="Library Items", type=Script_Library_Item)
     library_path: bpy.props.StringProperty(name="Library Path")
     panel_id: bpy.props.StringProperty(name="Panel ID")
 
 
-class AP_Object_Driver_Props(PropertyGroup):
+class BP_Object_Material_Pointer_Props(PropertyGroup):
+    slots: bpy.props.CollectionProperty(name="Slots", type=Pointer_Slot)
+
+    @classmethod
+    def register(cls):
+        bpy.types.Object.material_pointer = PointerProperty(name="Material Pointer Props",description="Material Pointer Props",type=cls)
+        
+    @classmethod
+    def unregister(cls):
+        del bpy.types.Object.material_pointer
+
+class BP_Object_Driver_Props(PropertyGroup):
     show_driver_debug_info: BoolProperty(name="Show Driver Debug Info", default=False)
     
     def get_var(self,data_path,name):
@@ -493,7 +508,9 @@ classes = (
     Prompt_Page,
     Script_Library_Item,
     Script_Library,    
-    AP_Object_Driver_Props,
+    Pointer_Slot,
+    BP_Object_Material_Pointer_Props,
+    BP_Object_Driver_Props,
     BP_Window_Manager_Library_Props,
     BP_Scene_Props,
     BP_Collection_Props,

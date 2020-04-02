@@ -172,7 +172,7 @@ class VIEW3D_PT_object_materials(Panel):
         layout = self.layout
         obj = context.object
         slot = None
-        if len(obj.material_slots) - 1 > obj.active_material_index:
+        if len(obj.material_slots) >= obj.active_material_index + 1:
             slot = obj.material_slots[obj.active_material_index]
 
         is_sortable = len(obj.material_slots) > 1
@@ -188,7 +188,7 @@ class VIEW3D_PT_object_materials(Panel):
             row.template_list("MATERIAL_UL_matslots", "", obj, "material_slots", obj, "active_material_index", rows=rows)
 
         col = row.column(align=True)
-        col.operator("object.material_slot_add", icon='ADD', text="")
+        col.operator("bp_material.add_material_slot", icon='ADD', text="").object_name = obj.name
         col.operator("object.material_slot_remove", icon='REMOVE', text="")
 
         col.separator()
@@ -201,10 +201,16 @@ class VIEW3D_PT_object_materials(Panel):
             col.operator("object.material_slot_move", icon='TRIA_UP', text="").direction = 'UP'
             col.operator("object.material_slot_move", icon='TRIA_DOWN', text="").direction = 'DOWN'
 
+        if slot:
+            row = layout.row()
+            if len(obj.material_pointer.slots) >= obj.active_material_index + 1:
+                pointer_slot = obj.material_pointer.slots[obj.active_material_index]
+                row.prop(pointer_slot,'name')
+            else:
+                row.operator('bp_material.sync_material_slots').object_name = obj.name
+
         row = layout.row()
-
         row.template_ID(obj, "active_material", new="material.new")
-
         if slot:
             icon_link = 'MESH_DATA' if slot.link == 'DATA' else 'OBJECT_DATA'
             row.prop(slot, "link", icon=icon_link, icon_only=True)

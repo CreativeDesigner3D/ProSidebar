@@ -53,6 +53,12 @@ def get_assembly_collection(obj):
         if "IS_ASSEMBLY" in coll:
             return coll
 
+def get_assembly_bp(obj):
+    if "IS_ASSEMBLY_BP" in obj:
+        return obj
+    elif obj.parent:
+        return get_assembly_bp(obj.parent)
+
 def hook_vertex_group_to_object(obj_mesh,vertex_group,obj_hook):
     """ This function adds a hook modifier to the verties 
         in the vertex_group to the obj_hook
@@ -307,3 +313,15 @@ def calc_distance(point1,point2):
     """ This gets the distance between two points (X,Y,Z)
     """
     return math.sqrt((point1[0]-point2[0])**2 + (point1[1]-point2[1])**2 + (point1[2]-point2[2])**2)      
+
+def get_drivers(obj):
+    drivers = []
+    if obj.animation_data:
+        for driver in obj.animation_data.drivers:
+            drivers.append(driver)
+
+    if obj.data and obj.data.animation_data:
+        for driver in obj.data.animation_data.drivers:
+            drivers.append(driver)
+
+    return drivers    

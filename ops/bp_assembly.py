@@ -110,6 +110,9 @@ class ASSEMBLY_OT_add_object(Operator):
             obj_mesh = bp_utils.create_cube_mesh(self.object_name,(assembly.obj_x.location.x,
                                                                    assembly.obj_y.location.y,
                                                                    assembly.obj_z.location.z))
+
+            if 'PROMPT_ID' in assembly.obj_bp:
+                obj_mesh['PROMPT_ID'] = assembly.obj_bp['PROMPT_ID']
             
             assembly.add_object(obj_mesh)
 
@@ -148,23 +151,24 @@ class ASSEMBLY_OT_connect_mesh_to_hooks_in_assembly(Operator):
     
     def execute(self, context):
         obj = bpy.data.objects[self.obj_name]
-        coll = bp_utils.get_assembly_collection(obj)
+        obj_bp = bp_utils.get_assembly_bp(obj)
+        if obj_bp:
+            hooklist = []
 
-        hooklist = []
-        for child in coll.objects:
-            if child.type == 'EMPTY' and 'obj_prompts' not in child:
-                hooklist.append(child)
-        
-        if obj.mode == 'EDIT':
-            bpy.ops.object.editmode_toggle()
-        
-        bp_utils.apply_hook_modifiers(context,obj)
-        for vgroup in obj.vertex_groups:
-            for hook in hooklist:
-                if hook.name == vgroup.name:
-                    bp_utils.hook_vertex_group_to_object(obj,vgroup.name,hook)
+            for child in obj_bp.children:
+                if child.type == 'EMPTY' and 'obj_prompts' not in child:
+                    hooklist.append(child)
 
-        obj.lock_location = (True,True,True)
+            if obj.mode == 'EDIT':
+                bpy.ops.object.editmode_toggle()
+            
+            bp_utils.apply_hook_modifiers(context,obj)
+            for vgroup in obj.vertex_groups:
+                for hook in hooklist:
+                    if hook.name == vgroup.name:
+                        bp_utils.hook_vertex_group_to_object(obj,vgroup.name,hook)
+
+            obj.lock_location = (True,True,True)
                 
         return {'FINISHED'}
 

@@ -446,6 +446,58 @@ class bp_object_OT_set_base_point(bpy.types.Operator):
             
         return {'FINISHED'}    
 
+
+class bp_object_OT_clear_vertex_groups(Operator):
+    bl_idname = "bp_object.clear_vertex_groups"
+    bl_label = "Clear Vertex Groups"
+    bl_description = "This clears all of the vertex group assignments"
+    bl_options = {'UNDO'}
+    
+    obj_name: StringProperty(name="Object Name")
+    
+    def execute(self,context):
+
+        obj = bpy.data.objects[self.obj_name]
+        
+        if obj.mode == 'EDIT':
+            bpy.ops.object.editmode_toggle()
+            
+        for vgroup in obj.vertex_groups:
+            for vert in obj.data.vertices:
+                vgroup.remove((vert.index,))
+
+        if obj.mode == 'OBJECT':
+            bpy.ops.object.editmode_toggle()
+
+        return{'FINISHED'}
+
+
+class bp_object_OT_assign_verties_to_vertex_group(Operator):
+    bl_idname = "bp_object.assign_verties_to_vertex_group"
+    bl_label = "Assign Verties to Vertex Group"
+    bl_description = "This clears all of the vertex group assignments"
+    bl_options = {'UNDO'}
+    
+    vertex_group_name = StringProperty(name="Vertex Group Name")
+    
+    def execute(self,context):
+
+        obj = context.active_object
+        
+        if obj.mode == 'EDIT':
+            bpy.ops.object.editmode_toggle()
+            
+        vgroup = obj.vertex_groups[self.vertex_group_name]
+        
+        for vert in obj.data.vertices:
+            if vert.select == True:
+                vgroup.add((vert.index,),1,'ADD')
+
+        if obj.mode == 'OBJECT':
+            bpy.ops.object.editmode_toggle()
+
+        return{'FINISHED'}
+
 classes = (
     bp_object_OT_select_object,
     bp_object_OT_collapse_all_modifiers,
@@ -458,7 +510,9 @@ classes = (
     bp_object_OT_toggle_edit_mode,
     bp_object_OT_update_selected_text_with_active_font,
     bp_object_OT_place_area_lamp,
-    bp_object_OT_set_base_point
+    bp_object_OT_set_base_point,
+    bp_object_OT_clear_vertex_groups,
+    bp_object_OT_assign_verties_to_vertex_group
 )
 
 register, unregister = bpy.utils.register_classes_factory(classes)

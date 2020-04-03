@@ -40,7 +40,7 @@ class VIEW3D_PT_all_materials(Panel):
     bl_region_type = 'UI'
     bl_label = "All Materials"
     bl_category = "Materials"
-    # bl_options = {'HIDE_HEADER'}
+    bl_options = {'HIDE_HEADER'}
 
     def draw_header(self, context):
         layout = self.layout
@@ -65,8 +65,8 @@ class VIEW3D_PT_all_materials(Panel):
 class VIEW3D_PT_object_materials(Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
-    bl_label = "Selected Object Materials"
-    bl_category = "Materials"
+    bl_label = "Object Materials"
+    bl_category = "Object"
     # bl_parent_id = 'VIEW3D_PT_objects'
     bl_options = {'DEFAULT_CLOSED'}
     

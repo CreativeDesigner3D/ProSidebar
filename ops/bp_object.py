@@ -478,7 +478,7 @@ class bp_object_OT_assign_verties_to_vertex_group(Operator):
     bl_description = "This clears all of the vertex group assignments"
     bl_options = {'UNDO'}
     
-    vertex_group_name = StringProperty(name="Vertex Group Name")
+    vertex_group_name: StringProperty(name="Vertex Group Name")
     
     def execute(self,context):
 

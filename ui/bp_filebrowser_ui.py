@@ -88,21 +88,28 @@ class FILEBROWSER_PT_library_headers(Panel):
         folders = utils_library.get_active_categories(props.library_tabs)
         active_folder_name = utils_library.get_active_category(props,folders)
 
-        if props.library_tabs == 'SCRIPT':
-            lib = utils_library.get_active_script_library()
+        if active_folder_name:
 
-            row = layout.row(align=True)
-            row.menu('FILEBROWSER_MT_library_menu',icon='SCRIPTPLUGINS',text=lib.name.replace("_"," "))
-            row.menu('FILEBROWSER_MT_library_category_menu',icon='FILE_FOLDER',text=active_folder_name)   
-            if hasattr(bpy.types,lib.panel_id):
-                row.popover(panel=lib.panel_id,text="",icon='SETTINGS') 
-        else:
-            if len(folders) > 0:
+            if props.library_tabs == 'SCRIPT':
+                lib = utils_library.get_active_script_library()
+
                 row = layout.row(align=True)
-                row.menu('FILEBROWSER_MT_library_category_menu',icon='FILE_FOLDER',text=active_folder_name)
-                row.popover(panel="FILEBROWSER_PT_library_commands",text="",icon='SETTINGS')
+                row.menu('FILEBROWSER_MT_library_menu',icon='SCRIPTPLUGINS',text=lib.name.replace("_"," "))
+                row.menu('FILEBROWSER_MT_library_category_menu',icon='FILE_FOLDER',text=active_folder_name)   
+                if hasattr(bpy.types,lib.panel_id):
+                    row.popover(panel=lib.panel_id,text="",icon='SETTINGS') 
             else:
-                layout.popover(panel="FILEBROWSER_PT_library_commands",text="No Assets Found",icon='SETTINGS')
+                if len(folders) > 0:
+                    row = layout.row(align=True)
+                    row.menu('FILEBROWSER_MT_library_category_menu',icon='FILE_FOLDER',text=active_folder_name)
+                    row.popover(panel="FILEBROWSER_PT_library_commands",text="",icon='SETTINGS')
+                else:
+                    layout.popover(panel="FILEBROWSER_PT_library_commands",text="No Assets Found",icon='SETTINGS')
+        
+        else:
+            row = layout.row()
+            row.label(text="No Libraries Found")
+            row.operator('wm.url_open',text="Download Libraries").url="https://creativedesigner3d.com/"
 
 
 class FILEBROWSER_HT_header_library(Header):

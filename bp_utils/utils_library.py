@@ -89,8 +89,10 @@ def get_active_script_library():
     wm_props = get_wm_props()
     if scene_props.active_script_library in wm_props.script_libraries:
         return wm_props.script_libraries[scene_props.active_script_library]
-    else:
+    elif len(wm_props.script_libraries) > 0:
         return wm_props.script_libraries[0]
+    else:
+        return None
 
 def get_active_category(scene_props,folders):
     """ Gets the active folder for the active library
@@ -137,7 +139,8 @@ def get_active_categories(library_tabs):
 def get_active_library_path(library_tabs):
     if library_tabs == 'SCRIPT':
         lib = get_active_script_library()  
-        return lib.library_path      
+        if lib:
+            return lib.library_path      
     if library_tabs == 'OBJECT':
         return get_object_library_path()
     if library_tabs == 'COLLECTION':

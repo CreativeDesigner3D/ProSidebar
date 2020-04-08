@@ -114,7 +114,7 @@ class bp_material_OT__sync_material_slots(Operator):
     def execute(self, context):
         obj = bpy.data.objects[self.object_name]
         for index, mat_slot in enumerate(obj.material_slots):
-            if len(obj.material_pointer.slots) > index + 1:
+            if len(obj.material_pointer.slots) < index + 1:
                 slot = obj.material_pointer.slots.add()
         return{'FINISHED'}
 

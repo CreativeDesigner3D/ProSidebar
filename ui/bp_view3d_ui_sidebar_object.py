@@ -1306,7 +1306,7 @@ class VIEW3D_PT_object_drivers(Panel):
             props.var_name = var.name
 
             for target in var.targets:
-                if obj.ap_props.show_driver_debug_info:
+                if obj.drivers.show_driver_debug_info:
                     row = boxvar.row()
                     row.prop(var,"type",text="")
                     row = boxvar.row()
@@ -1332,7 +1332,6 @@ class VIEW3D_PT_object_drivers(Panel):
     def draw(self, context):
         layout = self.layout
         obj = context.object
-        print('OBJ',obj)
         if obj:
             drivers = bp_utils.get_drivers(obj)
 

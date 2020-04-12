@@ -107,9 +107,12 @@ class FILEBROWSER_PT_library_headers(Panel):
                     layout.popover(panel="FILEBROWSER_PT_library_commands",text="No Assets Found",icon='SETTINGS')
         
         else:
-            row = layout.row()
-            row.label(text="No Libraries Found")
-            row.operator('wm.url_open',text="Download Libraries").url="https://creativedesigner3d.com/"
+            if props.library_tabs == 'SCRIPT':
+                row = layout.row()
+                row.label(text="No Libraries Found")
+                row.operator('wm.url_open',text="Download Libraries").url="https://creativedesigner3d.com/"
+            else:
+                layout.popover(panel="FILEBROWSER_PT_library_commands",text="No Assets Found",icon='SETTINGS')
 
 
 class FILEBROWSER_HT_header_library(Header):
@@ -118,14 +121,22 @@ class FILEBROWSER_HT_header_library(Header):
     def draw(self, context):
         layout = self.layout
         props = utils_library.get_wm_props()
+        st = context.space_data
 
-        layout.popover(panel="FILEBROWSER_PT_tags",text="Tags",icon='COLOR')
-        layout.separator_spacer()
-        layout.popover(panel="FILEBROWSER_PT_library_settings",text="Options",icon='PREFERENCES')
-        layout.separator_spacer()
-        row = layout.row()
-        row.alignment = 'RIGHT'
-        row.prop(props,"file_browser_search_text",text="",icon='VIEWZOOM')
+        if st.active_operator is None:
+            layout.template_header()
+
+        layout.menu("FILEBROWSER_MT_view")
+        layout.menu("FILEBROWSER_MT_select")
+
+        # TODO: Implement Tags and better library browsing features
+        # layout.popover(panel="FILEBROWSER_PT_tags",text="Tags",icon='COLOR')
+        # layout.separator_spacer()
+        # layout.popover(panel="FILEBROWSER_PT_library_settings",text="Options",icon='PREFERENCES')
+        # layout.separator_spacer()
+        # row = layout.row()
+        # row.alignment = 'RIGHT'
+        # row.prop(props,"file_browser_search_text",text="",icon='VIEWZOOM')
 
 
 #TODO: Setup settings. Render thumbnail assest in library, open location in explorer.
@@ -161,20 +172,27 @@ class FILEBROWSER_PT_library_commands(Panel):
     def draw(self, context):
         layout = self.layout
         props = utils_library.get_scene_props()
+        folders = utils_library.get_active_categories(props.library_tabs)
+        active_folder_name = utils_library.get_active_category(props,folders)
+        
         if props.library_tabs == 'OBJECT':
-            layout.operator('library.save_object_to_asset_library',text="Save Object to Library",icon='BACK')
+            if active_folder_name:
+                layout.operator('library.save_object_to_asset_library',text="Save Object to Library",icon='BACK')
             layout.operator('bp_general.create_new_folder',text="Create New Category",icon='NEWFOLDER').path = utils_library.get_object_library_path()
             layout.operator('library.change_object_library_path',text="Change Library Path",icon='FILE_FOLDER')
         if props.library_tabs == 'COLLECTION':
-            layout.operator('library.save_collection_to_asset_library',text="Save Collection to Library",icon='BACK')
+            if active_folder_name:
+                layout.operator('library.save_collection_to_asset_library',text="Save Collection to Library",icon='BACK')
             layout.operator('bp_general.create_new_folder',text="Create New Category",icon='NEWFOLDER').path = utils_library.get_collection_library_path()
             layout.operator('library.change_collection_library_path',text="Change Library Path",icon='FILE_FOLDER')
         if props.library_tabs == 'MATERIAL':
-            layout.operator('library.save_material_to_asset_library',text="Save Material to Library",icon='BACK')
+            if active_folder_name:
+                layout.operator('library.save_material_to_asset_library',text="Save Material to Library",icon='BACK')
             layout.operator('bp_general.create_new_folder',text="Create New Category",icon='NEWFOLDER').path = utils_library.get_material_library_path()
             layout.operator('library.change_material_library_path',text="Change Library Path",icon='FILE_FOLDER')
         if props.library_tabs == 'WORLD':
-            layout.operator('library.save_world_to_asset_library',text="Save World to Library",icon='BACK')
+            if active_folder_name:
+                layout.operator('library.save_world_to_asset_library',text="Save World to Library",icon='BACK')
             layout.operator('bp_general.create_new_folder',text="Create New Category",icon='NEWFOLDER').path = utils_library.get_world_library_path()
             layout.operator('library.change_world_library_path',text="Change Library Path",icon='FILE_FOLDER')
 

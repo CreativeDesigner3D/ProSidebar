@@ -62,7 +62,8 @@ def update_library_tab(self,context):
         os.makedirs(root_path)
     folders = utils_library.get_active_categories(self.library_tabs)
     active_folder_name = utils_library.get_active_category(self,folders)
-    utils_library.update_file_browser_path(context,os.path.join(root_path,active_folder_name))
+    if root_path and active_folder_name and os.path.exists(os.path.join(root_path,active_folder_name)):
+        utils_library.update_file_browser_path(context,os.path.join(root_path,active_folder_name))
 
 class Variable():
 

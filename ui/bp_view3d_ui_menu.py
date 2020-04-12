@@ -15,6 +15,11 @@ def draw_mesh_context(self, context):
     layout = self.layout
     layout.menu("VIEW3D_MT_vertex_groups",icon='GROUP_VERTEX')
 
+def draw_file_browser_menu(self, context):
+    layout = self.layout
+    layout.operator_context = 'INVOKE_AREA'
+    layout.operator('library.create_thumbnails_for_library',text="Update Asset Previews",icon='ASSET_MANAGER')
+    layout.separator()
 
 class VIEW3D_MT_vertex_groups(bpy.types.Menu):
     bl_label = "Assembly Vertex Groups"
@@ -35,11 +40,13 @@ class VIEW3D_MT_vertex_groups(bpy.types.Menu):
 
 def register():
     bpy.utils.register_class(VIEW3D_MT_vertex_groups)
+    bpy.types.FILEBROWSER_MT_context_menu.prepend(draw_file_browser_menu)
     bpy.types.VIEW3D_MT_object_context_menu.prepend(draw_assembly_properties)
     bpy.types.VIEW3D_MT_edit_mesh.prepend(draw_mesh_context)
     # bpy.types.VIEW3D_MT_edit_curve_context_menu.prepend()
 
 def unregister():
+    bpy.types.FILEBROWSER_MT_context_menu.remove(draw_file_browser_menu)
     bpy.types.VIEW3D_MT_object_context_menu.remove(draw_assembly_properties)
     bpy.types.VIEW3D_MT_edit_mesh.remove(draw_mesh_context)
     # bpy.types.VIEW3D_MT_edit_curve_context_menu.remove

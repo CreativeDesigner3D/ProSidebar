@@ -1258,6 +1258,31 @@ class VIEW3D_PT_camera_background_image(Panel):
                             col.prop(bg, "use_flip_x")
                             col.prop(bg, "use_flip_y")
 
+
+class VIEW3D_PT_object_prompts(Panel):
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+    bl_category = "Object"
+    bl_label = "Prompts"
+    bl_options = {'DEFAULT_CLOSED'}
+    
+    @classmethod
+    def poll(cls, context):
+        if context.object:
+            return True
+        else:
+            return False
+
+    def draw_header(self, context):
+        layout = self.layout
+        layout.label(text="",icon='LINENUMBERS_ON')
+
+    def draw(self, context):
+        layout = self.layout
+        obj = context.object
+        obj.prompt_page.draw_prompts(layout)
+
+
 class VIEW3D_PT_object_drivers(Panel):
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
@@ -1497,6 +1522,7 @@ classes = (
     VIEW3D_PT_object_constraints,
     VIEW3D_MT_bp_add,
     VIEW3D_PT_camera_background_image,
+    VIEW3D_PT_object_prompts,
     VIEW3D_PT_object_drivers
 )
 

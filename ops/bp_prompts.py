@@ -72,7 +72,7 @@ class bp_prompts_OT_add_prompt(Operator):
 
     def get_data(self,context):
         if self.obj_name in bpy.data.objects:
-            return bpy.data.objects[self.data_name]
+            return bpy.data.objects[self.obj_name]
         else:
             return context.object
 
@@ -102,6 +102,183 @@ class bp_prompts_OT_add_prompt(Operator):
         row = layout.row()
         row.label(text="Prompt Type")
         row.prop(self,"prompt_type",text="")
+
+
+class bp_prompts_OT_add_calculator(Operator):
+    bl_idname = "bp_prompts.add_calculator"
+    bl_label = "Add Calculator"
+    bl_options = {'UNDO'}
+    
+    obj_name: StringProperty(name="Data Name",default="")
+
+    calculator_name: StringProperty(name="Calculator Name",default="New Prompt")
+    # prompt_type: EnumProperty(name="Prompt Type",items=prompt_types)
+    # the_obj = PointerProperty(name="Object",type=bpy.types.Object) #WHY CANNOT I USE POINTER PROPERTY
+    obj = None
+
+    @classmethod
+    def poll(cls, context):
+        return True
+
+    def get_data(self,context):
+        if self.obj_name in bpy.data.objects:
+            return bpy.data.objects[self.obj_name]
+        else:
+            return context.object
+
+    def execute(self, context):
+        if self.obj_name in bpy.data.objects:
+            self.obj = bpy.data.objects[self.obj_name]        
+            self.obj.prompt_page.add_calculator(self.calculator_name)
+        context.area.tag_redraw()
+        return {'FINISHED'}
+
+    def invoke(self,context,event):
+        self.obj = context.object
+        self.calculator_name = "New Calculator"
+        counter = 1
+        while self.calculator_name + " " + str(counter) in self.obj.prompt_page.calculators:
+            counter += 1
+        self.calculator_name = self.calculator_name + " " + str(counter)
+            
+        wm = context.window_manager
+        return wm.invoke_props_dialog(self, width=250)
+
+    def draw(self, context):
+        layout = self.layout
+        row = layout.row()
+        row.label(text="Calculator Name")
+        row.prop(self,"calculator_name",text="")
+
+
+class bp_prompts_OT_add_calculator_prompt(Operator):
+    bl_idname = "bp_prompts.add_calculator_prompt"
+    bl_label = "Add Calculator"
+    bl_options = {'UNDO'}
+    
+    calculator_name: StringProperty(name="Calculator Name",default="")
+    obj_name: StringProperty(name="Data Name",default="")
+
+    prompt_name: StringProperty(name="Prompt Name",default="New Prompt")
+    obj = None
+
+    @classmethod
+    def poll(cls, context):
+        return True
+
+    def get_data(self,context):
+        if self.obj_name in bpy.data.objects:
+            return bpy.data.objects[self.obj_name]
+        else:
+            return context.object
+
+    def get_calculator(self):
+        for calculator in self.obj.prompt_page.calculators:
+            if calculator.name == self.calculator_name:
+                return calculator
+
+    def execute(self, context):
+        calculator = self.get_calculator()      
+        calculator.add_calculator_prompt(self.prompt_name)
+        context.area.tag_redraw()
+        return {'FINISHED'}
+
+    def invoke(self,context,event):
+        self.obj = context.object
+        self.prompt_name = "New Prompt"
+        counter = 1
+        calculator = self.get_calculator()
+        while self.prompt_name + " " + str(counter) in calculator.prompts:
+            counter += 1
+        self.prompt_name = self.prompt_name + " " + str(counter)
+            
+        wm = context.window_manager
+        return wm.invoke_props_dialog(self, width=250)
+
+    def draw(self, context):
+        layout = self.layout
+        row = layout.row()
+        row.label(text="Prompt Name")
+        row.prop(self,"prompt_name",text="")
+
+
+class bp_prompts_OT_edit_calculator(Operator):
+    bl_idname = "bp_prompts.edit_calculator"
+    bl_label = "Edit Calculator"
+    bl_options = {'UNDO'}
+    
+    calculator_name: StringProperty(name="Calculator Name",default="")
+    obj_name: StringProperty(name="Data Name",default="")
+
+    prompt_name: StringProperty(name="Prompt Name",default="New Prompt")
+    obj = None
+    calculator = None
+
+    @classmethod
+    def poll(cls, context):
+        return True
+
+    def get_data(self,context):
+        if self.obj_name in bpy.data.objects:
+            return bpy.data.objects[self.obj_name]
+        else:
+            return context.object
+
+    def get_calculator(self):
+        for calculator in self.obj.prompt_page.calculators:
+            if calculator.name == self.calculator_name:
+                return calculator
+
+    def execute(self, context):
+        context.area.tag_redraw()
+        return {'FINISHED'}
+
+    def invoke(self,context,event):
+        self.obj = self.get_data(context)
+        self.calculator = self.get_calculator()
+        wm = context.window_manager
+        return wm.invoke_props_dialog(self, width=250)
+
+    def draw(self, context):
+        layout = self.layout
+        row = layout.row()
+        row.label(text="Calculator Name")
+        row.prop(self.calculator,"name",text="")
+
+
+class bp_prompts_OT_run_calculator(Operator):
+    bl_idname = "bp_prompts.run_calculator"
+    bl_label = "Run Calculator"
+    bl_options = {'UNDO'}
+    
+    calculator_name: StringProperty(name="Calculator Name",default="")
+    obj_name: StringProperty(name="Data Name",default="")
+
+    prompt_name: StringProperty(name="Prompt Name",default="New Prompt")
+    obj = None
+    calculator = None
+
+    @classmethod
+    def poll(cls, context):
+        return True
+
+    def get_data(self,context):
+        if self.obj_name in bpy.data.objects:
+            return bpy.data.objects[self.obj_name]
+        else:
+            return context.object
+
+    def get_calculator(self):
+        for calculator in self.obj.prompt_page.calculators:
+            if calculator.name == self.calculator_name:
+                return calculator
+
+    def execute(self, context):
+        self.obj = self.get_data(context)
+        self.calculator = self.get_calculator()
+        self.calculator.calculate()
+        context.area.tag_redraw()
+        return {'FINISHED'}
 
 
 class bp_prompts_OT_delete_tab(Operator):
@@ -226,10 +403,13 @@ class bp_prompts_OT_delete_comboxbox_value(Operator):
         layout = self.layout
         layout.label(text="Are you sure you want to delete the combobox value")
 
-
 classes = (
     bp_prompts_OT_add_tab,
     bp_prompts_OT_add_prompt,
+    bp_prompts_OT_add_calculator,
+    bp_prompts_OT_add_calculator_prompt,
+    bp_prompts_OT_edit_calculator,
+    bp_prompts_OT_run_calculator,
     bp_prompts_OT_delete_tab,
     bp_prompts_OT_edit_prompt,
     bp_prompts_OT_add_comboxbox_value,

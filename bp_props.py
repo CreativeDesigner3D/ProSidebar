@@ -220,18 +220,48 @@ class Calculator_Prompt(PropertyGroup):
     equal: BoolProperty(name="Equal",default=True)
 
     def draw(self,layout):
-        pass
+        row = layout.row()
+        row.active = False if self.equal else True
+        row.prop(self,'distance_value',text=self.name)
+        row.prop(self,'equal',text="")
+
+    def get_var(self,calculator_name,name):
+        prompt_path = 'prompt_page.calculators["' + calculator_name + '"].prompts["' + self.name + '"]'
+        return Variable(self.id_data, prompt_path + '.distance_value',name)    
 
 
 class Calculator(PropertyGroup):
     prompts: CollectionProperty(name="Prompts",type=Calculator_Prompt)
-    total_distance: FloatProperty(name="Distance Value",subtype='DISTANCE')
+    total_distance: FloatProperty(name="Total Distance",subtype='DISTANCE')
 
     def set_total_distance(self,expression="",variables=[],value=0):
-        pass
+        data_path = 'prompt_page.calculators["' + self.name + '"].total_distance'
+        driver = self.id_data.driver_add(data_path)
+        add_driver_variables(driver,variables)
+        driver.driver.expression = expression
 
-    def draw_calculator(self,layout):
-        pass
+    def draw(self,layout):
+        col = layout.column(align=True)
+        box = col.box()
+        row = box.row()
+        row.label(text=self.name)
+        props = row.operator('bp_prompts.add_calculator_prompt',text="",icon='ADD')
+        props.calculator_name = self.name
+        props.obj_name = self.id_data.name
+        props = row.operator('bp_prompts.edit_calculator',text="",icon='OUTLINER_DATA_GP_LAYER')
+        props.calculator_name = self.name
+        props.obj_name = self.id_data.name
+        
+        box.prop(self,'total_distance')
+        box = col.box()
+        for prompt in self.prompts:
+            prompt.draw(box)
+        box = col.box()
+        row = box.row()
+        row.scale_y = 1.3
+        props = row.operator('bp_prompts.run_calculator')
+        props.calculator_name = self.name
+        props.obj_name = self.id_data.name        
 
     def add_calculator_prompt(self,name):
         prompt = self.prompts.add()
@@ -270,7 +300,7 @@ class Prompt_Page(PropertyGroup):
     def register(cls):
         bpy.types.Object.prompt_page = PointerProperty(
             name="Prompt Page",
-            description="Blender Pro Prompts",
+            description="Prompt Page",
             type=cls,
         )
 
@@ -295,15 +325,24 @@ class Prompt_Page(PropertyGroup):
     def draw_prompts(self,layout):
         props = layout.operator('bp_prompts.add_prompt')
         props.obj_name = self.id_data.name
+        props = layout.operator('bp_prompts.add_calculator')
+        props.obj_name = self.id_data.name        
         for prompt in self.prompts:
             prompt.draw(layout)
-    
+        for cal in self.calculators:
+            cal.draw(layout)
+
     def add_prompt(self,prompt_type,prompt_name):
         prompt = self.prompts.add()
         prompt.prompt_type = prompt_type
         prompt.name = prompt_name
         prompt.tab_index = self.tab_index
         return prompt
+
+    def add_calculator(self,calculator_name):
+        calculator = self.calculators.add()
+        calculator.name = calculator_name
+        return calculator
 
 
 class Script_Library_Item(bpy.types.PropertyGroup):

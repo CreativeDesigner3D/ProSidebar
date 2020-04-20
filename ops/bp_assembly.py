@@ -32,7 +32,7 @@ class ASSEMBLY_OT_create_new_assembly(Operator):
 
     def execute(self, context):
         assembly = bp_types.Assembly()
-        assembly.create_assembly()
+        assembly.create_assembly(self.assembly_name)
         assembly.obj_x.location.x = 1
         assembly.obj_y.location.y = 1
         assembly.obj_z.location.z = 1
@@ -102,7 +102,8 @@ class ASSEMBLY_OT_add_object(Operator):
         return True
 
     def execute(self, context):
-        assembly = bp_types.Assembly(context.view_layer.active_layer_collection.collection)
+        obj_bp = bp_utils.get_assembly_bp(context.object)
+        assembly = bp_types.Assembly(obj_bp)
         if self.object_type == 'EMPTY':
             assembly.add_empty("New Empty")
 

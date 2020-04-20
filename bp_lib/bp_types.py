@@ -25,7 +25,7 @@ class Assembly:
 
     def __init__(self,obj_bp=None):
         if obj_bp:
-            self.coll = bpy.context.view_layer.active_layer_collection
+            self.coll = bpy.context.view_layer.active_layer_collection.collection
             self.obj_bp = obj_bp
             for child in obj_bp.children:
                 if "obj_x" in child:
@@ -76,12 +76,13 @@ class Assembly:
         # self.coll = coll
         # coll["IS_ASSEMBLY"] = True
 
-        self.obj_bp = bpy.data.objects.new("OBJ_BP",None)
+        self.obj_bp = bpy.data.objects.new(assembly_name,None)
         self.obj_bp.location = (0,0,0)
         self.obj_bp["obj_bp"] = True
         self.obj_bp.empty_display_type = 'ARROWS'
-        self.obj_bp.empty_display_size = .1           
+        self.obj_bp.empty_display_size = .1
         self.coll.objects.link(self.obj_bp)
+        self.obj_bp['IS_ASSEMBLY_BP'] = True
 
         self.obj_x = bpy.data.objects.new("OBJ_X",None)
         self.obj_x.location = (0,0,0)

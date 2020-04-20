@@ -496,6 +496,13 @@ class BP_Scene_Props(PropertyGroup):
                                          default='SCRIPT',
                                          update=update_library_tab)
 
+    assembly_tabs: EnumProperty(name="Assembly Tabs",
+                                items=[('MAIN',"Main","Show the Main Properties"),
+                                       ('PROMPTS',"Prompts","Show the Prompts"),
+                                       ('OBJECTS',"Objects","Show the Objects"),
+                                       ('LOGIC',"Logic","Show the Assembly Logic")],
+                                default='MAIN')
+
     active_script_library: StringProperty(name="Active Script Library",default="")
     active_script_category: StringProperty(name="Active Script Category",default="")
     active_object_library: StringProperty(name="Active Object Library",default="")

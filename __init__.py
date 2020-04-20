@@ -20,6 +20,7 @@ from .ui import bp_view3d_ui_sidebar_materials
 from .ui import bp_view3d_ui_sidebar_world
 from .ui import bp_view3d_ui_sidebar_collections
 from .ui import bp_view3d_ui_sidebar_view
+from .ui import bp_view3d_ui_sidebar_assemblies
 from .ops import bp_assembly
 from .ops import bp_draw_objects
 from .ops import bp_driver
@@ -50,6 +51,7 @@ def register():
     bp_view3d_ui_sidebar_world.register()
     bp_view3d_ui_sidebar_collections.register()
     bp_view3d_ui_sidebar_view.register()
+    bp_view3d_ui_sidebar_assemblies.register()
     bp_assembly.register()
     bp_draw_objects.register()
     bp_driver.register()
@@ -80,6 +82,7 @@ def unregister():
     bp_view3d_ui_sidebar_world.unregister()
     bp_view3d_ui_sidebar_collections.unregister()
     bp_view3d_ui_sidebar_view.unregister()
+    bp_view3d_ui_sidebar_assemblies.unregister()
     bp_draw_objects.unregister()
     bp_assembly.unregister()
     bp_driver.unregister()

@@ -64,6 +64,7 @@ def hook_vertex_group_to_object(obj_mesh,vertex_group,obj_hook):
         in the vertex_group to the obj_hook
     """
     bpy.ops.object.select_all(action = 'DESELECT')
+    obj_hook.hide_viewport = False
     obj_hook.hide_set(False)
     obj_hook.hide_select = False
     obj_hook.select_set(True)
@@ -80,6 +81,7 @@ def hook_vertex_group_to_object(obj_mesh,vertex_group,obj_hook):
             bpy.ops.object.hook_add_selob()
         bpy.ops.mesh.select_all(action = 'DESELECT')
         bpy.ops.bp_object.toggle_edit_mode(obj_name=obj_mesh.name)
+    obj_hook.hide_viewport = True
 
 def apply_hook_modifiers(context,obj):
     """ This function applies all of the hook modifers on an object

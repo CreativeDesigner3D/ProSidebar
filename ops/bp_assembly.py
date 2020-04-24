@@ -18,7 +18,7 @@ from bpy.props import (
 import os
 from ..bp_lib import bp_types, bp_utils
 
-class ASSEMBLY_OT_create_new_assembly(Operator):
+class bp_assembly_OT_create_new_assembly(Operator):
     bl_idname = "bp_assembly.create_new_assembly"
     bl_label = "Create New Assembly"
     bl_description = "This will create a new assembly"
@@ -50,7 +50,7 @@ class ASSEMBLY_OT_create_new_assembly(Operator):
         layout.prop(self,'assembly_name')
 
 
-class ASSEMBLY_OT_delete_assembly(Operator):
+class bp_assembly_OT_delete_assembly(Operator):
     bl_idname = "bp_assembly.delete_assembly"
     bl_label = "Delete Assembly"
     bl_description = "This will delete the assembly"
@@ -82,7 +82,7 @@ class ASSEMBLY_OT_delete_assembly(Operator):
         layout.label(text=self.assembly_name)
 
 
-class ASSEMBLY_OT_add_object(Operator):
+class bp_assembly_OT_add_object(Operator):
     bl_idname = "bp_assembly.add_object"
     bl_label = "Add Object to Assembly"
     bl_description = "This will add a new object to the assembly"
@@ -139,7 +139,7 @@ class ASSEMBLY_OT_add_object(Operator):
         layout.prop(self,'object_type',expand=True)
         layout.prop(self,'object_name')
 
-class ASSEMBLY_OT_connect_mesh_to_hooks_in_assembly(Operator):
+class bp_assembly_OT_connect_mesh_to_hooks_in_assembly(Operator):
     bl_idname = "bp_assembly.connect_meshes_to_hooks_in_assembly"
     bl_label = "Connect Mesh to Hooks In Assembly"
     bl_options = {'UNDO'}
@@ -173,7 +173,7 @@ class ASSEMBLY_OT_connect_mesh_to_hooks_in_assembly(Operator):
                 
         return {'FINISHED'}
 
-class ASSEMBLY_OT_create_assembly_script(Operator):
+class bp_assembly_OT_create_assembly_script(Operator):
     bl_idname = "bp_assembly.create_assembly_script"
     bl_label = "Create Assembly Script"
     bl_options = {'UNDO'}
@@ -215,12 +215,39 @@ class ASSEMBLY_OT_create_assembly_script(Operator):
             pass
         return {'FINISHED'}
 
+
+class bp_assembly_OT_select_parent_assembly(bpy.types.Operator):
+    bl_idname = "bp_object.select_parent"
+    bl_label = "Select Parent Assembly"
+    bl_description = "UPDATES DEPENDENCICE"
+    bl_options = {'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        obj_bp = bp_utils.get_assembly_bp(context.object)
+        if obj_bp and obj_bp.parent:    
+            return True
+        else:
+            return False
+
+    def execute(self, context):
+        obj_bp = bp_utils.get_assembly_bp(context.object)
+        assembly = bp_types.Assembly(obj_bp)
+
+        if assembly:
+            if assembly.obj_bp.parent:
+                assembly.obj_bp.parent.select_set(True)
+                context.view_layer.objects.active = assembly.obj_bp.parent
+
+        return {'FINISHED'}
+
 classes = (
-    ASSEMBLY_OT_create_new_assembly,
-    ASSEMBLY_OT_delete_assembly,
-    ASSEMBLY_OT_add_object,
-    ASSEMBLY_OT_connect_mesh_to_hooks_in_assembly,
-    ASSEMBLY_OT_create_assembly_script
+    bp_assembly_OT_create_new_assembly,
+    bp_assembly_OT_delete_assembly,
+    bp_assembly_OT_add_object,
+    bp_assembly_OT_connect_mesh_to_hooks_in_assembly,
+    bp_assembly_OT_create_assembly_script,
+    bp_assembly_OT_select_parent_assembly
 )
 
 register, unregister = bpy.utils.register_classes_factory(classes)

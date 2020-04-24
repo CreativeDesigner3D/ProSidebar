@@ -13,6 +13,8 @@ def get_object_icon(obj):
     obj (bpy.types.Object) - Object to get the icon for
 
     '''
+    if 'IS_ASSEMBLY_BP' in obj:
+        return 'FILE_3D'
     if obj.type == 'MESH':
         return 'OUTLINER_OB_MESH'
     if obj.type == 'CURVE':

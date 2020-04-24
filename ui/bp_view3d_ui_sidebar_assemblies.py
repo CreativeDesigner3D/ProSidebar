@@ -8,7 +8,10 @@ def draw_assembly_properties(context, layout, assembly):
 
     col = layout.column(align=True)
     box = col.box()
-    box.label(text="Assembly Name: " + assembly.obj_bp.name)
+    row = box.row()
+    row.label(text="Assembly Name: " + assembly.obj_bp.name)
+    row.operator('bp_object.select_parent',text="",icon='SORT_DESC')
+
     row = box.row(align=True)
     row.prop(scene_props,'assembly_tabs',expand=True)
     box = col.box()

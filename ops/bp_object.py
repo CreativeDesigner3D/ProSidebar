@@ -498,6 +498,38 @@ class bp_object_OT_assign_verties_to_vertex_group(Operator):
 
         return{'FINISHED'}
 
+
+class bp_object_OT_apply_hook_modifiers(bpy.types.Operator):
+    bl_idname = "bp_object.apply_hook_modifiers"
+    bl_label = "Apply Hook Modifiers"
+    bl_description = "UPDATES DEPENDENCICE"
+    bl_options = {'UNDO'}
+
+    obj_name: StringProperty(name="Object Name")
+
+    def execute(self, context):
+        obj = bpy.data.objects[self.obj_name]
+        override = {'active_object':obj,'object':obj}
+        for mod in obj.modifiers:
+            if mod.type == 'HOOK':
+                bpy.ops.object.modifier_apply(override,'INVOKE_DEFAULT',apply_as='DATA',modifier=mod.name)    
+        return {'FINISHED'}
+
+
+class bp_object_OT_update_dependencies(bpy.types.Operator):
+    bl_idname = "bp_object.update_dependencies"
+    bl_label = "Update Dependencies"
+    bl_description = "UPDATES DEPENDENCICE"
+    bl_options = {'UNDO'}
+
+    def execute(self, context):
+        obj = context.object
+        obj.tag = True
+        obj.update_tag(refresh={'OBJECT', 'DATA', 'TIME'})
+        context.view_layer.update()        
+        context.view_layer.depsgraph.update()
+        return {'FINISHED'}
+
 classes = (
     bp_object_OT_select_object,
     bp_object_OT_collapse_all_modifiers,
@@ -512,7 +544,9 @@ classes = (
     bp_object_OT_place_area_lamp,
     bp_object_OT_set_base_point,
     bp_object_OT_clear_vertex_groups,
-    bp_object_OT_assign_verties_to_vertex_group
+    bp_object_OT_assign_verties_to_vertex_group,
+    bp_object_OT_apply_hook_modifiers,
+    bp_object_OT_update_dependencies
 )
 
 register, unregister = bpy.utils.register_classes_factory(classes)

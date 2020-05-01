@@ -16,7 +16,6 @@ from bpy.props import (StringProperty,
                        CollectionProperty)
 
 from ..bp_lib import bp_unit, bp_utils, bp_types
-from .. import bp_utils as utils
 
 class BP_prompt_collection(PropertyGroup):
     add: BoolProperty(name="Add")
@@ -67,7 +66,7 @@ class DRIVER_OT_get_vars_from_object(Operator):
                 prompt_copy.prompt_type = prompt.prompt_type
 
     def execute(self, context):
-        drivers = utils.get_drivers(self.obj)
+        drivers = bp_utils.get_drivers(self.obj)
         for DR in drivers:
             if self.data_path in DR.data_path and DR.array_index == self.array_index:
                 # DR.driver.show_debug_info = False
@@ -175,6 +174,13 @@ class DRIVER_OT_get_vars_from_object(Operator):
                 for target in var.targets:
                     target.transform_space = 'LOCAL_SPACE'
                     
+        #HOW DO I UPDATE THIS DATA!?!?
+        if self.assembly:
+            self.assembly.obj_prompts.tag = True
+            self.assembly.obj_prompts.update_tag(refresh={'OBJECT', 'DATA', 'TIME'})
+        self.obj.tag = True
+        self.obj.update_tag(refresh={'OBJECT', 'DATA', 'TIME'})
+        context.view_layer.update()
         return {'FINISHED'}
 
     def reset_variables(self):
@@ -191,9 +197,9 @@ class DRIVER_OT_get_vars_from_object(Operator):
     def invoke(self,context,event):
         self.reset_variables()
         self.obj = bpy.data.objects[self.object_name]
-        coll = bp_utils.get_assembly_collection(self.obj)
-        if coll:
-            self.assembly = bp_types.Assembly(coll)
+        obj_bp = bp_utils.get_assembly_bp(self.obj)
+        if obj_bp:
+            self.assembly = bp_types.Assembly(obj_bp)
         self.get_prompts()
         wm = context.window_manager
         return wm.invoke_props_dialog(self, width=400)
@@ -202,7 +208,7 @@ class DRIVER_OT_get_vars_from_object(Operator):
         layout = self.layout
         box = layout.box()
         if self.assembly:
-            box.label(text='Main Properties - ' + self.assembly.coll.name)
+            box.label(text='Main Properties - ' + self.assembly.obj_bp.name)
         else:
             box.label(text='Main Properties - ' + self.obj.name)
         row = box.row()
@@ -238,7 +244,7 @@ class DRIVER_OT_remove_variable(Operator):
 
     def execute(self, context):
         obj = bpy.data.objects[self.object_name]
-        drivers = utils.get_drivers(obj)
+        drivers = bp_utils.get_drivers(obj)
         for driver in drivers:
             if driver.data_path == self.data_path:
                 if driver.array_index == self.array_index:

@@ -62,6 +62,8 @@ class VIEW3D_PT_objects(Panel):
         obj = context.object
         layout = self.layout
         
+        layout.operator('bp_object.update_dependencies')
+
         row = layout.row(align=True)
         row.scale_y = 1.3
         row.operator("library.add_object_from_library",text="Object Library",icon='DISK_DRIVE')

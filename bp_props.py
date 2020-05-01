@@ -427,6 +427,60 @@ class BP_Object_Driver_Props(PropertyGroup):
         del bpy.types.Object.drivers
 
 
+class Library_Item(bpy.types.PropertyGroup):
+    package_name: bpy.props.StringProperty(name="Package Name")
+    module_name: bpy.props.StringProperty(name="Module Name")
+    class_name: bpy.props.StringProperty(name="Class Name")
+    placement_id: bpy.props.StringProperty(name="Placement ID")
+    prompts_id: bpy.props.StringProperty(name="Prompts ID")
+    render_id: bpy.props.StringProperty(name="Render ID")
+    category_name: bpy.props.StringProperty(name="Category Name")
+    # tags: bpy.props.CollectionProperty(name="Tags", type=Tag) #TODO: Implement Tags
+
+
+class Library(bpy.types.PropertyGroup):
+    library_items: bpy.props.CollectionProperty(name="Library Items", type=Library_Item)
+    library_path: bpy.props.StringProperty(name="Library Path")
+    panel_id: bpy.props.StringProperty(name="Panel ID")
+
+    def load_library_items_from_module(self,module):
+        package_name, module_name = module.__name__.split(".")
+        for name, obj in inspect.getmembers(module):
+            if hasattr(obj,'show_in_library') and name != 'ops' and obj.show_in_library:
+                item = self.library_items.add()
+                item.package_name = package_name
+                item.category_name = obj.category_name
+                item.module_name = module_name
+                item.class_name = name
+                item.name = name
+
+
+class PyClone_Window_Manager_Props(bpy.types.PropertyGroup):
+    libraries: CollectionProperty(name="Libraries",type=Library)
+
+    def add_library(self,name,library_path,panel_id):
+        lib = self.libraries.add()
+        lib.name = name
+        lib.library_path = library_path
+        lib.panel_id = panel_id
+
+    def remove_library(self,name):
+        for i, lib in enumerate(self.libraries):
+            if lib.name == name:
+                self.libraries.remove(i)
+
+    @classmethod
+    def register(cls):
+        bpy.types.WindowManager.pyclone = bpy.props.PointerProperty(
+            name="PyClone",
+            description="PyClone Properties",
+            type=cls,
+        )
+        
+    @classmethod
+    def unregister(cls):
+        del bpy.types.WindowManager.pyclone    
+
 class BP_Window_Manager_Library_Props(bpy.types.PropertyGroup):
 
     file_browser_search_text: bpy.props.StringProperty(name="File Browser Search Text")
@@ -555,6 +609,8 @@ classes = (
     Prompt_Page,
     Script_Library_Item,
     Script_Library,    
+    Library_Item,
+    Library,
     Pointer_Slot,
     BP_Object_Material_Pointer_Props,
     BP_Object_Driver_Props,

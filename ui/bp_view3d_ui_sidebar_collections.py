@@ -13,7 +13,7 @@ from bpy.props import (
         StringProperty,
         CollectionProperty,
         )
-from ..bp_lib import bp_utils
+from .. import sidebar_utils
 
 class VIEW3D_PT_collection_info(Panel):
     bl_space_type = 'VIEW_3D'
@@ -52,11 +52,6 @@ class VIEW3D_PT_collection_info(Panel):
         layout = self.layout
         view_layer = context.view_layer
         master_collection = context.view_layer.layer_collection.collection
-
-        row = layout.row(align=True)
-        row.scale_y = 1.3
-        row.operator("library.add_collection_from_library",text="Collection Library",icon='DISK_DRIVE')
-        row.menu('LIBRARY_MT_collection_library',text="",icon="DISCLOSURE_TRI_DOWN")
 
         layout.menu('VIEW3D_MT_bp_create_collection',text="Create Collection",icon="DISCLOSURE_TRI_DOWN")
 
@@ -156,7 +151,7 @@ class COLLECTION_UL_objects(UIList):
         if item == context.view_layer.objects.active:
             sel_icon = 'RADIOBUT_ON'
         layout.label(text="",icon=sel_icon)
-        layout.label(text=item.name,icon=bp_utils.get_object_icon(item))
+        layout.label(text=item.name,icon=sidebar_utils.get_object_icon(item))
         
         layout.prop(item,'hide_viewport',emboss=False,icon_only=True)
         layout.prop(item,'hide_select',emboss=False,icon_only=True)

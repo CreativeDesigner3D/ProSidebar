@@ -10,7 +10,7 @@ from bpy.props import (StringProperty,
                        EnumProperty,
                        CollectionProperty)
 import os
-from ..bp_lib import bp_unit, bp_utils
+from .. import sidebar_utils
 
 class bp_object_OT_select_object(bpy.types.Operator):
     bl_idname = "bp_object.select_object"
@@ -167,7 +167,7 @@ class bp_object_OT_add_camera(bpy.types.Operator):
         bpy.ops.object.camera_add(align='VIEW')
         camera = context.active_object
         bpy.ops.view3d.camera_to_view()
-        camera.data.clip_start = bp_unit.inch(1)
+        camera.data.clip_start = .01
         camera.data.clip_end = 9999
         camera.data.ortho_scale = 200.0
         return {'FINISHED'}
@@ -286,14 +286,14 @@ class bp_object_OT_place_area_lamp(bpy.types.Operator):
         return True
 
     def cancel_drop(self,context):
-        bp_utils.delete_object_and_children(self.lamp)
+        sidebar_utils.delete_object_and_children(self.lamp)
         self.finish(context)
         
     def finish(self,context):
         context.space_data.draw_handler_remove(self._draw_handle, 'WINDOW')
         context.window.cursor_set('DEFAULT')
         if self.drawing_plane:
-            bp_utils.delete_obj_list([self.drawing_plane])
+            sidebar_utils.delete_obj_list([self.drawing_plane])
         context.area.tag_redraw()
         return {'FINISHED'}
 
@@ -342,8 +342,8 @@ class bp_object_OT_place_area_lamp(bpy.types.Operator):
             self.lamp.location = selected_point
             self.selected_point = selected_point
         else:
-            self.lamp.data.size = bp_utils.calc_distance((self.selected_point[0],0,0),(selected_point[0],0,0))
-            self.lamp.data.size_y = bp_utils.calc_distance((0,self.selected_point[1],0),(0,selected_point[1],0))
+            self.lamp.data.size = sidebar_utils.calc_distance((self.selected_point[0],0,0),(selected_point[0],0,0))
+            self.lamp.data.size_y = sidebar_utils.calc_distance((0,self.selected_point[1],0),(0,selected_point[1],0))
             self.lamp.location.x = self.selected_point[0] + ((selected_point[0]/2) - (self.selected_point[0]/2))
             self.lamp.location.y = self.selected_point[1] + ((selected_point[1]/2) - (self.selected_point[1]/2))
             self.lamp.location.z = self.selected_point[2]
@@ -356,7 +356,7 @@ class bp_object_OT_place_area_lamp(bpy.types.Operator):
         self.mouse_x = event.mouse_x
         self.mouse_y = event.mouse_y
         
-        selected_point, selected_obj = bp_utils.get_selection_point(context,event)
+        selected_point, selected_obj = sidebar_utils.get_selection_point(context,event)
         
         self.position_lamp(selected_point)
         

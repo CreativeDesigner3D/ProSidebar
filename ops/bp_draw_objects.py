@@ -4,7 +4,7 @@ import math
 from bpy_extras import view3d_utils
 import mathutils
 from mathutils import Vector
-from ..bp_lib import bp_utils
+from .. import sidebar_utils
 from bpy_extras.view3d_utils import location_3d_to_region_2d
 
 def get_point_under_mouse(context,event):
@@ -52,7 +52,7 @@ class BP_OT_draw_plane(bpy.types.Operator):
     found_snap_point = False
     
     def cancel_drop(self,context):
-        bp_utils.delete_object_and_children(self.plane)
+        sidebar_utils.delete_object_and_children(self.plane)
         self.finish(context)
         
     def finish(self,context):
@@ -197,7 +197,7 @@ class BP_OT_draw_plane(bpy.types.Operator):
         self.mouse_y = event.mouse_y
         
         # Fix this to return Locations on Object if found
-        hit_info = bp_utils.floor_raycast(context,self.mouse_x,self.mouse_y)
+        hit_info = sidebar_utils.floor_raycast(context,self.mouse_x,self.mouse_y)
 
         #This works great for Grid in Perspective Mode not Orthographic!
         grid_location = get_point_under_mouse(context,event)

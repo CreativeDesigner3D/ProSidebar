@@ -10,7 +10,6 @@ from bpy.props import (StringProperty,
                        EnumProperty,
                        CollectionProperty)
 import os
-from ..bp_lib import bp_unit
 
 class bp_material_OT_delete_material(Operator):
     bl_idname = "bp_material.delete_material"

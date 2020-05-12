@@ -27,10 +27,6 @@ class VIEW3D_PT_material_library(Panel):
 
         row = layout.row(align=True)
         row.scale_y = 1.3
-        row.operator("library.add_material_from_library",text="Material Library",icon='DISK_DRIVE')
-        row.menu('LIBRARY_MT_material_library',text="",icon="DISCLOSURE_TRI_DOWN")
-        row = layout.row(align=True)
-        row.scale_y = 1.3
         row.menu('VIEW3D_MT_add_material',text="Add Material",icon="ADD")
         
 
@@ -60,7 +56,7 @@ class VIEW3D_PT_all_materials(Panel):
                 row.prop(mat,'name')
                 row.popover(panel="VIEW3D_PT_material_settings",text="",icon='SETTINGS')
 
-        layout.operator('library.assign_material',text="Assign Selected Material",icon='NONE')
+        # layout.operator('library.assign_material',text="Assign Selected Material",icon='NONE')
 
 class VIEW3D_PT_object_materials(Panel):
     bl_space_type = 'VIEW_3D'

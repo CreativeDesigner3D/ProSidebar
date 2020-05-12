@@ -1,9 +1,6 @@
 import bpy
+import math
 from bpy_extras import view3d_utils
-import mathutils
-from mathutils import Vector
-import math, random
-import bmesh
 
 def get_object_icon(obj):
     ''' 
@@ -44,56 +41,23 @@ def get_object_icon(obj):
     if obj.type == 'LIGHT_PROBE':
         return 'OUTLINER_OB_LIGHTPROBE'  
 
-def get_addon_preferences(context):
-    return bpy.context.preferences.addons["BlenderProSidebar"].preferences
-
-def get_assembly_collection(obj):
-    '''
-    Gets the assembly collection that is assigned to the object
-    '''
-    for coll in obj.users_collection:
-        if "IS_ASSEMBLY" in coll:
-            return coll
-
-def get_assembly_bp(obj):
-    if "IS_ASSEMBLY_BP" in obj:
-        return obj
-    elif obj.parent:
-        return get_assembly_bp(obj.parent)
-
-def hook_vertex_group_to_object(obj_mesh,vertex_group,obj_hook):
-    """ This function adds a hook modifier to the verties 
-        in the vertex_group to the obj_hook
+def meter_to_inch(meter):
+    """ Converts meter to inch
     """
-    bpy.ops.object.select_all(action = 'DESELECT')
-    obj_hook.hide_viewport = False
-    obj_hook.hide_set(False)
-    obj_hook.hide_select = False
-    obj_hook.select_set(True)
-    obj_mesh.hide_set(False)
-    obj_mesh.hide_select = False
-    if vertex_group in obj_mesh.vertex_groups:
-        vgroup = obj_mesh.vertex_groups[vertex_group]
-        obj_mesh.vertex_groups.active_index = vgroup.index
-        bpy.context.view_layer.objects.active = obj_mesh
-        bpy.ops.bp_object.toggle_edit_mode(obj_name=obj_mesh.name)
-        bpy.ops.mesh.select_all(action = 'DESELECT')
-        bpy.ops.object.vertex_group_select()
-        if obj_mesh.data.total_vert_sel > 0:
-            bpy.ops.object.hook_add_selob()
-        bpy.ops.mesh.select_all(action = 'DESELECT')
-        bpy.ops.bp_object.toggle_edit_mode(obj_name=obj_mesh.name)
-    obj_hook.hide_viewport = True
+    return round(meter * 39.3700787,6)
 
-def apply_hook_modifiers(context,obj):
-    """ This function applies all of the hook modifers on an object
+def meter_to_millimeter(meter):
+    """ Converts meter to millimeter
     """
-    obj.hide_set(False)
-    obj.select_set(True)
-    context.view_layer.objects.active = obj
-    for mod in obj.modifiers:
-        if mod.type == 'HOOK':
-            bpy.ops.object.modifier_apply(modifier=mod.name)
+    return meter * 1000
+
+def meter_to_active_unit(meter):
+    """ Converts meter to active unit
+    """
+    if bpy.context.scene.unit_settings.system == 'METRIC':
+        return meter_to_millimeter(meter)
+    else:
+        return meter_to_inch(meter)
 
 def delete_obj_list(obj_list):
     ''' 
@@ -135,57 +99,6 @@ def delete_object_and_children(obj_bp):
         else:
             obj_list.append(child)
     delete_obj_list(obj_list)
-
-def create_cube_mesh(name,size):
-    
-    verts = [(0.0, 0.0, 0.0),
-             (0.0, size[1], 0.0),
-             (size[0], size[1], 0.0),
-             (size[0], 0.0, 0.0),
-             (0.0, 0.0, size[2]),
-             (0.0, size[1], size[2]),
-             (size[0], size[1], size[2]),
-             (size[0], 0.0, size[2]),
-             ]
-
-    faces = [(0, 1, 2, 3),
-             (4, 7, 6, 5),
-             (0, 4, 5, 1),
-             (1, 5, 6, 2),
-             (2, 6, 7, 3),
-             (4, 0, 3, 7),
-            ]
-    
-    return create_object_from_verts_and_faces(verts,faces,name)
-
-def create_object_from_verts_and_faces(verts,faces,name):
-    """ 
-        Creates an object from Verties and Faces
-        arg1: Verts List of tuples [(float,float,float)]
-        arg2: Faces List of ints
-        arg3: name of object
-
-        RETURNS bpy.types.Object
-    """
-    mesh = bpy.data.meshes.new(name)
-    
-    bm = bmesh.new()
-
-    for v_co in verts:
-        bm.verts.new(v_co)
-    
-    for f_idx in faces:
-        bm.verts.ensure_lookup_table()
-        bm.faces.new([bm.verts[i] for i in f_idx])
-    
-    bm.to_mesh(mesh)
-    
-    mesh.update()
-    
-    obj_new = bpy.data.objects.new(mesh.name, mesh)
-    
-    # bpy.context.scene.objects.link(obj_new)
-    return obj_new
 
 def floor_raycast(context, mx, my):
     '''
@@ -267,12 +180,12 @@ def get_selection_point(context, event, ray_max=10000.0,objects=None,floor=None,
                     if obj.type == 'MESH' and obj.hide_select == False:
                         yield (obj, obj.matrix_world.copy())
     
-                    # if obj.instance_type != 'NONE':
-                    #     obj.dupli_list_create(scene)
-                    #     for dob in obj.dupli_list:
-                    #         obj_dupli = dob.object
-                    #         if obj_dupli.type == 'MESH':
-                    #             yield (obj_dupli, dob.matrix.copy())
+                    if obj.instance_type != 'NONE':
+                        obj.dupli_list_create(scene)
+                        for dob in obj.dupli_list:
+                            obj_dupli = dob.object
+                            if obj_dupli.type == 'MESH':
+                                yield (obj_dupli, dob.matrix.copy())
  
             # obj.dupli_list_clear()
  
@@ -316,16 +229,4 @@ def get_selection_point(context, event, ray_max=10000.0,objects=None,floor=None,
 def calc_distance(point1,point2):
     """ This gets the distance between two points (X,Y,Z)
     """
-    return math.sqrt((point1[0]-point2[0])**2 + (point1[1]-point2[1])**2 + (point1[2]-point2[2])**2)      
-
-def get_drivers(obj):
-    drivers = []
-    if obj.animation_data:
-        for driver in obj.animation_data.drivers:
-            drivers.append(driver)
-
-    if obj.data and obj.data.animation_data:
-        for driver in obj.data.animation_data.drivers:
-            drivers.append(driver)
-
-    return drivers    
+    return math.sqrt((point1[0]-point2[0])**2 + (point1[1]-point2[1])**2 + (point1[2]-point2[2])**2)     

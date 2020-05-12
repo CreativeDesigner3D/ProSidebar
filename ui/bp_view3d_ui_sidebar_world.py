@@ -18,11 +18,6 @@ class VIEW3D_PT_worlds(Panel):
         scene = context.scene
         world = scene.world
         view = context.space_data
-        
-        row = layout.row(align=True)
-        row.scale_y = 1.3
-        row.operator("library.add_world_from_library",text="World Library",icon='DISK_DRIVE')
-        row.menu('LIBRARY_MT_world_library',text="",icon="DISCLOSURE_TRI_DOWN")
 
         row = layout.row()
         row.scale_y = 1.3        

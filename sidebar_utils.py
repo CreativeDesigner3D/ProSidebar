@@ -1,5 +1,6 @@
 import bpy
 import math
+import mathutils
 from bpy_extras import view3d_utils
 
 def get_object_icon(obj):
@@ -132,7 +133,7 @@ def floor_raycast(context, mx, my):
                                                                False)
     if snapped_location != None:
         has_hit = True
-        snapped_normal = Vector((0, 0, 1))
+        snapped_normal = mathutils.Vector((0, 0, 1))
         face_index = None
         object = None
         matrix = None

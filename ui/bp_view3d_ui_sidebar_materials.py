@@ -184,7 +184,7 @@ class VIEW3D_PT_object_materials(Panel):
             row.template_list("MATERIAL_UL_matslots", "", obj, "material_slots", obj, "active_material_index", rows=rows)
 
         col = row.column(align=True)
-        col.operator("bp_material.add_material_slot", icon='ADD', text="").object_name = obj.name
+        col.operator("object.material_slot_add", icon='ADD', text="").object_name = obj.name
         col.operator("object.material_slot_remove", icon='REMOVE', text="")
 
         col.separator()

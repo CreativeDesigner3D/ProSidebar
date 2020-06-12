@@ -88,40 +88,9 @@ class bp_material_OT_create_material_from_image(Operator):
         return {'FINISHED'}       
 
 
-class bp_material_OT_add_material_slot(Operator):
-    bl_idname = "bp_material.add_material_slot"
-    bl_label = "Add Material Slot"
-    bl_options = {'UNDO'}
-    
-    object_name: StringProperty(name="Object Name")
-    
-    def execute(self,context):
-        obj = bpy.data.objects[self.object_name]
-        obj.material_pointer.slots.add()
-        override = {'active_object':obj,'object':obj}
-        bpy.ops.object.material_slot_add(override)
-        return{'FINISHED'}
-
-
-class bp_material_OT__sync_material_slots(Operator):
-    bl_idname = "bp_material.sync_material_slots"
-    bl_label = "Sync Material Slots"
-    bl_options = {'UNDO'}
-    
-    object_name: StringProperty(name="Object Name")
-    
-    def execute(self, context):
-        obj = bpy.data.objects[self.object_name]
-        for index, mat_slot in enumerate(obj.material_slots):
-            if len(obj.material_pointer.slots) < index + 1:
-                slot = obj.material_pointer.slots.add()
-        return{'FINISHED'}
-
 classes = (
     bp_material_OT_delete_material,
     bp_material_OT_create_material_from_image,
-    bp_material_OT_add_material_slot,
-    bp_material_OT__sync_material_slots
 )
 
 register, unregister = bpy.utils.register_classes_factory(classes)

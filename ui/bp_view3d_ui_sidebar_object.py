@@ -56,10 +56,6 @@ class VIEW3D_PT_objects(Panel):
         obj = context.object
         layout = self.layout
         
-        layout.operator('bp_object.update_dependencies')
-
-        # layout.operator('bp_object.set_base_point')
-        
         if obj:
             self.draw_modes(obj,layout)
             row = layout.row(align=True)

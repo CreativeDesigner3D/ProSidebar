@@ -155,7 +155,7 @@ class WORLD_OT_open_world_editor(bpy.types.Operator):
         bpy.ops.screen.userpref_show('INVOKE_DEFAULT')
         for window in context.window_manager.windows:
             if len(window.screen.areas) == 1 and window.screen.areas[0].type == 'PREFERENCES':
-                window.screen.areas[0].type = 'NODE_EDITOR'
+                window.screen.areas[0].ui_type = 'ShaderNodeTree'
                 for space in window.screen.areas[0].spaces:
                     if space.type == 'NODE_EDITOR':
                         space.shader_type = 'WORLD'

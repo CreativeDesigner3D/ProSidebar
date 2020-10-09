@@ -212,7 +212,7 @@ class VIEW3D_PT_object_materials(Panel):
         if obj.type == 'GPENCIL':
             self.draw_gpencil_properties(context,layout,obj)
         else:
-            layout.operator("bp_general.open_new_editor",text="Open Material Editor",icon='MATERIAL').space_type = 'NODE_EDITOR'
+            layout.operator("bp_general.open_new_editor",text="Open Material Editor",icon='MATERIAL').space_type = 'ShaderNodeTree'
 
 
 class BP_UL_materials(UIList):

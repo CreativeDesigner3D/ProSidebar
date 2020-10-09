@@ -42,7 +42,7 @@ class general_OT_open_new_editor(Operator):
         bpy.ops.screen.userpref_show('INVOKE_DEFAULT')
         for window in context.window_manager.windows:
             if len(window.screen.areas) == 1 and window.screen.areas[0].type == 'PREFERENCES':
-                window.screen.areas[0].type = self.space_type
+                window.screen.areas[0].ui_type = self.space_type
         return {'FINISHED'}
 
 class general_OT_open_texture_editor(bpy.types.Operator):
